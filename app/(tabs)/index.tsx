@@ -1,26 +1,13 @@
-import {StyleSheet, View } from 'react-native';
+import {SafeAreaView, Text} from 'react-native';
+import { HStack } from '@/components/ui/hstack';
 
 export default function HomeScreen() {
   return (
-    <View>hello</View>
+    <SafeAreaView>
+      <HStack className='flex-1 justify-between'>
+        <Text className='text-2xl font-bold'> Home </Text>
+        <Text className='text-2xl font-bold'> Test </Text>
+      </HStack>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
