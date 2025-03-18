@@ -1,12 +1,11 @@
-//import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import React from 'react'
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
-import { View, StyleSheet, ActivityIndicator, Button, KeyboardAvoidingView, SafeAreaView } from 'react-native';
-import { TextInput } from 'react-native-gesture-handler';
+import {SafeAreaView } from 'react-native';
 import { Heading } from "@/components/ui/heading"
-//import {createUserWithEmailAndPassword, signInWithEmailAndPassword  } from "firebase/auth";
-//import {useAuth} from "./auth/AuthProvider"
+import {createUserWithEmailAndPassword, signInWithEmailAndPassword  } from "firebase/auth";
+import {useAuth} from "./auth/AuthProvider"
 import { VStack } from '@/components/ui/vstack';
 import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorText, FormControlHelper, FormControlHelperText, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
@@ -27,9 +26,8 @@ export default function Index() {
     const [loggingIn, setLoggingIn] = useState(true);
     const [loadingLogin, setLoading] = useState(false);
 
-    //const auth = FIREBASE_AUTH;
-    // const {user, loading} = useAuth();
-    const user = null;
+    const auth = FIREBASE_AUTH;
+    const {user, loading} = useAuth();
 
     if (user) return <Redirect href="/(tabs)" />;
 
@@ -50,33 +48,33 @@ export default function Index() {
     };
 
     const signUp = async () => {
-        // setLoading(true)
-        // try{
-        //     const response = await createUserWithEmailAndPassword(auth, email, password);
-        //     console.log(response);
-        // } catch (error: any) {
-        //     console.log(error);
-        //     alert("Sign up failed:" + error.message)
-        // } finally {
-        //     setLoading(false);
-        // }
+        setLoading(true)
+        try{
+            const response = await createUserWithEmailAndPassword(auth, email, password);
+            console.log(response);
+        } catch (error: any) {
+            console.log(error);
+            alert("Sign up failed:" + error.message)
+        } finally {
+            setLoading(false);
+        }
     };
 
     const signIn = async () => {
-        // if (confirmPass !== password){
-        //     alert("Passwords do not match!");
-        //     return;
-        // }
-        // setLoading(true)
-        // try{
-        //     const response = await signInWithEmailAndPassword(auth, email, password);
-        //     console.log(response);
-        // } catch (error: any){
-        //     console.log(error);
-        //     alert("Email/Password is incorrect")
-        // } finally {
-        //     setLoading(false);
-        // }
+        if (confirmPass !== password){
+            alert("Passwords do not match!");
+            return;
+        }
+        setLoading(true)
+        try{
+            const response = await signInWithEmailAndPassword(auth, email, password);
+            console.log(response);
+        } catch (error: any){
+            console.log(error);
+            alert("Email/Password is incorrect")
+        } finally {
+            setLoading(false);
+        }
     };
 
 

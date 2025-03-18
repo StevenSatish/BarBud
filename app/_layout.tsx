@@ -1,17 +1,17 @@
 
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 
 
 function AppLayout() {
-  // const { user, loading } = useAuth();
+  const { user, loading } = useAuth();
 
-  // if (loading) return null;
-  // console.log("rendering app")
-  const user = null;
+  if (loading) return null;
+  console.log("rendering app")
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {!user ? (
@@ -28,7 +28,9 @@ export default function RootLayout() {
 
   return (
     <GluestackUIProvider mode="dark">
-      <AppLayout />
+      <AuthProvider children={
+            <AppLayout />
+          } />
       <StatusBar style="auto" />
     </GluestackUIProvider>
   );
