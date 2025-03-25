@@ -82,98 +82,100 @@ export default function Signup() {
         className="bg-background-0 flex-1 items-center justify-center"
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <VStack className="w-full max-w-[300px] rounded-xl bg-background-50 p-6 space-y-4">
-            <Heading size="xl" className="text-typography-700 font-bold">Register</Heading>
-            <FormControl isInvalid={isInvalidEmail}>
-                <FormControlLabel>
-                    <FormControlLabelText className="text-typography-700 font-medium">Email</FormControlLabelText>
-                </FormControlLabel>
-                <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
-                    <InputField
-                        className="text-typography-900"
-                        placeholder="email"
-                        placeholderTextColor="text-typography-700"
-                        value={email}
-                        onChangeText={(text) => setEmail(text)}
-                    />
-                </Input>
-                <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText className="text-error-500">
-                        Not a valid email address
-                    </FormControlErrorText>
-                </FormControlError>
-            </FormControl>
+        <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
+            <VStack className="w-full max-w-[300px] rounded-xl bg-background-50 p-6 space-y-4">
+                <Heading size="xl" className="text-typography-700 font-bold">Register</Heading>
+                <FormControl isInvalid={isInvalidEmail}>
+                    <FormControlLabel>
+                        <FormControlLabelText className="text-typography-700 font-medium">Email</FormControlLabelText>
+                    </FormControlLabel>
+                    <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
+                        <InputField
+                            className="text-typography-900"
+                            placeholder="email"
+                            placeholderTextColor="text-typography-700"
+                            value={email}
+                            onChangeText={(text) => setEmail(text)}
+                        />
+                    </Input>
+                    <FormControlError>
+                        <FormControlErrorIcon as={AlertCircleIcon} />
+                        <FormControlErrorText className="text-error-500">
+                            Not a valid email address
+                        </FormControlErrorText>
+                    </FormControlError>
+                </FormControl>
 
-            <FormControl isInvalid={isInvalidPass}>
-                <FormControlLabel>
-                    <FormControlLabelText className="text-typography-700 font-medium">Password</FormControlLabelText>
-                </FormControlLabel>
-                <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
-                    <InputField
-                        className="text-typography-900"
-                        placeholder="password"
-                        placeholderTextColor="text-typography-700"
-                        type={showPass ? "text" : "password"}
-                        value={password}
-                        onChangeText={(text) => setPassword(text)}
-                    />
-                    <InputSlot className="mr-2" onPress={() => setShowPass(!showPass)}>
-                        <InputIcon as={showPass ? EyeIcon : EyeOffIcon} className="text-typography-400" />
-                    </InputSlot>
-                </Input>
-                <FormControlHelper>
-                    <FormControlHelperText className="text-typography-700">
-                        Must be at least 8 characters.
-                    </FormControlHelperText>
-                </FormControlHelper>
-                <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText>
-                        That's not 8 characters, bozo
-                    </FormControlErrorText>
-                </FormControlError>
-            </FormControl>
-            
-            <FormControl isInvalid={isInvalidConfirmPass}>
-                <FormControlLabel>
-                    <FormControlLabelText className="text-typography-700 font-medium">Confirm Password</FormControlLabelText>
-                </FormControlLabel>
-                <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
-                    <InputField
-                        className="text-typography-900"
-                        placeholder="confirm password"
-                        placeholderTextColor="text-typography-700"
-                        type={showConfirmPass ? "text" : "password"}
-                        value={confirmPass}
-                        onChangeText={(text) => setConfirmPass(text)}
-                    />
-                    <InputSlot className="mr-2" onPress={() => setShowConfirmPass(!showConfirmPass)}>
-                        <InputIcon as={showConfirmPass ? EyeIcon : EyeOffIcon} className="text-typography-400" />
-                    </InputSlot>
-                </Input>
-                <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText>
-                        Passwords must match
-                    </FormControlErrorText>
-                </FormControlError>
-            </FormControl>
-            <Button 
-                size="lg" 
-                variant="solid" 
-                action="primary"
-                className="bg-background-700 mt-4"
-                onPress={submitForm}
-                disabled={loadingRegister}
-            >
-                {loadingRegister ? (
-                    <Spinner color="black" size="small" />
-                ) : (
-                    <ButtonText className="text-typography-100 font-semibold">Sign Up</ButtonText>
-                )}
-            </Button>
-        </VStack>
+                <FormControl isInvalid={isInvalidPass}>
+                    <FormControlLabel>
+                        <FormControlLabelText className="text-typography-700 font-medium">Password</FormControlLabelText>
+                    </FormControlLabel>
+                    <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
+                        <InputField
+                            className="text-typography-900"
+                            placeholder="password"
+                            placeholderTextColor="text-typography-700"
+                            type={showPass ? "text" : "password"}
+                            value={password}
+                            onChangeText={(text) => setPassword(text)}
+                        />
+                        <InputSlot className="mr-2" onPress={() => setShowPass(!showPass)}>
+                            <InputIcon as={showPass ? EyeIcon : EyeOffIcon} className="text-typography-400" />
+                        </InputSlot>
+                    </Input>
+                    <FormControlHelper>
+                        <FormControlHelperText className="text-typography-700">
+                            Must be at least 8 characters.
+                        </FormControlHelperText>
+                    </FormControlHelper>
+                    <FormControlError>
+                        <FormControlErrorIcon as={AlertCircleIcon} />
+                        <FormControlErrorText>
+                            That's not 8 characters, bozo
+                        </FormControlErrorText>
+                    </FormControlError>
+                </FormControl>
+                
+                <FormControl isInvalid={isInvalidConfirmPass}>
+                    <FormControlLabel>
+                        <FormControlLabelText className="text-typography-700 font-medium">Confirm Password</FormControlLabelText>
+                    </FormControlLabel>
+                    <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
+                        <InputField
+                            className="text-typography-900"
+                            placeholder="confirm password"
+                            placeholderTextColor="text-typography-700"
+                            type={showConfirmPass ? "text" : "password"}
+                            value={confirmPass}
+                            onChangeText={(text) => setConfirmPass(text)}
+                        />
+                        <InputSlot className="mr-2" onPress={() => setShowConfirmPass(!showConfirmPass)}>
+                            <InputIcon as={showConfirmPass ? EyeIcon : EyeOffIcon} className="text-typography-400" />
+                        </InputSlot>
+                    </Input>
+                    <FormControlError>
+                        <FormControlErrorIcon as={AlertCircleIcon} />
+                        <FormControlErrorText>
+                            Passwords must match
+                        </FormControlErrorText>
+                    </FormControlError>
+                </FormControl>
+                <Button 
+                    size="lg" 
+                    variant="solid" 
+                    action="primary"
+                    className="bg-background-700 mt-4"
+                    onPress={submitForm}
+                    disabled={loadingRegister}
+                >
+                    {loadingRegister ? (
+                        <Spinner color="black" size="small" />
+                    ) : (
+                        <ButtonText className="text-typography-100 font-semibold">Sign Up</ButtonText>
+                    )}
+                </Button>
+            </VStack>
+        </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
 </TouchableWithoutFeedback>
   );

@@ -6,9 +6,14 @@ import { Heading } from '@/components/ui/heading'
 import { HStack } from '@/components/ui/hstack'
 import { Image } from '@/components/ui/image'
 import { useRouter } from 'expo-router'
+import {useAuth} from ".././auth/AuthProvider"
+import { Redirect } from 'expo-router';
+
 
 export default function index() {
   const router = useRouter();
+  const {user, loading} = useAuth();
+    if (user) return <Redirect href="../(tabs)" />;
   
   return (
     <Box className="bg-background-0 flex-1 items-center justify-center">
