@@ -1,16 +1,31 @@
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, Alert } from 'react-native';
 import { useAuth } from '../auth/AuthProvider';
 
 export default function Settings() {
   const { signOut } = useAuth();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      alert('You have been successfully signed out.');
-    } catch (error: any) {
-      alert('Sign Out Failed' + error.message);
-    }
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Yes, Sign Out", 
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error: any) {
+              alert('Sign Out Failed' + error.message);
+            }
+          },
+          style: "destructive"
+        }
+      ]
+    );
   };
 
   return (
