@@ -2,7 +2,7 @@ import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import React from 'react'
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
-import { KeyboardAvoidingView, Platform, View, TouchableWithoutFeedback, Keyboard} from 'react-native';
+import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard} from 'react-native';
 import { Heading } from "@/components/ui/heading"
 import {signInWithEmailAndPassword  } from "firebase/auth";
 import {useAuth} from ".././auth/AuthProvider"
@@ -55,21 +55,21 @@ export default function Login() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 items-center justify-center"
+        className="bg-background-0 flex-1 items-center justify-center"
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
-          <VStack className="w-full max-w-[300px] rounded-xl border border-background-700 bg-background-900 p-6 space-y-4">
-            <Heading size="xl" className="text-typography-50 font-bold">Login</Heading>
+          <VStack className="w-full max-w-[300px] rounded-xl bg-background-50 p-6 space-y-4">
+            <Heading size="xl" className="text-typography-700 font-bold">Login</Heading>
             <FormControl isInvalid={isInvalidEmail}>
                 <FormControlLabel>
-                    <FormControlLabelText className="text-typography-50 font-medium">Email</FormControlLabelText>
+                    <FormControlLabelText className="text-typography-700 font-medium">Email</FormControlLabelText>
                 </FormControlLabel>
-                <Input className="my-1 bg-background-700 border-background-600" size={"md"}>
+                <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
                     <InputField
-                        className="text-typography-50"
+                        className="text-typography-900"
                         placeholder="email"
-                        placeholderTextColor="#666666"
+                        placeholderTextColor="text-typography-700"
                         value={email}
                         onChangeText={(text) => setEmail(text)}
                     />
@@ -84,13 +84,13 @@ export default function Login() {
 
             <FormControl>
                 <FormControlLabel>
-                    <FormControlLabelText className="text-typography-50 font-medium">Password</FormControlLabelText>
+                    <FormControlLabelText className="text-typography-700 font-medium">Password</FormControlLabelText>
                 </FormControlLabel>
-                <Input className="my-1 bg-background-700 border-background-600" size={"md"}>
+                <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
                     <InputField
-                        className="text-typography-50"
+                        className="text-typography-900"
                         placeholder="password"
-                        placeholderTextColor="#666666"
+                        placeholderTextColor="text-typography-700"
                         type={showPass ? "text" : "password"}
                         value={password}
                         onChangeText={(text) => setPassword(text)}
@@ -105,14 +105,14 @@ export default function Login() {
                 size="lg" 
                 variant="solid" 
                 action="primary"
-                className="bg-primary-500 mt-4"
+                className="bg-background-700 mt-4"
                 onPress={submitForm}
                 disabled={loadingLogin}
             >
                 {loadingLogin ? (
                     <Spinner color="black" size="small" />
                 ) : (
-                    <ButtonText className="font-semibold">Sign In</ButtonText>
+                    <ButtonText className="text-typography-100 font-semibold">Sign In</ButtonText>
                 )}
             </Button>
           </VStack>
