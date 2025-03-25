@@ -2,7 +2,7 @@ import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import React from 'react'
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
-import {SafeAreaView } from 'react-native';
+import { KeyboardAvoidingView, Platform, View, TouchableWithoutFeedback, Keyboard} from 'react-native';
 import { Heading } from "@/components/ui/heading"
 import {signInWithEmailAndPassword  } from "firebase/auth";
 import {useAuth} from ".././auth/AuthProvider"
@@ -11,16 +11,15 @@ import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorTe
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "@/components/ui/icon"
 import { Button, ButtonText } from '@/components/ui/button'
+import { Spinner } from "@/components/ui/spinner"
 
 export default function Login() {
     const [email, setEmail] = useState("")
     const [isInvalidEmail, setIsInvalidEmail] = useState(false);
 
     const [password, setPassword] = useState("");
-    const [isInvalidPass, setIsInvalidPass] = useState(false);
     const [showPass, setShowPass] = useState(false);
 
-    const [loggingIn, setLoggingIn] = useState(true);
     const [loadingLogin, setLoading] = useState(false);
 
     const auth = FIREBASE_AUTH;
@@ -35,11 +34,7 @@ export default function Login() {
             setIsInvalidEmail(true);
         } else{
             setIsInvalidEmail(false);
-        }
-        if (password.length < 8){
-            setIsInvalidPass(true)
-        } else {
-            setIsInvalidPass(false);
+            signIn();
         }
     };
 
@@ -57,9 +52,15 @@ export default function Login() {
     };
 
   return (
-    <SafeAreaView className="bg-background-0 flex-1 items-center justify-center">
-        <VStack className="w-full max-w-[300px] rounded-xl border border-background-700 bg-background-800 p-6 mx-4 space-y-4">
-            <Heading size="xl" className="text-typography-50 font-bold">{loggingIn ? "Login" : "Register"}</Heading>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1 items-center justify-center"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
+          <VStack className="w-full max-w-[300px] rounded-xl border border-background-700 bg-background-900 p-6 space-y-4">
+            <Heading size="xl" className="text-typography-50 font-bold">Login</Heading>
             <FormControl isInvalid={isInvalidEmail}>
                 <FormControlLabel>
                     <FormControlLabelText className="text-typography-50 font-medium">Email</FormControlLabelText>
@@ -81,7 +82,7 @@ export default function Login() {
                 </FormControlError>
             </FormControl>
 
-            <FormControl isInvalid={isInvalidPass}>
+            <FormControl>
                 <FormControlLabel>
                     <FormControlLabelText className="text-typography-50 font-medium">Password</FormControlLabelText>
                 </FormControlLabel>
@@ -94,21 +95,10 @@ export default function Login() {
                         value={password}
                         onChangeText={(text) => setPassword(text)}
                     />
-                    <InputSlot onPress={() => setShowPass(!showPass)}>
+                    <InputSlot className="mr-2" onPress={() => setShowPass(!showPass)}>
                         <InputIcon as={showPass ? EyeIcon : EyeOffIcon} className="text-typography-400" />
                     </InputSlot>
                 </Input>
-                <FormControlHelper>
-                    <FormControlHelperText className="text-typography-400">
-                        Must be at least 8 characters.
-                    </FormControlHelperText>
-                </FormControlHelper>
-                <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText className="text-error-500">
-                        That's not 8 characters, bozo
-                    </FormControlErrorText>
-                </FormControlError>
             </FormControl>
 
             <Button 
@@ -116,11 +106,18 @@ export default function Login() {
                 variant="solid" 
                 action="primary"
                 className="bg-primary-500 mt-4"
-                onPress={signIn}
+                onPress={submitForm}
+                disabled={loadingLogin}
             >
-                <ButtonText className="font-semibold">Sign In</ButtonText>
+                {loadingLogin ? (
+                    <Spinner color="black" size="small" />
+                ) : (
+                    <ButtonText className="font-semibold">Sign In</ButtonText>
+                )}
             </Button>
-        </VStack>
-    </SafeAreaView>
+          </VStack>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
