@@ -6,7 +6,7 @@ import { Heading } from '@/components/ui/heading'
 import { HStack } from '@/components/ui/hstack'
 import { Image } from '@/components/ui/image'
 import { useRouter } from 'expo-router'
-import {useAuth} from ".././auth/AuthProvider"
+import {useAuth} from "../context/AuthProvider"
 import { Redirect } from 'expo-router';
 
 

@@ -4,10 +4,10 @@ export default function OnStartupLayout() {
   return (
     <Stack
     screenOptions={{
-        headerShown: false,  // Hide the default header
-        animation: 'slide_from_right',  // Default animation
+        headerShown: false,  
+        animation: 'slide_from_right',  
         contentStyle: {
-        backgroundColor: '#121212',  // Changed to match background-0
+        backgroundColor: '#121212',  
         },
     }}
     >
@@ -23,7 +23,7 @@ export default function OnStartupLayout() {
         headerShown: true,
         headerTitle: "", 
         headerStyle: {
-          backgroundColor: '#121212',  // Changed to match background-0
+          backgroundColor: '#121212',  
         },
         headerTintColor: 'white',  
         headerShadowVisible: false,  

@@ -5,7 +5,7 @@ import { Redirect } from 'expo-router';
 import {KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { Heading } from "@/components/ui/heading"
 import {createUserWithEmailAndPassword  } from "firebase/auth";
-import {useAuth} from ".././auth/AuthProvider"
+import {useAuth} from "../context/AuthProvider"
 import { VStack } from '@/components/ui/vstack';
 import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorText, FormControlHelper, FormControlHelperText, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
