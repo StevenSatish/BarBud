@@ -80,10 +80,9 @@ export default function Signup() {
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="bg-background-0 flex-1 items-center justify-center"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}>
         <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
-            <VStack className="w-full max-w-[300px] rounded-xl bg-background-50 p-6 space-y-4">
+            <VStack className="w-full max-w-[300px] rounded-xl bg-background-50 p-6 space-y-4 -mt-20">
                 <Heading size="xl" className="text-typography-700 font-bold">Register</Heading>
                 <FormControl isInvalid={isInvalidEmail}>
                     <FormControlLabel>

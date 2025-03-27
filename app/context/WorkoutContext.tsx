@@ -106,3 +106,5 @@ export const useWorkout = () => {
   }
   return context;
 };
+
+export default useWorkout;
