@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import dummyData from '../(workout)/dummyWorkout';
 
 type WorkoutState = {
   isActive: boolean;
@@ -14,10 +15,12 @@ type WorkoutContextType = {
   endWorkout: () => void;
   minimizeWorkout: () => void;
   maximizeWorkout: () => void;
-  // Other functions
+  updateSet: (exerciseId: string, setId: string, newData: any) => void;
+  deleteSet: (exerciseId: string, setId: string) => void;
+  addSet: (exerciseId: string) => void;
 };
 
-const initialWorkoutState: WorkoutState = {
+const nullWorkoutState: WorkoutState = {
   isActive: false,
   isMinimized: false,
   workoutData: null,
@@ -26,7 +29,7 @@ const initialWorkoutState: WorkoutState = {
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
 
 export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  const [workoutState, setWorkoutState] = useState<WorkoutState>(initialWorkoutState);
+  const [workoutState, setWorkoutState] = useState<WorkoutState>(nullWorkoutState);
 
   useEffect(() => {
     const loadWorkoutState = async () => {
@@ -62,14 +65,17 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     setWorkoutState({
       isActive: true,
       isMinimized: false,
-      workoutData: { startTime: new Date(), exercises: [] },
+      workoutData: { 
+        startTime: new Date(), 
+        exercises: dummyData 
+      },
     });
     router.replace('/(workout)')
   };
 
   const endWorkout = () => {
     console.log("ending workout");
-    setWorkoutState(initialWorkoutState);
+    setWorkoutState(nullWorkoutState);
     AsyncStorage.removeItem('workoutState');
     router.replace('/(tabs)')
   };
@@ -84,6 +90,54 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     router.replace('/(workout)');
   };
 
+  const updateSet = (exerciseId: string, setId: string, newData: any) => {
+    setWorkoutState(prev => ({
+      ...prev,
+      workoutData: {
+        ...prev.workoutData,
+        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: any[]; }) => 
+          exercise.exerciseId === exerciseId 
+            ? {
+                ...exercise,
+                sets: exercise.sets.map((set: { setId: string; }) => 
+                  set.setId === setId 
+                    ? { ...set, trackingData: newData }
+                    : set
+                )
+              }
+            : exercise
+        )
+      }
+    }));
+  };
+
+  const deleteSet = (exerciseId: string, setId: string) => {
+    console.log("deleting papi");
+  };
+
+  const addSet = (exerciseId: string) => {
+    setWorkoutState(prev => ({
+      ...prev,
+      workoutData: {
+        ...prev.workoutData,
+        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: string | any[]; trackingMethods: any[]; }) => 
+          exercise.exerciseId === exerciseId 
+            ? {
+                ...exercise,
+                sets: [...exercise.sets, {
+                  setId: `${exerciseId}-${exercise.sets.length + 1}`,
+                  trackingData: exercise.trackingMethods.reduce((acc: any, method: any) => ({
+                    ...acc,
+                    [method]: null
+                  }), {})
+                }]
+              }
+            : exercise
+        )
+      }
+    }));
+  };
+
   return (
     <WorkoutContext.Provider
       value={{
@@ -92,6 +146,9 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         endWorkout,
         minimizeWorkout,
         maximizeWorkout,
+        updateSet,
+        deleteSet,
+        addSet
       }}
     >
       {children}
