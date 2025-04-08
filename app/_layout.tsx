@@ -1,5 +1,6 @@
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from './context/AuthProvider';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 import { Stack } from 'expo-router';
@@ -26,13 +27,15 @@ function AppLayout() {
 
 export default function RootLayout() {
   return (
-    <GluestackUIProvider mode="dark">
-      <AuthProvider>
-        <WorkoutProvider>
-          <AppLayout />
-        </WorkoutProvider>
-      </AuthProvider>
-      <StatusBar style="auto" />
-    </GluestackUIProvider>
+    <GestureHandlerRootView>
+      <GluestackUIProvider mode="dark">
+        <AuthProvider>
+          <WorkoutProvider>
+            <AppLayout />
+          </WorkoutProvider>
+        </AuthProvider>
+        <StatusBar style="auto" />
+      </GluestackUIProvider>
+    </GestureHandlerRootView>
   );
 }
