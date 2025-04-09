@@ -8,11 +8,14 @@ import {
     CheckboxIcon,
 } from "@/components/ui/checkbox"
 import { Button, ButtonIcon, ButtonText} from '@/components/ui/button'
-import { CheckIcon, TrashIcon } from "@/components/ui/icon"
+import { CheckIcon } from "@/components/ui/icon"
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Input, InputField } from "@/components/ui/input"
 import { useWorkout } from '../context/WorkoutContext'
-import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import {Pressable} from "react-native-gesture-handler";  
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import { Alert } from 'react-native'
 
 
 function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
@@ -28,29 +31,48 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
 
   
 
-  const renderRightActions = (
-    progress: SharedValue<number>,
-    dragX: SharedValue<number>,
-  ) => {
+  function renderRightActions(progress: SharedValue<number>, drag: SharedValue<number>) {
     const animatedStyle = useAnimatedStyle(() => {
+      'worklet';
+      const width = Math.max(-drag.value, 100); 
       return {
-        opacity: Math.min(progress.value * 2, 1),
+        width,
+        height: '100%',
+        backgroundColor: '#ef4444',
       };
     });
-    return (
-      <Reanimated.View style={animatedStyle}>
-        <Button onPress={() => deleteSet(exerciseId, set.setId)}>
-          <ButtonText>Delete</ButtonText>
-          <ButtonIcon as={TrashIcon} />
-        </Button>
-      </Reanimated.View>
-    );
-  };
-  
 
     return (
-      <Swipeable renderRightActions={renderRightActions}>
-        <HStack className="justify-between items-center py-3">
+      <Reanimated.View style={animatedStyle}>
+        <Pressable 
+          style={({ pressed }) => [{ 
+            width: 100, 
+            height: '100%', 
+            position: 'absolute', 
+            right: 0, 
+            justifyContent: 'center',
+            alignItems: 'center',
+            opacity: pressed ? 0.7 : 1,
+            backgroundColor: pressed ? '#dc2626' : 'transparent' 
+          }]}
+          onPress={() => deleteSet(exerciseId, set.setId)}
+          android_ripple={{ color: '#dc2626' }}
+        >
+          <FontAwesome name="trash-o" size={24} color="white" />
+        </Pressable>
+      </Reanimated.View>
+    );
+  }
+  
+    return (
+      <ReanimatedSwipeable 
+        renderRightActions={renderRightActions}
+        friction={1}
+        rightThreshold={100}
+        overshootRight={true}
+        containerStyle={{ overflow: 'hidden' }}
+      >
+        <HStack className="justify-between items-center py-3 bg-background-0">
           <Box className="w-12 flex items-center justify-center">
             <Text size="lg" className="text-typography-900 text-center">{index + 1}</Text>
           </Box>
@@ -82,7 +104,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
             </Checkbox>
           </Box>
         </HStack>
-      </Swipeable>
+      </ReanimatedSwipeable>
     )
   }
 

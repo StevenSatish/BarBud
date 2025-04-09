@@ -5,8 +5,16 @@ import { AuthProvider, useAuth } from './context/AuthProvider';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from 'react-native-reanimated';
 
 function AppLayout() {
+  configureReanimatedLogger({
+    level: ReanimatedLogLevel.warn,
+    strict: false,
+  });
   const { user, loading } = useAuth();
   const { workoutState } = useWorkout();
 

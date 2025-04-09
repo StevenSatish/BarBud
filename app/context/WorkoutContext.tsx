@@ -112,7 +112,20 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
   };
 
   const deleteSet = (exerciseId: string, setId: string) => {
-    console.log("deleting papi");
+    setWorkoutState(prev => ({
+      ...prev,
+      workoutData: {
+        ...prev.workoutData,
+        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: any[]; }) => 
+          exercise.exerciseId === exerciseId 
+            ? {
+                ...exercise,
+                sets: exercise.sets.filter((set: { setId: string; }) => set.setId !== setId)
+              }
+            : exercise
+        )
+      }
+    }));
   };
 
   const addSet = (exerciseId: string) => {
