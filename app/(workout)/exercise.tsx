@@ -76,10 +76,9 @@ function Exercise({ exercise }: any) {
             <AntDesign name="check" size={24} color="white" />
           </Box>
         </HStack>
-        <VStack space="sm">
+        <VStack>
           {exercise.sets.map((set: any, index: any) => {
             const swipeableKey = `${set.setId}-${exercise.sets.length}`;
-            
             return (
               <React.Fragment key={set.setId}>
                 <ReanimatedSwipeable 
@@ -90,17 +89,12 @@ function Exercise({ exercise }: any) {
                   overshootRight={true}
                   containerStyle={{ overflow: 'hidden' }}
                 >
-                  <Box>
-                    <ExerciseSet 
-                      set={set}
-                      index={index}
-                      trackingMethods={exercise.trackingMethods}
-                      exerciseId={exercise.exerciseId}
-                    />
-                    {index !== exercise.sets.length - 1 && (
-                      <Divider />
-                    )}
-                  </Box>
+                  <ExerciseSet
+                    set={set}
+                    index={index}
+                    trackingMethods={exercise.trackingMethods}
+                    exerciseId={exercise.exerciseId}
+                  />
                 </ReanimatedSwipeable>
               </React.Fragment>
             );

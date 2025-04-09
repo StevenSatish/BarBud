@@ -9,21 +9,24 @@ const dummyData = [
         trackingData: {
           weight: 135,
           reps: 10
-        }
+        },
+        completed: false
       },
       {
         setId: "bench-press-2",
         trackingData: {
           weight: 155,
           reps: 8
-        }
+        },
+        completed: false
       },
       {
         setId: "bench-press-3",
         trackingData: {
           weight: 155,
           reps: 8
-        }
+          },
+        completed: false
       }
     ]
   },
@@ -36,13 +39,15 @@ const dummyData = [
         setId: "plank-1",
         trackingData: {
           time: 60 
-        }
+        },
+        completed: false
       },
       {
         setId: "plank-2",
         trackingData: {
           time: 45
-        }
+        },
+        completed: false
       }
     ]
   },
@@ -55,19 +60,22 @@ const dummyData = [
         setId: "pull-ups-1",
         trackingData: {
           reps: 8
-        }
+        },
+        completed: false
       },
       {
         setId: "pull-ups-2",
         trackingData: {
           reps: 6
-        }
+        },
+        completed: false
       },
       {
         setId: "pull-ups-3",
         trackingData: {
           reps: 5
-        }
+        },
+        completed: false
       }
     ]
   }
