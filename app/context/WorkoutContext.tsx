@@ -116,14 +116,26 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
       ...prev,
       workoutData: {
         ...prev.workoutData,
-        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: any[]; }) => 
-          exercise.exerciseId === exerciseId 
-            ? {
-                ...exercise,
-                sets: exercise.sets.filter((set: { setId: string; }) => set.setId !== setId)
-              }
-            : exercise
-        )
+        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: any[]; }) => {
+          if (exercise.exerciseId === exerciseId) {
+            // First, filter out the set to be deleted
+            const filteredSets = exercise.sets.filter(
+              (set: { setId: string; }) => set.setId !== setId
+            );
+            
+            // Then, renumber the setIds for all remaining sets
+            const renumberedSets = filteredSets.map((set: any, index: number) => ({
+              ...set,
+              setId: `${exerciseId}-${index + 1}`
+            }));
+            
+            return {
+              ...exercise,
+              sets: renumberedSets
+            };
+          }
+          return exercise;
+        })
       }
     }));
   };
