@@ -77,29 +77,34 @@ function Exercise({ exercise }: any) {
           </Box>
         </HStack>
         <VStack space="sm">
-          {exercise.sets.map((set: any, index: any) => (
-            <React.Fragment key={set.setId}>
-              <ReanimatedSwipeable 
-                renderRightActions={renderRightActions(set.setId)}
-                friction={1}
-                rightThreshold={100}
-                overshootRight={true}
-                containerStyle={{ overflow: 'hidden' }}
-              >
-                <Box>
-                  <ExerciseSet 
-                    set={set}
-                    index={index}
-                    trackingMethods={exercise.trackingMethods}
-                    exerciseId={exercise.exerciseId}
-                  />
-                  {index !== exercise.sets.length - 1 && (
-                    <Divider />
-                  )}
-                </Box>
-              </ReanimatedSwipeable>
-            </React.Fragment>
-          ))}
+          {exercise.sets.map((set: any, index: any) => {
+            const swipeableKey = `${set.setId}-${exercise.sets.length}`;
+            
+            return (
+              <React.Fragment key={set.setId}>
+                <ReanimatedSwipeable 
+                  key={swipeableKey}
+                  renderRightActions={renderRightActions(set.setId)}
+                  friction={1}
+                  rightThreshold={100}
+                  overshootRight={true}
+                  containerStyle={{ overflow: 'hidden' }}
+                >
+                  <Box>
+                    <ExerciseSet 
+                      set={set}
+                      index={index}
+                      trackingMethods={exercise.trackingMethods}
+                      exerciseId={exercise.exerciseId}
+                    />
+                    {index !== exercise.sets.length - 1 && (
+                      <Divider />
+                    )}
+                  </Box>
+                </ReanimatedSwipeable>
+              </React.Fragment>
+            );
+          })}
         </VStack>
         <Button 
           className='bg-background-200'
