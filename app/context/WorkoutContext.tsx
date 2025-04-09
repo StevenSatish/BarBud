@@ -17,6 +17,7 @@ type WorkoutContextType = {
   minimizeWorkout: () => void;
   maximizeWorkout: () => void;
   updateSet: (exerciseId: string, setId: string, newData: any) => void;
+  updateSetCompleted: (exerciseId: string, setId: string, completed: boolean) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
   addSet: (exerciseId: string) => void;
 };
@@ -119,6 +120,27 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     }));
   };
 
+  const updateSetCompleted = (exerciseId: string, setId: string, completed: boolean) => {
+    setWorkoutState(prev => ({
+      ...prev,
+      workoutData: {
+        ...prev.workoutData,
+        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: any[]; }) => 
+          exercise.exerciseId === exerciseId 
+            ? {
+                ...exercise,
+                sets: exercise.sets.map((set: { setId: string; }) => 
+                  set.setId === setId 
+                    ? { ...set, completed: completed }
+                    : set
+                )
+              }
+            : exercise
+        )
+      }
+    }));
+  };
+
   const deleteSet = (exerciseId: string, setId: string) => {
     setWorkoutState(prev => ({
       ...prev,
@@ -197,6 +219,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         minimizeWorkout,
         maximizeWorkout,
         updateSet,
+        updateSetCompleted,
         deleteSet,
         addSet
       }}

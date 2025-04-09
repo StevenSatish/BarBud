@@ -12,7 +12,7 @@ import { Input, InputField } from "@/components/ui/input"
 import { useWorkout } from '../context/WorkoutContext'
 
 function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
-  const { updateSet } = useWorkout();
+  const { updateSet, updateSetCompleted } = useWorkout();
 
   const handleInputChange = (method: string, value: string) => {
     const newTrackingData = {
@@ -23,7 +23,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   };
 
   return (
-    <HStack className="justify-between items-center py-3 bg-background-0">
+    <HStack className={`justify-between items-center py-3 ${set.completed ? 'bg-success-100' : 'bg-background-0'}`}>
       <Box className="w-12 flex items-center justify-center">
         <Text size="lg" className="text-typography-900 text-center">{index + 1}</Text>
       </Box>
@@ -45,9 +45,9 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
       <Box className="w-8 flex items-center justify-center">
         <Checkbox 
           size="lg"
-          isInvalid={false}
-          isDisabled={false}
-          value="checked"
+          value="completed"
+          isChecked={set.completed}
+          onChange={() => {updateSetCompleted(exerciseId, set.setId, !set.completed)}}
         >
           <CheckboxIndicator>
             <CheckboxIcon as={CheckIcon} />

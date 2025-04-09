@@ -21,10 +21,6 @@ function AppLayout() {
   const { workoutState } = useWorkout();
 
   if (loading) return null;
-
-  useEffect(() => {
-    populatePresetExercises();
-  }, []);
   
   return (
     <Stack screenOptions={{ headerShown: false }}>
