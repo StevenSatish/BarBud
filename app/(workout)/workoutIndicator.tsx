@@ -12,7 +12,7 @@ export default function WorkoutIndicator() {
   }
   
   const handleMaximize = () => {
-    router.navigate('/(tabs)/workout');
+    router.navigate('/(tabs)');
     maximizeWorkout();
   };
 

@@ -9,10 +9,49 @@ import ExerciseSet from './exerciseSet'
 import { Button, ButtonText } from '@/components/ui/button'
 import { Divider } from "@/components/ui/divider"
 import { useWorkout } from '../context/WorkoutContext'
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import {Pressable} from "react-native-gesture-handler"
+import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
+import FontAwesome from '@expo/vector-icons/FontAwesome'
 
 function Exercise({ exercise }: any) {
-  const { addSet } = useWorkout();
+  const { addSet, deleteSet } = useWorkout();
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
+  function renderRightActions(setId: string) {
+    return (drag: SharedValue<number>) => {
+      const animatedStyle = useAnimatedStyle(() => {
+        'worklet';
+        const width = Math.max(-drag.value, 100); 
+        return {
+          width,
+          height: '100%',
+          backgroundColor: '#ef4444',
+        };
+      });
+
+      return (
+        <Reanimated.View style={animatedStyle}>
+          <Pressable 
+            style={({ pressed }) => [{ 
+              width: 100, 
+              height: '100%', 
+              position: 'absolute', 
+              right: 0, 
+              justifyContent: 'center',
+              alignItems: 'center',
+              opacity: pressed ? 0.7 : 1,
+              backgroundColor: pressed ? '#dc2626' : 'transparent' 
+            }]}
+            onPress={() => deleteSet(exercise.exerciseId, setId)}
+            android_ripple={{ color: '#dc2626' }}
+          >
+            <FontAwesome name="trash-o" size={24} color="white" />
+          </Pressable>
+        </Reanimated.View>
+      );
+    };
+  }
 
   return (
     <Box className="w-full bg-background-0 mb-2">
@@ -40,15 +79,25 @@ function Exercise({ exercise }: any) {
         <VStack space="sm">
           {exercise.sets.map((set: any, index: any) => (
             <React.Fragment key={set.setId}>
-              <ExerciseSet 
-                set={set}
-                index={index}
-                trackingMethods={exercise.trackingMethods}
-                exerciseId={exercise.exerciseId}
-              />
-              {index !== exercise.sets.length - 1 && (
-                <Divider />
-              )}
+              <ReanimatedSwipeable 
+                renderRightActions={renderRightActions(set.setId)}
+                friction={1}
+                rightThreshold={100}
+                overshootRight={true}
+                containerStyle={{ overflow: 'hidden' }}
+              >
+                <Box>
+                  <ExerciseSet 
+                    set={set}
+                    index={index}
+                    trackingMethods={exercise.trackingMethods}
+                    exerciseId={exercise.exerciseId}
+                  />
+                  {index !== exercise.sets.length - 1 && (
+                    <Divider />
+                  )}
+                </Box>
+              </ReanimatedSwipeable>
             </React.Fragment>
           ))}
         </VStack>
@@ -59,7 +108,6 @@ function Exercise({ exercise }: any) {
           <ButtonText className='text-typography-800'>+ Add Set</ButtonText>
         </Button>
       </VStack>
-      
     </Box>
   )
 }
