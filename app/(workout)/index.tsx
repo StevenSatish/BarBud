@@ -12,7 +12,7 @@ import Exercise from './exercise';
 import WorkoutTimer from './workoutTimer';
 
 export default function WorkoutScreen() {
-  const { minimizeWorkout, endWorkout, workoutState } = useWorkout();
+  const { cancelWorkout, minimizeWorkout, endWorkout, workoutState } = useWorkout();
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -33,14 +33,20 @@ export default function WorkoutScreen() {
 
   return (
     <SafeAreaView className="bg-background-0 flex-1">
-      <HStack className="w-full py-4 px-4 bg-background-0 items-center justify-between">
-        <FontAwesome5 onPress={minimizeWorkout} name="chevron-down" size={24} color="white" />
-        <WorkoutTimer elapsedSeconds={elapsedSeconds} />
-        <Button>
-          <ButtonText>
-            Finish
-          </ButtonText>
-        </Button>
+      <HStack className="w-full py-4 px-2 bg-background-0 items-center justify-between">
+        <Box className="w-24 pl-2 flex items-start">
+          <FontAwesome5 onPress={minimizeWorkout} name="chevron-down" size={24} color="white" />
+        </Box>
+        
+        <Box className="flex-1 flex items-center justify-center">
+          <WorkoutTimer elapsedSeconds={elapsedSeconds} />
+        </Box>
+        
+        <Box className="w-24 flex items-end pr-2">
+          <Button size="md" onPress={endWorkout}>
+            <ButtonText>Finish</ButtonText>
+          </Button>
+        </Box>
       </HStack>
 
       <ScrollView 
