@@ -13,6 +13,7 @@ type WorkoutContextType = {
   workoutState: WorkoutState;
   startWorkout: () => void;
   endWorkout: () => void;
+  cancelWorkout: () => void;
   minimizeWorkout: () => void;
   maximizeWorkout: () => void;
   updateSet: (exerciseId: string, setId: string, newData: any) => void;
@@ -74,6 +75,13 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
   };
 
   const endWorkout = () => {
+    console.log("ending workout");
+    setWorkoutState(nullWorkoutState);
+    AsyncStorage.removeItem('workoutState');
+    router.replace('/(tabs)')
+  };
+
+  const cancelWorkout = () => {
     console.log("ending workout");
     setWorkoutState(nullWorkoutState);
     AsyncStorage.removeItem('workoutState');
@@ -185,6 +193,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         workoutState,
         startWorkout,
         endWorkout,
+        cancelWorkout,
         minimizeWorkout,
         maximizeWorkout,
         updateSet,

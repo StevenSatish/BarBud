@@ -9,6 +9,8 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
+import { populatePresetExercises }  from './TempDBInit';
+import { useEffect } from "react";
 
 function AppLayout() {
   configureReanimatedLogger({
@@ -19,6 +21,10 @@ function AppLayout() {
   const { workoutState } = useWorkout();
 
   if (loading) return null;
+
+  useEffect(() => {
+    populatePresetExercises();
+  }, []);
   
   return (
     <Stack screenOptions={{ headerShown: false }}>
