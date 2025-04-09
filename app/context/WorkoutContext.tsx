@@ -133,20 +133,36 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
       ...prev,
       workoutData: {
         ...prev.workoutData,
-        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: string | any[]; trackingMethods: any[]; }) => 
-          exercise.exerciseId === exerciseId 
-            ? {
-                ...exercise,
-                sets: [...exercise.sets, {
-                  setId: `${exerciseId}-${exercise.sets.length + 1}`,
-                  trackingData: exercise.trackingMethods.reduce((acc: any, method: any) => ({
-                    ...acc,
-                    [method]: null
-                  }), {})
-                }]
-              }
-            : exercise
-        )
+        exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: any[]; trackingMethods: any[]; }) => {
+          if (exercise.exerciseId === exerciseId) {
+            const existingSets = exercise.sets;
+            const previousSetData = existingSets.length > 0 
+              ? existingSets[existingSets.length - 1].trackingData 
+              : null;
+              
+            // Create new tracking data based on previous set if available
+            const newTrackingData = exercise.trackingMethods.reduce((acc: any, method: any) => {
+              // Use previous value if it exists and isn't null/undefined
+              const valueFromPrevious = previousSetData && previousSetData[method] !== null 
+                ? previousSetData[method] 
+                : null;
+                
+              return {
+                ...acc,
+                [method]: valueFromPrevious
+              };
+            }, {});
+            
+            return {
+              ...exercise,
+              sets: [...existingSets, {
+                setId: `${exerciseId}-${existingSets.length + 1}`,
+                trackingData: newTrackingData
+              }]
+            };
+          }
+          return exercise;
+        })
       }
     }));
   };
