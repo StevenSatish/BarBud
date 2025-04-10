@@ -9,7 +9,7 @@ import ExerciseSet from './exerciseSet'
 import { Button, ButtonText } from '@/components/ui/button'
 import { Divider } from "@/components/ui/divider"
 import { useWorkout } from '../context/WorkoutContext'
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import {Pressable} from "react-native-gesture-handler"
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
@@ -81,12 +81,12 @@ function Exercise({ exercise }: any) {
             const swipeableKey = `${set.setId}-${exercise.sets.length}`;
             return (
               <React.Fragment key={set.setId}>
-                <ReanimatedSwipeable 
+                <Swipeable 
                   key={swipeableKey}
                   renderRightActions={renderRightActions(set.setId)}
                   friction={1}
                   rightThreshold={100}
-                  overshootRight={true}
+                  overshootRight={false}
                   containerStyle={{ overflow: 'hidden' }}
                 >
                   <ExerciseSet
@@ -95,7 +95,7 @@ function Exercise({ exercise }: any) {
                     trackingMethods={exercise.trackingMethods}
                     exerciseId={exercise.exerciseId}
                   />
-                </ReanimatedSwipeable>
+                </Swipeable>
               </React.Fragment>
             );
           })}
