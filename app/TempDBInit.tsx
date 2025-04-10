@@ -948,3 +948,5 @@ export const populatePresetExercises = async () => {
     console.error("Error adding preset exercises: ", error);
   }
 };
+
+export default populatePresetExercises;
