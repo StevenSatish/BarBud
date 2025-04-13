@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, Fragment } from 'react'
 import { Box } from '@/components/ui/box'
 import { VStack } from '@/components/ui/vstack'
 import { HStack } from '@/components/ui/hstack'
@@ -7,16 +7,30 @@ import Entypo from '@expo/vector-icons/Entypo';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import ExerciseSet from './exerciseSet'
 import { Button, ButtonText } from '@/components/ui/button'
-import { Divider } from "@/components/ui/divider"
 import { useWorkout } from '../context/WorkoutContext'
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import {Pressable} from "react-native-gesture-handler"
+import {
+  Actionsheet,
+  ActionsheetContent,
+  ActionsheetItem,
+  ActionsheetItemText,
+  ActionsheetDragIndicator,
+  ActionsheetDragIndicatorWrapper,
+  ActionsheetBackdrop,
+} from "@/components/ui/actionsheet"
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 
 function Exercise({ exercise }: any) {
-  const { addSet, deleteSet } = useWorkout();
+  const { addSet, deleteSet, deleteExercise } = useWorkout();
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+  const [showActionsheet, setShowActionsheet] = useState(false)
+  const handleClose = () => setShowActionsheet(false)
+  const handleDeletion = () => {
+    deleteExercise(exercise.exerciseId)
+    setShowActionsheet(false)
+  }
 
   function renderRightActions(setId: string) {
     return (drag: SharedValue<number>) => {
@@ -58,7 +72,7 @@ function Exercise({ exercise }: any) {
       <VStack space="md">
         <HStack className="justify-between items-center">
           <Text size="xl" className="text-typography-900 font-bold">{exercise.name}</Text>
-          <Entypo name="dots-three-horizontal" size={24} color="white" />
+          <Entypo name="dots-three-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)}/>
         </HStack>
         <HStack className="justify-between items-center">
           <Box className="w-12 flex items-center justify-center">
@@ -80,7 +94,7 @@ function Exercise({ exercise }: any) {
           {exercise.sets.map((set: any, index: any) => {
             const swipeableKey = `${set.setId}-${exercise.sets.length}`;
             return (
-              <React.Fragment key={set.setId}>
+              <Fragment key={set.setId}>
                 <Swipeable 
                   key={swipeableKey}
                   renderRightActions={renderRightActions(set.setId)}
@@ -96,7 +110,7 @@ function Exercise({ exercise }: any) {
                     exerciseId={exercise.exerciseId}
                   />
                 </Swipeable>
-              </React.Fragment>
+              </Fragment>
             );
           })}
         </VStack>
@@ -107,6 +121,20 @@ function Exercise({ exercise }: any) {
           <ButtonText className='text-typography-800'>+ Add Set</ButtonText>
         </Button>
       </VStack>
+      <Actionsheet isOpen={showActionsheet} onClose={handleClose}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem onPress={handleDeletion}>
+            <ActionsheetItemText className='text-lg justify-center text-error-500'>Remove Exercise</ActionsheetItemText>
+          </ActionsheetItem>
+          <ActionsheetItem onPress={handleClose}>
+            <ActionsheetItemText className='text-lg justify-center text-typography-500'>Mark Unread</ActionsheetItemText>
+          </ActionsheetItem>
+        </ActionsheetContent>
+      </Actionsheet>
     </Box>
   )
 }

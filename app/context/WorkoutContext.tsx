@@ -19,6 +19,7 @@ type WorkoutContextType = {
   updateSet: (exerciseId: string, setId: string, newData: any) => void;
   updateSetCompleted: (exerciseId: string, setId: string, completed: boolean) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
+  deleteExercise: (exerciseId: string) => void;
   addSet: (exerciseId: string) => void;
 };
 
@@ -148,7 +149,6 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         ...prev.workoutData,
         exercises: prev.workoutData.exercises.map((exercise: { exerciseId: string; sets: any[]; }) => {
           if (exercise.exerciseId === exerciseId) {
-            // First, filter out the set to be deleted
             const filteredSets = exercise.sets.filter(
               (set: { setId: string; }) => set.setId !== setId
             );
@@ -207,7 +207,17 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         })
       }
     }));
-  };
+    };
+
+  const deleteExercise = (exerciseId: string) => {
+    setWorkoutState(prev => ({
+      ...prev,
+      workoutData: {
+        ...prev.workoutData,
+        exercises: prev.workoutData.exercises.filter((exercise: { exerciseId: string; }) => exercise.exerciseId !== exerciseId)
+      }
+    }));
+  };  
 
   return (
     <WorkoutContext.Provider
@@ -221,6 +231,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         updateSet,
         updateSetCompleted,
         deleteSet,
+        deleteExercise,
         addSet
       }}
     >

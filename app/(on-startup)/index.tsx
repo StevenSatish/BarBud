@@ -3,8 +3,6 @@ import { Box } from '@/components/ui/box'
 import { VStack } from '@/components/ui/vstack'
 import { Button, ButtonGroup, ButtonText } from '@/components/ui/button'
 import { Heading } from '@/components/ui/heading'
-import { HStack } from '@/components/ui/hstack'
-import { Image } from '@/components/ui/image'
 import { useRouter } from 'expo-router'
 import {useAuth} from "../context/AuthProvider"
 import { Redirect } from 'expo-router';
