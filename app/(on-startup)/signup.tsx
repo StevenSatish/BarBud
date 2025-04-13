@@ -1,4 +1,4 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import React from 'react'
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
@@ -12,6 +12,7 @@ import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "@/components/ui/icon"
 import { Button, ButtonText } from '@/components/ui/button';
 import { Spinner } from "@/components/ui/spinner"
+import { collection, doc, setDoc, getDocs, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 export default function Signup() {
     const [email, setEmail] = useState("")
@@ -58,10 +59,40 @@ export default function Signup() {
     };
 
     const signUp = async () => {
-        setLoading(true)
-        try{
+        setLoading(true);
+        try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
             console.log(response);
+            
+            await setDoc(doc(FIREBASE_DB, 'users', email), {
+                email: email,
+                createdAt: serverTimestamp()
+            });
+            
+            // 3. Copy preset exercises to user's collection
+            const presetExercisesRef = collection(FIREBASE_DB, 'presetExercises');
+            const exercisesSnapshot = await getDocs(presetExercisesRef);
+            
+            // Use batch write for better performance
+            const batch = writeBatch(FIREBASE_DB);
+            
+            exercisesSnapshot.forEach((exerciseDoc) => {
+                const exerciseData = exerciseDoc.data();
+                const userExerciseRef = doc(
+                    FIREBASE_DB, 
+                    'users', 
+                    email, 
+                    'exercises', 
+                    exerciseDoc.id
+                );
+                batch.set(userExerciseRef, exerciseData);
+            });
+            
+            // Commit the batch
+            await batch.commit();
+            
+            console.log("User profile and exercises created successfully");
+            
         } catch (error: any) {
             console.log(error);
             if (error.code === "auth/email-already-in-use") {
