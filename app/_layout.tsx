@@ -3,14 +3,14 @@ import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from './context/AuthProvider';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
+import { ExerciseDBProvider } from './context/ExerciseDBContext';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
-import { populatePresetExercises }  from './TempDBInit';
-import { useEffect } from "react";
+
 
 function AppLayout() {
   configureReanimatedLogger({
@@ -41,7 +41,9 @@ export default function RootLayout() {
       <GluestackUIProvider mode="dark">
         <AuthProvider>
           <WorkoutProvider>
-            <AppLayout />
+            <ExerciseDBProvider>
+              <AppLayout />
+            </ExerciseDBProvider>
           </WorkoutProvider>
         </AuthProvider>
         <StatusBar style="auto" />

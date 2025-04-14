@@ -6,6 +6,11 @@ export default function TabsLayout() {
   return (
     <Box className='flex-1'>
       <Tabs screenOptions={{
+        tabBarStyle: {
+          backgroundColor: '#121212',
+          borderTopWidth: 2,
+          borderTopColor: '#222222',
+        },
         headerShown: false,  
       }}>
         <Tabs.Screen
@@ -27,11 +32,11 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="profile"
+          name="exerciseDatabase"
           options={{
-            title: 'Profile',
+            title: 'Exercises',
             tabBarIcon: ({ color }) => (
-              <Ionicons name="person" size={24} color={color} />
+              <Ionicons name="barbell-outline" size={24} color={color} />
             ),
           }}
         />

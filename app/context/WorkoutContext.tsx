@@ -77,14 +77,13 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
   };
 
   const endWorkout = () => {
-    console.log("ending workout");
+    // TODO: Save workout to database
     setWorkoutState(nullWorkoutState);
     AsyncStorage.removeItem('workoutState');
     router.replace('/(tabs)')
   };
 
   const cancelWorkout = () => {
-    console.log("ending workout");
     setWorkoutState(nullWorkoutState);
     AsyncStorage.removeItem('workoutState');
     router.replace('/(tabs)')
