@@ -5,10 +5,9 @@ import { Button, ButtonText } from '@/components/ui/button';
 
 export default function StartWorkoutTab() {
   const { startWorkout } = useWorkout();
-
-  // Otherwise show options to start a workout
+  
   return (
-    <Box style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <Box className="flex-1 justify-center items-center bg-background-0">
       <Button onPress={startWorkout}>
         <ButtonText>
           Start Workout

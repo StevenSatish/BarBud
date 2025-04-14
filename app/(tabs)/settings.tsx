@@ -29,8 +29,8 @@ export default function Settings() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Settings Page</Text>
+    <View className="flex-1 justify-center items-center bg-background-0">
+      <Text className="text-white text-2xl font-bold mb-2">Settings Page</Text>
       <Button onPress={() => setShowAlertDialog(true)}>
         <ButtonText>Sign Out</ButtonText>
       </Button>
