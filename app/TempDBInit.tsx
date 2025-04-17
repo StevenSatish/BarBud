@@ -932,21 +932,21 @@ const presetExercises = [
 ];
 
 // Function to populate Firestore with preset exercises
-export const populatePresetExercises = async () => {
-  try {
-    const presetExercisesCollection = collection(FIREBASE_DB, "presetExercises");
+export const populatePresetExercises = () => {
+  // try {
+  //   const presetExercisesCollection = collection(FIREBASE_DB, "presetExercises");
     
-    // Add each exercise to Firestore
-    const promises = presetExercises.map(exercise => 
-      setDoc(doc(presetExercisesCollection, exercise.exerciseId), exercise)
-    );
+  //   // Add each exercise to Firestore
+  //   const promises = presetExercises.map(exercise => 
+  //     setDoc(doc(presetExercisesCollection, exercise.exerciseId), exercise)
+  //   );
     
-    await Promise.all(promises);
-    console.log("Successfully added preset exercises to Firestore!");
+  //   await Promise.all(promises);
+  //   console.log("Successfully added preset exercises to Firestore!");
     
-  } catch (error) {
-    console.error("Error adding preset exercises: ", error);
-  }
+  // } catch (error) {
+  //   console.error("Error adding preset exercises: ", error);
+  // }  
 };
 
 export default populatePresetExercises;

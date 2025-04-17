@@ -13,6 +13,7 @@ type WorkoutContextType = {
   workoutState: WorkoutState;
   startWorkout: () => void;
   endWorkout: () => void;
+  endWorkoutWarnings:() => any[];
   cancelWorkout: () => void;
   minimizeWorkout: () => void;
   maximizeWorkout: () => void;
@@ -81,6 +82,10 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     setWorkoutState(nullWorkoutState);
     AsyncStorage.removeItem('workoutState');
     router.replace('/(tabs)')
+  };
+
+  const endWorkoutWarnings = () => {
+    return [ "One invalid Set Will be Removed"]
   };
 
   const cancelWorkout = () => {
@@ -224,6 +229,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         workoutState,
         startWorkout,
         endWorkout,
+        endWorkoutWarnings,
         cancelWorkout,
         minimizeWorkout,
         maximizeWorkout,
