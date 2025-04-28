@@ -1,9 +1,8 @@
-// app/(tabs)/exerciseDatabase.tsx
-import { View, Text, SectionList, ActivityIndicator, RefreshControl, KeyboardAvoidingView } from 'react-native';
+import { View, Text, SectionList, ActivityIndicator, RefreshControl, KeyboardAvoidingView, Pressable } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useExerciseDB } from '../context/ExerciseDBContext';
+import useExerciseDB  from '../context/ExerciseDBContext';
 import { Input, InputField, InputSlot } from '@/components/ui/input';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Entypo from '@expo/vector-icons/Entypo';
@@ -21,7 +20,7 @@ const CATEGORIES = [
   "Barbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
 ];
 
-export default function ExerciseDatabase() {
+export default function ExerciseDatabase({ handleExercisePress, selectedExercises = [] }) {
   const { exerciseSections, loading, refreshExercises } = useExerciseDB();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,37 +70,42 @@ export default function ExerciseDatabase() {
     setRefreshing(false);
   };
 
-  const handleMuscleGroupSelect = (value: string) => {
+  const handleMuscleGroupSelect = (value) => {
     setSelectedMuscleGroup(value === selectedMuscleGroup ? '' : value);
   };
 
-  const handleCategorySelect = (value: string) => {
+  const handleCategorySelect = (value) => {
     setSelectedCategory(value === selectedCategory ? '' : value);
   };
   
-  const renderExerciseItem = ({ item, index, section }: any) => (
-    <VStack 
-      space="xs" 
-      className={`py-4 px-6 w-full ${index === section.data.length - 1 ? '' : 'border-b border-gray-200'}`}
-    >
-      <Text className="text-white text-xl font-bold">
-        {item.name} ({item.category})
-      </Text>
-      <HStack space="md" className="justify-between w-full">
-        <Text className="text-gray-400 text-base">
-          {item.muscleGroup}
-        </Text>
-        <HStack space="xs" className="items-center">
-          <Entypo name="back-in-time" size={12} color="gray" />
-          <Text className="text-gray-400 text-base">
-            {"x days ago"}
+  const renderExerciseItem = ({ item, index, section }) => {
+    const isSelected = selectedExercises.some(e => e.id === item.id);
+    return (
+      <Pressable onPress={() => handleExercisePress?.(item)}>
+        <VStack 
+          space="xs" 
+          className={`py-4 px-6 w-full ${index === section.data.length - 1 ? '' : 'border-b border-gray-200'} ${isSelected ? 'bg-info-200' : ''}`}
+        >
+          <Text className="text-white text-xl font-bold">
+            {item.name} ({item.category})
           </Text>
-        </HStack>
-      </HStack>
-    </VStack>
-  );
-  
-  const renderSectionHeader = ({ section }: any) => (
+          <HStack space="md" className="justify-between w-full">
+            <Text className="text-gray-400 text-base">
+              {item.muscleGroup}
+            </Text>
+            <HStack space="xs" className="items-center">
+              <Entypo name="back-in-time" size={12} color="gray" />
+              <Text className="text-gray-400 text-base">
+                {"x days ago"}
+              </Text>
+            </HStack>
+          </HStack>
+        </VStack>
+      </Pressable>
+    );
+  };
+
+  const renderSectionHeader = ({ section }) => (
     <View className="py-2 px-6 bg-background-100">
       <Text className="text-white text-xl font-bold">
         {section.title}

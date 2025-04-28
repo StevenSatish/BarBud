@@ -32,7 +32,7 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="exerciseDatabase"
+          name="historyDatabase"
           options={{
             title: 'Exercises',
             tabBarIcon: ({ color }) => (
