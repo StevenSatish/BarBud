@@ -19,10 +19,14 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Exercise from './exercise';
 import WorkoutTimer from './workoutTimer';
 import { Heading } from '@/components/ui/heading';
+import { Modal } from 'react-native';
+import ExerciseDatabase from '../components/exerciseDatabase';
 
 export default function WorkoutScreen() {
   const { cancelWorkout, minimizeWorkout, endWorkout, endWorkoutWarnings, workoutState } = useWorkout();
   const [showEndWorkoutAlert, setShowEndWorkoutAlert] = useState(false);
+  const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
+  const [selectedExercises, setSelectedExercises] = useState<any[]>([]);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -40,6 +44,25 @@ export default function WorkoutScreen() {
 
     return () => clearInterval(interval);
   }, [workoutState.workoutData.startTime]);
+
+  // Toggle selection
+  const handleExerciseToggle = (exercise: any) => {
+    setSelectedExercises((prev: any[]) => {
+      const exists = prev.find(e => e.id === exercise.id);
+      if (exists) {
+        return prev.filter(e => e.id !== exercise.id);
+      } else {
+        return [...prev, exercise];
+      }
+    });
+  };
+
+  // Add all selected exercises to workout
+  const handleAddExercises = () => {
+    // TODO: Add selectedExercises to workout here
+    setShowAddExerciseModal(false);
+    setSelectedExercises([]);
+  };
 
   return (
     <SafeAreaView className="bg-background-0 flex-1">
@@ -108,11 +131,35 @@ export default function WorkoutScreen() {
               exercise={exercise}
             />
           ))}
+          <Button onPress={() => setShowAddExerciseModal(true)} className="mt-auto">
+            <ButtonText>Add Exercise</ButtonText>
+          </Button>
           <Button onPress={() => setShowEndWorkoutAlert(true)} className="mt-auto">
             <ButtonText>Finish Workout</ButtonText>
           </Button>
         </VStack>
       </ScrollView>
+
+      <Modal
+        visible={showAddExerciseModal}
+        animationType="slide"
+        onRequestClose={() => setShowAddExerciseModal(false)}
+      >
+        <SafeAreaView className="flex-1 bg-background-0">
+          <HStack className="w-full justify-between px-4 py-2">
+            <Button onPress={() => setShowAddExerciseModal(false)}>
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button onPress={handleAddExercises}>
+              <ButtonText>Add</ButtonText>
+            </Button>
+          </HStack>
+          <ExerciseDatabase
+            selectedExercises={selectedExercises as never[]}
+            handleExercisePress={handleExerciseToggle}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }

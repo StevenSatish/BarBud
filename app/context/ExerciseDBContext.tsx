@@ -97,7 +97,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
   );
 };
 
-export const useExerciseDB = () => {
+export default function useExerciseDB() {
   const context = useContext(ExerciseDBContext);
   if (context === undefined) {
     throw new Error('useExerciseDB must be used within an ExerciseDBProvider');
