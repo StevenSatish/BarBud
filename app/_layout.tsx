@@ -27,9 +27,21 @@ function AppLayout() {
       {!user ? (
         <Stack.Screen name="(on-startup)" />
       ) : workoutState.isActive && !workoutState.isMinimized ? (
-        <Stack.Screen name="(workout)" />
+        <Stack.Screen 
+          name="(workout)" 
+          options={{
+            animation: "slide_from_bottom",
+            presentation: "modal",
+            headerShown: false,
+          }}
+        />
       ) : (
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabs)" 
+        options={{
+          animation: "slide_from_bottom",
+          presentation: "modal",
+          headerShown: false,
+        }}/>
       )}
     </Stack>
   );
