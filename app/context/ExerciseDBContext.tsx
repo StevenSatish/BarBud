@@ -12,7 +12,6 @@ type ExerciseSectionType = {
 type ExerciseDBContextType = {
   exerciseSections: ExerciseSectionType[];
   loading: boolean;
-  refreshExercises: () => Promise<void>;
 };
 
 const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undefined);
@@ -80,16 +79,11 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
     return () => unsubscribe();
   }, []);
 
-  const refreshExercises = async () => {
-    await fetchExercises();
-  };
-
   return (
     <ExerciseDBContext.Provider
       value={{
         exerciseSections,
         loading,
-        refreshExercises
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import { View, Text, SectionList, ActivityIndicator, RefreshControl, KeyboardAvoidingView } from 'react-native';
+import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,8 +52,7 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
 });
 
 export default function AddExerciseDatabase() {
-  const { exerciseSections, loading, refreshExercises } = useExerciseDB();
-  const [refreshing, setRefreshing] = useState(false);
+  const { exerciseSections, loading} = useExerciseDB();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -108,11 +107,6 @@ export default function AddExerciseDatabase() {
       .filter(section => section.data.length > 0);
   }, [exerciseSections, searchQuery, selectedMuscleGroup, selectedCategory]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refreshExercises();
-    setRefreshing(false);
-  };
 
   const handleMuscleGroupSelect = (value) => {
     setSelectedMuscleGroup(value === selectedMuscleGroup ? '' : value);
@@ -149,7 +143,7 @@ export default function AddExerciseDatabase() {
     router.back();
   };
 
-  if (loading && !refreshing) {
+  if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background-0">
         <ActivityIndicator size="large" color="#ffffff" />
@@ -225,13 +219,6 @@ export default function AddExerciseDatabase() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingVertical: 8 }}
           stickySectionHeadersEnabled={true}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#ffffff"
-            />
-          }
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center py-20">
               <Text className="text-white text-lg">
