@@ -1,16 +1,16 @@
-import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
+import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import useExerciseDB  from '../context/ExerciseDBContext';
 import { Input, InputField, InputSlot } from '@/components/ui/input';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Entypo from '@expo/vector-icons/Entypo';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
-import { Pressable } from '@/components/ui/pressable';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
 import { router } from 'expo-router';
+import { useWorkout } from '../context/WorkoutContext';
+
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -22,15 +22,20 @@ const CATEGORIES = [
   "Barbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
 ];
 
-const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
+const ExerciseItem = ({ item, isSelected, onToggle }) => {
   return (
-    <Pressable 
+    <TouchableOpacity 
       onPress={onToggle}
       style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
     >
       <VStack 
         space="xs" 
-        className={`py-4 px-6 w-full ${isSelected ? 'bg-info-200' : ''}`}
+        style={{
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          width: '100%',
+          backgroundColor: isSelected ? '#174161' : 'transparent', // info-200 fallback
+        }}
       >
         <Text className="text-white text-xl font-bold">
           {item.name} ({item.category})
@@ -47,12 +52,13 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
           </HStack>
         </HStack>
       </VStack>
-    </Pressable>
+    </TouchableOpacity>
   );
-});
+};
 
 export default function AddExerciseDatabase() {
   const { exerciseSections, loading} = useExerciseDB();
+  const { addExercises } = useWorkout();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -139,7 +145,7 @@ export default function AddExerciseDatabase() {
   );
   
   const handleAddExercises = () => {
-    // Process selected exercises here
+    addExercises(Object.values(selectedExercises));
     router.back();
   };
 
@@ -154,19 +160,24 @@ export default function AddExerciseDatabase() {
   return (
     <View className="flex-1 bg-background-0">
       <KeyboardAvoidingView behavior="padding" className="flex-1">
-        <Input className="h-12 mx-4 my-2 rounded-full bg-background-100">
-          <InputField 
-            autoComplete="off"
-            placeholder="Search" 
-            placeholderTextColor="#9ca3af"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <InputSlot className="pr-4">
-            <Ionicons name="search" size={20} color="white" />
-          </InputSlot>
-        </Input>
-        <HStack className="w-full items-center justify-center gap-5">
+        <HStack className="w-full items-center justify-between px-4 my-2">
+          <Input className="h-12 rounded-full bg-background-100 w-2/3">
+            <InputField 
+              autoComplete="off"
+              placeholder="Search" 
+              placeholderTextColor="#9ca3af"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            <InputSlot className="pr-4">
+              <Ionicons name="search" size={20} color="white" />
+            </InputSlot>
+          </Input>
+          <Button onPress={handleAddExercises} className="rounded-full bg-info-200">
+            <ButtonText>{`Add (${Object.keys(selectedExercises).length})`}</ButtonText>
+          </Button>
+        </HStack>
+        <HStack className="w-full items-center justify-center gap-2">
           <Menu
             placement="bottom"
             offset={0}
@@ -211,6 +222,10 @@ export default function AddExerciseDatabase() {
             </MenuItem>
             ))}
           </Menu>
+          <Button className="rounded-full w-15">
+            <ButtonText>New</ButtonText>
+            <Ionicons name="add" size={20} color="black"/>
+          </Button>
         </HStack>
         <SectionList
           sections={filteredSections}

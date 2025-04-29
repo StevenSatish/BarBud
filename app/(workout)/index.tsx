@@ -103,7 +103,7 @@ export default function WorkoutScreen() {
         }}
       >
         <VStack space="md" className="w-full">
-          {workoutState.workoutData.exercises.map((exercise: any) => (
+          { workoutState.workoutData.exercises.length > 0 && workoutState.workoutData.exercises.map((exercise: any) => (
             <Exercise
               key={exercise.exerciseId} 
               exercise={exercise}
