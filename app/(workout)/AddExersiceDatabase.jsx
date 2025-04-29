@@ -1,4 +1,4 @@
-import { View, Text, SectionList, ActivityIndicator, RefreshControl, KeyboardAvoidingView, Pressable } from 'react-native';
+import { View, Text, SectionList, ActivityIndicator, RefreshControl, KeyboardAvoidingView } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +8,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import Entypo from '@expo/vector-icons/Entypo';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
+import { Pressable } from '@/components/ui/pressable';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
+import { router } from 'expo-router';
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -20,13 +22,55 @@ const CATEGORIES = [
   "Barbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
 ];
 
-export default function ExerciseDatabase({ handleExercisePress, selectedExercises = [] }) {
+const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
+  return (
+    <Pressable 
+      onPress={onToggle}
+      style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+    >
+      <VStack 
+        space="xs" 
+        className={`py-4 px-6 w-full ${isSelected ? 'bg-info-200' : ''}`}
+      >
+        <Text className="text-white text-xl font-bold">
+          {item.name} ({item.category})
+        </Text>
+        <HStack space="md" className="justify-between w-full">
+          <Text className="text-gray-400 text-base">
+            {item.muscleGroup}
+          </Text>
+          <HStack space="xs" className="items-center">
+            <Entypo name="back-in-time" size={12} color="gray" />
+            <Text className="text-gray-400 text-base">
+              {"x days ago"}
+            </Text>
+          </HStack>
+        </HStack>
+      </VStack>
+    </Pressable>
+  );
+});
+
+export default function AddExerciseDatabase() {
   const { exerciseSections, loading, refreshExercises } = useExerciseDB();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  
+  const [selectedExercises, setSelectedExercises] = useState({});
+
+  const handleExerciseToggle = (exercise) => {
+    setSelectedExercises(prev => {
+      const newSelected = {...prev};
+      if (newSelected[exercise.id]) {
+        delete newSelected[exercise.id];
+      } else {
+        newSelected[exercise.id] = exercise;
+      }
+      return newSelected;
+    });
+  };
+
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim() && !selectedMuscleGroup && !selectedCategory) {
       return exerciseSections;
@@ -79,29 +123,16 @@ export default function ExerciseDatabase({ handleExercisePress, selectedExercise
   };
   
   const renderExerciseItem = ({ item, index, section }) => {
-    const isSelected = selectedExercises.some(e => e.id === item.id);
+    const isSelected = Boolean(selectedExercises[item.id]);
+    
     return (
-      <Pressable onPress={() => handleExercisePress?.(item)}>
-        <VStack 
-          space="xs" 
-          className={`py-4 px-6 w-full ${index === section.data.length - 1 ? '' : 'border-b border-gray-200'} ${isSelected ? 'bg-info-200' : ''}`}
-        >
-          <Text className="text-white text-xl font-bold">
-            {item.name} ({item.category})
-          </Text>
-          <HStack space="md" className="justify-between w-full">
-            <Text className="text-gray-400 text-base">
-              {item.muscleGroup}
-            </Text>
-            <HStack space="xs" className="items-center">
-              <Entypo name="back-in-time" size={12} color="gray" />
-              <Text className="text-gray-400 text-base">
-                {"x days ago"}
-              </Text>
-            </HStack>
-          </HStack>
-        </VStack>
-      </Pressable>
+      <ExerciseItem 
+        item={item} 
+        index={index}
+        section={section}
+        isSelected={isSelected}
+        onToggle={() => handleExerciseToggle(item)}
+      />
     );
   };
 
@@ -113,6 +144,11 @@ export default function ExerciseDatabase({ handleExercisePress, selectedExercise
     </View>
   );
   
+  const handleAddExercises = () => {
+    // Process selected exercises here
+    router.back();
+  };
+
   if (loading && !refreshing) {
     return (
       <View className="flex-1 items-center justify-center bg-background-0">
@@ -122,7 +158,7 @@ export default function ExerciseDatabase({ handleExercisePress, selectedExercise
   }
   
   return (
-    <SafeAreaView className="flex-1 bg-background-0" edges={['top', 'left', 'right']}>
+    <View className="flex-1 bg-background-0">
       <KeyboardAvoidingView behavior="padding" className="flex-1">
         <Input className="h-12 mx-4 my-2 rounded-full bg-background-100">
           <InputField 
@@ -156,11 +192,6 @@ export default function ExerciseDatabase({ handleExercisePress, selectedExercise
               className={`w-40 ${selectedMuscleGroup === group ? "bg-info-200" : ""}`}
             >    
               <MenuItemLabel size="lg">{group}</MenuItemLabel>
-              {selectedMuscleGroup === group && (
-                <View style={{flexGrow: 1, alignItems: 'flex-end', paddingRight: 8}}>
-                  <Ionicons name="checkmark" size={16} color="white" />
-                </View>
-              )}
             </MenuItem>
             ))}
           </Menu>
@@ -183,11 +214,6 @@ export default function ExerciseDatabase({ handleExercisePress, selectedExercise
               className={selectedCategory === category ? "bg-info-200" : ""}
             >    
               <MenuItemLabel size="lg">{category}</MenuItemLabel>
-              {selectedCategory === category && (
-                <View style={{flexGrow: 1, alignItems: 'flex-end', paddingRight: 8}}>
-                  <Ionicons name="checkmark" size={16} color="white" />
-                </View>
-              )}
             </MenuItem>
             ))}
           </Menu>
@@ -217,6 +243,6 @@ export default function ExerciseDatabase({ handleExercisePress, selectedExercise
           }
         />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

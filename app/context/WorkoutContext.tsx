@@ -95,8 +95,13 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
   };
 
   const minimizeWorkout = () => {
+    // First set minimized state
     setWorkoutState(prev => ({ ...prev, isMinimized: true }));
-    router.replace('/(tabs)');
+    // Then navigate back with animation
+    router.replace({
+      pathname: '/(tabs)',
+      params: { direction: 'down' }
+    });
   };
 
   const maximizeWorkout = () => {
