@@ -19,6 +19,7 @@ type WorkoutContextType = {
   maximizeWorkout: () => void;
   updateSet: (exerciseId: string, setId: string, newData: any) => void;
   updateSetCompleted: (exerciseId: string, setId: string, completed: boolean) => void;
+  addExercises: (exercises: any) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
   deleteExercise: (exerciseId: string) => void;
   addSet: (exerciseId: string) => void;
@@ -71,7 +72,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
       isMinimized: false,
       workoutData: { 
         startTime: new Date(), 
-        exercises: dummyData 
+        exercises: [],
       },
     });
     router.replace('/(workout)')
@@ -216,7 +217,26 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         })
       }
     }));
-    };
+  };
+
+  const addExercises = (exercises: any) => {
+    const newExercises: any[] = [];
+    exercises.forEach((exercise: any) => {
+      newExercises.push({
+        exerciseId: exercise.id,
+        name: exercise.name,
+        trackingMethods: exercise.trackingMethods,
+        sets: []
+      });
+    });
+    setWorkoutState(prev => ({
+      ...prev,
+      workoutData: {
+        ...prev.workoutData,
+        exercises: [...prev.workoutData.exercises, ...newExercises]
+      }
+    }));
+  };
 
   const deleteExercise = (exerciseId: string) => {
     setWorkoutState(prev => ({
@@ -226,7 +246,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         exercises: prev.workoutData.exercises.filter((exercise: { exerciseId: string; }) => exercise.exerciseId !== exerciseId)
       }
     }));
-  };  
+  };
 
   return (
     <WorkoutContext.Provider
@@ -241,6 +261,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         updateSet,
         updateSetCompleted,
         deleteSet,
+        addExercises,
         deleteExercise,
         addSet
       }}
