@@ -68,13 +68,13 @@ function Exercise({ exercise }: any) {
   }
 
   return (
-    <Box className="w-full bg-background-0 mb-2 px-2">
+    <Box className="w-full bg-background-0 mb-2">
       <VStack space="md">
-        <HStack className="justify-between items-center">
+        <HStack className="justify-between items-center px-2">
           <Text size="xl" className="text-typography-900 font-bold">{`${exercise.name} ${exercise.category != 'Other' ? `(${exercise.category})` : ''}`}</Text>
           <Entypo name="dots-three-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)}/>
         </HStack>
-        <HStack className="justify-between items-center">
+        <HStack className="justify-between items-center px-1">
           <Box className="w-12 flex items-center justify-center">
             <Text className="text-typography-900 text-center">Set</Text>
           </Box>
@@ -86,7 +86,7 @@ function Exercise({ exercise }: any) {
               <Text className="text-typography-900 text-center">{capitalize(method)}</Text>
             </Box>
           ))}
-          <Box className="w-8 flex items-center justify-center">
+          <Box className="pr-2">
             <AntDesign name="check" size={24} color="white" />
           </Box>
         </HStack>
