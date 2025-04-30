@@ -42,6 +42,14 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
         const savedState = await AsyncStorage.getItem('workoutState');
         if (savedState) {
           setWorkoutState(JSON.parse(savedState));
+          // Double state setting to fix the startTime bug
+          setWorkoutState(prev => ({
+            ...prev,
+            workoutData: {
+              ...prev.workoutData,
+              startTime: new Date(JSON.parse(savedState).workoutData.startTime)
+            }
+          }));
         }
       } catch (error) {
         console.error('Error loading workout state:', error);
@@ -223,9 +231,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     const newExercises: any[] = [];
     exercises.forEach((exercise: any) => {
       newExercises.push({
-        exerciseId: exercise.id,
-        name: exercise.name,
-        trackingMethods: exercise.trackingMethods,
+        ...exercise,
         sets: []
       });
     });
