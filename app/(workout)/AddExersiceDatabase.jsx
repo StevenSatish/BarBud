@@ -37,7 +37,7 @@ const ExerciseItem = ({ item, isSelected, onToggle }) => {
           backgroundColor: isSelected ? '#174161' : 'transparent', // info-200 fallback
         }}
       >
-        <Text className="text-white text-xl font-bold">
+        <Text className="text-xl font-bold text-blue-100">
           {item.name} ({item.category})
         </Text>
         <HStack space="md" className="justify-between w-full">

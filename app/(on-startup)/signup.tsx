@@ -12,11 +12,14 @@ import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "@/components/ui/icon"
 import { Button, ButtonText } from '@/components/ui/button';
 import { Spinner } from "@/components/ui/spinner"
-import { collection, doc, setDoc, getDocs, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, writeBatch, serverTimestamp, query, where } from 'firebase/firestore';
 
 export default function Signup() {
     const [email, setEmail] = useState("")
     const [isInvalidEmail, setIsInvalidEmail] = useState(false);
+
+    const [username, setUsername] = useState("");
+    const [isInvalidUsername, setIsInvalidUsername] = useState(false);
 
     const [password, setPassword] = useState("");
     const [isInvalidPass, setIsInvalidPass] = useState(false);
@@ -33,29 +36,37 @@ export default function Signup() {
 
     if (user) return <Redirect href="../(tabs)" />;
 
-    const submitForm = () => {
+    const submitForm = async () => {
         const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-        
+        let valid = true;
         if (password !== confirmPass) {
             setIsInvalidConfirmPass(true);
-            return;
+            valid = false;
         }
-
-        if (emailRegex.test(email) && password.length >= 8) {
-            signUp();
-            return;
+        if (!await checkUsername()) {
+            setIsInvalidUsername(true);
+            valid = false;
         }
         if (!emailRegex.test(email)) {
             setIsInvalidEmail(true);
-        } else{
-            setIsInvalidEmail(false);
+            valid = false;
         }
         if (password.length < 8){
             setIsInvalidPass(true)
-        } else {
-            setIsInvalidPass(false);
+            valid = false;
         }
+        if (valid) {
+            signUp();
+        }
+    };
 
+    const checkUsername = async () => {
+        const usersRef = collection(FIREBASE_DB, 'users');
+        const querySnapshot = await getDocs(query(usersRef, where('username', '==', username)));
+        if (querySnapshot.size > 0) {
+            return false;
+        }
+        return true;
     };
 
     const signUp = async () => {
@@ -66,7 +77,8 @@ export default function Signup() {
             
             await setDoc(doc(FIREBASE_DB, 'users', email), {
                 email: email,
-                createdAt: serverTimestamp()
+                createdAt: serverTimestamp(),
+                username: username
             });
             
             // 3. Copy preset exercises to user's collection
@@ -115,6 +127,27 @@ export default function Signup() {
         <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
             <VStack className="w-full max-w-[300px] rounded-xl bg-background-50 p-6 space-y-4 -mt-20">
                 <Heading size="xl" className="text-typography-700 font-bold">Register</Heading>
+                <FormControl isInvalid={isInvalidUsername}>
+                    <FormControlLabel>
+                        <FormControlLabelText className="text-typography-700 font-medium">Username</FormControlLabelText>
+                    </FormControlLabel>
+                    <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
+                        <InputField
+                            className="text-typography-900"
+                            placeholder="username"
+                            placeholderTextColor="text-typography-700"
+                            value={username}
+                            onChangeText={(text) => setUsername(text)}
+                        />
+                    </Input>
+                    <FormControlError>
+                        <FormControlErrorIcon as={AlertCircleIcon} />
+                        <FormControlErrorText className="text-error-500">
+                            Sorry, username is not available
+                        </FormControlErrorText>
+                    </FormControlError>
+                </FormControl>
+
                 <FormControl isInvalid={isInvalidEmail}>
                     <FormControlLabel>
                         <FormControlLabelText className="text-typography-700 font-medium">Email</FormControlLabelText>

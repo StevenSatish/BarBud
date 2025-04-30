@@ -98,7 +98,6 @@ export default function WorkoutScreen() {
         showsVerticalScrollIndicator={false}
         className="flex-1"
         contentContainerStyle={{ 
-          padding: 16,
           flexGrow: 1, 
         }}
       >

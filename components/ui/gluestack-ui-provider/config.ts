@@ -155,6 +155,16 @@ export const config = {
     '--color-indicator-error': '185 28 28',
   }),
   dark: vars({
+
+    /* Theme Colors */
+    '--color-blue-primary': '59 130 246', /* #3B82F6 */
+    '--color-blue-200': '37 99 235', /* #2563EB */
+    '--color-blue-secondary': '96 165 250', /* #60A5FA */
+    '--color-blue-hello': '30 58 138', /* #1E3A8A */
+    '--color-blue-100': '147 197 253', /* #93C5FD */
+
+
+    /* Primary */
     '--color-primary-0': '166 166 166', /* #a6a6a6 */
     '--color-primary-50': '175 175 175', /* #afafaf */
     '--color-primary-100': '186 186 186', /* #bababa */
