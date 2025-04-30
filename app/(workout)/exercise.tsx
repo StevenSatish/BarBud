@@ -71,7 +71,7 @@ function Exercise({ exercise }: any) {
     <Box className="w-full bg-background-0 mb-2">
       <VStack space="md">
         <HStack className="justify-between items-center">
-          <Text size="xl" className="text-typography-900 font-bold">{exercise.name}</Text>
+          <Text size="xl" className="text-typography-900 font-bold">{`${exercise.name} ${exercise.category != 'Other' ? `(${exercise.category})` : ''}`}</Text>
           <Entypo name="dots-three-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)}/>
         </HStack>
         <HStack className="justify-between items-center">
