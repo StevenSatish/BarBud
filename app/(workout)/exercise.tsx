@@ -68,7 +68,7 @@ function Exercise({ exercise }: any) {
   }
 
   return (
-    <Box className="w-full bg-background-0 mb-2">
+    <Box className="w-full bg-background-0 mb-2 px-2">
       <VStack space="md">
         <HStack className="justify-between items-center">
           <Text size="xl" className="text-typography-900 font-bold">{`${exercise.name} ${exercise.category != 'Other' ? `(${exercise.category})` : ''}`}</Text>
