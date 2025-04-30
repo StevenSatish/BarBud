@@ -10,6 +10,8 @@ import {
 import { CheckIcon } from "@/components/ui/icon"
 import { Input, InputField } from "@/components/ui/input"
 import { useWorkout } from '../context/WorkoutContext'
+import { TouchableOpacity } from 'react-native'
+import * as Haptics from 'expo-haptics'
 
 function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   const { updateSet, updateSetCompleted } = useWorkout();
@@ -20,6 +22,16 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
       [method]: parseInt(value) || null
     };
     updateSet(exerciseId, set.setId, newTrackingData);
+  };
+
+  const toggleCompleted = () => {
+    updateSetCompleted(exerciseId, set.setId, !set.completed);
+
+    if (set.completed) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
   };
 
   return (
@@ -42,18 +54,22 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
           </Input>
         </Box>
       ))}
-      <Box className="w-8 flex items-center justify-center">
+      <TouchableOpacity 
+        onPress={toggleCompleted}
+        style={{ paddingHorizontal: 8, paddingVertical: 8 }}
+        activeOpacity={0.7}
+      >
         <Checkbox 
           size="lg"
           value="completed"
           isChecked={set.completed}
-          onChange={() => {updateSetCompleted(exerciseId, set.setId, !set.completed)}}
+          onChange={toggleCompleted}
         >
           <CheckboxIndicator>
             <CheckboxIcon as={CheckIcon} />
           </CheckboxIndicator>
         </Checkbox>
-      </Box>
+      </TouchableOpacity>
     </HStack>
   )
 }
