@@ -10,6 +10,7 @@ import { VStack } from '@/components/ui/vstack';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
 import { router } from 'expo-router';
 import { useWorkout } from '../context/WorkoutContext';
+import NewExerciseModal from '../components/newExerciseModal';
 
 
 // Static data arrays
@@ -63,6 +64,7 @@ export default function AddExerciseDatabase() {
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedExercises, setSelectedExercises] = useState({});
+  const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
 
   const handleExerciseToggle = (exercise) => {
     setSelectedExercises(prev => {
@@ -159,6 +161,10 @@ export default function AddExerciseDatabase() {
   
   return (
     <View className="flex-1 bg-background-0">
+      <NewExerciseModal 
+        isOpen={showNewExerciseModal} 
+        onClose={() => setShowNewExerciseModal(false)} 
+      />
       <KeyboardAvoidingView behavior="padding" className="flex-1">
         <HStack className="w-full items-center justify-between px-4 my-2">
           <Input className="h-12 rounded-full bg-background-100 w-2/3">
@@ -222,7 +228,10 @@ export default function AddExerciseDatabase() {
             </MenuItem>
             ))}
           </Menu>
-          <Button className="rounded-full w-15">
+          <Button 
+            className="rounded-full w-15"
+            onPress={() => setShowNewExerciseModal(true)}
+          >
             <ButtonText>New</ButtonText>
             <Ionicons name="add" size={20} color="black"/>
           </Button>

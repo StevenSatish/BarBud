@@ -232,7 +232,8 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     exercises.forEach((exercise: any) => {
       newExercises.push({
         ...exercise,
-        sets: []
+        sets: [],
+        completed: false
       });
     });
     setWorkoutState(prev => ({
