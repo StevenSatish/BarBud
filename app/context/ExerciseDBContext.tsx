@@ -1,6 +1,6 @@
 // app/context/ExerciseDBContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 
@@ -12,6 +12,7 @@ type ExerciseSectionType = {
 type ExerciseDBContextType = {
   exerciseSections: ExerciseSectionType[];
   loading: boolean;
+  createExercise: (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => Promise<void>;
 };
 
 const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undefined);
@@ -19,6 +20,29 @@ const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undef
 export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [exerciseSections, setExerciseSections] = useState<ExerciseSectionType[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (!user?.email) return;
+
+    const exerciseId = `${exerciseName}-${category}`.toLowerCase().replace(/\s+/g, '-');
+    
+    const exerciseData = {
+      name: exerciseName,
+      category,
+      'exercise-id': exerciseId,
+      muscleGroup,
+      secondaryMuscles: secondaryMuscleGroups,
+      trackingMethods
+    };
+
+    try {
+      await setDoc(doc(FIREBASE_DB, `users/${user.email}/exercises/${exerciseId}`), exerciseData);
+      await fetchExercises(); // Refresh the exercises list
+    } catch (error) {
+      console.error('Error adding exercise:', error);
+    }
+  };
 
   const fetchExercises = async () => {
     try {
@@ -84,6 +108,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       value={{
         exerciseSections,
         loading,
+        createExercise,
       }}
     >
       {children}
