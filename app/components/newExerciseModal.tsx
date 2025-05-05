@@ -24,7 +24,7 @@ import {
   SelectDragIndicatorWrapper,
   SelectItem,
 } from "@/components/ui/select"
-import { ChevronDownIcon, CircleIcon, AlertCircleIcon, CheckIcon } from "@/components/ui/icon"
+import { ChevronDownIcon, CircleIcon, CheckIcon } from "@/components/ui/icon"
 import { useState } from 'react'
 import { Text } from '@/components/ui/text'
 import { Pressable } from '@/components/ui/pressable'
@@ -44,18 +44,25 @@ import {
   FormControlHelper,
   FormControlHelperText,
 } from "@/components/ui/form-control"
+import useExerciseDB from '../context/ExerciseDBContext'
 
 export default function NewExerciseModal({ isOpen, onClose }: any) {
-  const [category, setCategory] = useState<string | undefined>(undefined);
+  const { createExercise } = useExerciseDB();
+  const [category, setCategory] = useState<string>('');
   const [categoryError, setCategoryError] = useState(false);
 
-  const [muscleGroup, setMuscleGroup] = useState<string | undefined>(undefined);
+  const [muscleGroup, setMuscleGroup] = useState<string>('');
   const [muscleGroupError, setMuscleGroupError] = useState(false);
 
   const [exerciseName, setExerciseName] = useState('');
   const [exerciseNameError, setExerciseNameError] = useState(false);
+
   const [secondaryMuscleGroups, setSecondaryMuscleGroups] = useState<string[]>([]);
   const [showSecondaryMuscles, setShowSecondaryMuscles] = useState(false);
+
+  const [trackingMethods, setTrackingMethods] = useState<string[]>([]);
+  const [showTrackingMethods, setShowTrackingMethods] = useState(false);
+  const [trackingMethodsError, setTrackingMethodsError] = useState(false);
 
   const MUSCLE_GROUPS = [
     "Abs", "Back", "Biceps", "Chest", "Shoulders", "Quads", 
@@ -66,24 +73,48 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
     "Barbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
   ];
 
-  const handleAddExercise = () => {
+  const TRACKING_METHODS = [
+    "Reps", "Weight", "Time", "Distance"
+  ];
+
+  const handleAddExercise = async () => {
     let hasErrors = false;
     
     if (!category) {
       setCategoryError(true);
       hasErrors = true;
+    } else {
+      setCategoryError(false);
     }
     if (!muscleGroup) {
       setMuscleGroupError(true);
       hasErrors = true;
+    } else {
+      setMuscleGroupError(false);
+    }
+    if (trackingMethods.length === 0) {
+      setTrackingMethodsError(true);
+      hasErrors = true;
+    } else {
+      setTrackingMethodsError(false);
     }
     if (!exerciseName) {
       setExerciseNameError(true);
       hasErrors = true;
+    } else {
+      setExerciseNameError(false);
     }
-
     if (!hasErrors) {
+      await createExercise(exerciseName, category, muscleGroup, secondaryMuscleGroups, trackingMethods.map(method => method.toLowerCase()));
       onClose();
+    }
+  };
+
+  const toggleTrackingMethod = (method: string) => {
+    if (trackingMethods.includes(method)) {
+      setTrackingMethods(trackingMethods.filter(m => m !== method));
+    } else {
+      setTrackingMethods([...trackingMethods, method]);
     }
   };
 
@@ -144,36 +175,61 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
                 </FormControlHelper>
               </FormControl>
 
-              <FormControl isRequired className="w-1/2" isInvalid={muscleGroupError}>
-                <FormControlLabel>
-                  <FormControlLabelText>Primary Muscle</FormControlLabelText>
-                </FormControlLabel>
-                <Select 
-                  selectedValue={muscleGroup} 
-                  onValueChange={(value: string) => setMuscleGroup(value)}
-                >
-                  <SelectTrigger>
-                    <SelectInput placeholder="Select muscle" />
-                    <SelectIcon className="mr-3" as={ChevronDownIcon} />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      {MUSCLE_GROUPS.map((group) => (
-                        <SelectItem key={group} label={group} value={group} />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-                <FormControlHelper>
-                  <FormControlHelperText>
-                    Main muscle targeted
-                  </FormControlHelperText>
-                </FormControlHelper>
-              </FormControl>
+              <VStack className="w-1/2" space="md">
+                <FormControl isRequired isInvalid={muscleGroupError}>
+                  <FormControlLabel>
+                    <FormControlLabelText>Primary Muscle</FormControlLabelText>
+                  </FormControlLabel>
+                  <Select 
+                    selectedValue={muscleGroup} 
+                    onValueChange={(value: string) => setMuscleGroup(value)}
+                  >
+                    <SelectTrigger className="flex-row justify-between items-center">
+                      <SelectInput placeholder="Select muscle" />
+                      <SelectIcon className="mr-2" as={ChevronDownIcon} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        {MUSCLE_GROUPS.map((group) => (
+                          <SelectItem key={group} label={group} value={group} />
+                        ))}
+                        <SelectItem label="" value="" />
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                  <FormControlHelper>
+                    <FormControlHelperText>
+                      Main muscle targeted
+                    </FormControlHelperText>
+                  </FormControlHelper>
+                </FormControl>
+
+                <FormControl isRequired isInvalid={trackingMethodsError}>
+                  <FormControlLabel>
+                    <FormControlLabelText>Tracking Methods</FormControlLabelText>
+                  </FormControlLabel>
+                  <Pressable
+                    onPress={() => setShowTrackingMethods(true)}
+                    className="border rounded-lg p-3 bg-background-0 border-background-300 flex-row justify-between items-center"
+                  >
+                    <Text className={trackingMethods.length === 0 ? "text-gray-400" : "text-white"}>
+                      {trackingMethods.length > 0 
+                        ? trackingMethods.join(', ')
+                        : "Select tracking methods"}
+                    </Text>
+                    <ChevronDownIcon className="text-gray-400" />
+                  </Pressable>
+                  <FormControlHelper>
+                    <FormControlHelperText>
+                      How this exercise will be tracked
+                    </FormControlHelperText>
+                  </FormControlHelper>
+                </FormControl>
+              </VStack>
             </HStack>
 
             <FormControl>
@@ -182,9 +238,9 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
               </FormControlLabel>
               <Pressable
                 onPress={() => setShowSecondaryMuscles(true)}
-                className="border rounded-lg p-3 bg-white"
+                className="border rounded-lg p-3 bg-background-0 border-background-300"
               >
-                <Text className={secondaryMuscleGroups.length === 0 ? "text-gray-400" : "text-gray-800"}>
+                <Text className={secondaryMuscleGroups.length === 0 ? "text-gray-400" : "text-white"}>
                   {secondaryMuscleGroups.length > 0 
                     ? secondaryMuscleGroups.join(', ')
                     : "Select secondary muscles"}
@@ -220,23 +276,48 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
         <ActionsheetBackdrop />
         <ActionsheetContent>
           <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator />
+            <ActionsheetDragIndicator/>
           </ActionsheetDragIndicatorWrapper>
           {MUSCLE_GROUPS.filter(group => group !== muscleGroup).map((muscle) => (
             <ActionsheetItem 
               key={muscle} 
               onPress={() => toggleSecondaryMuscle(muscle)}
+              className={`${secondaryMuscleGroups.includes(muscle) ? "bg-[#174161]" : ""} rounded-xs`}
             >
               <HStack className="w-full justify-between items-center">
-                <ActionsheetItemText>{muscle}</ActionsheetItemText>
-                {secondaryMuscleGroups.includes(muscle) && <CheckIcon />}
+                <ActionsheetItemText size="md" className={secondaryMuscleGroups.includes(muscle) ? "text-white" : ""}>{muscle}</ActionsheetItemText>
               </HStack>
             </ActionsheetItem>
           ))}
           <ActionsheetItem onPress={() => setShowSecondaryMuscles(false)}>
-            <ActionsheetItemText className="text-center font-bold">Done</ActionsheetItemText>
+            <ActionsheetItemText size="md" className="text-center font-bold">Done</ActionsheetItemText>
+          </ActionsheetItem>
+          {/* blank item to add space */}
+          <ActionsheetItem>
           </ActionsheetItem>
         </ActionsheetContent>
+      </Actionsheet>
+
+      <Actionsheet isOpen={showTrackingMethods} onClose={() => setShowTrackingMethods(false)}>
+        <ActionsheetBackdrop />
+        <ActionsheetContent>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator/>
+          </ActionsheetDragIndicatorWrapper>
+          {TRACKING_METHODS.map((method) => (
+            <ActionsheetItem key={method} 
+            className={`${trackingMethods.includes(method) ? "bg-[#174161]" : ""} rounded-xs`}
+            onPress={() => toggleTrackingMethod(method)}>
+              <ActionsheetItemText size="md">{method}</ActionsheetItemText>
+            </ActionsheetItem>
+          ))}
+          <ActionsheetItem onPress={() => setShowTrackingMethods(false)}>
+            <ActionsheetItemText size="md" className="text-center font-bold">Done</ActionsheetItemText>
+          </ActionsheetItem>
+          {/* blank item to add space */}
+          <ActionsheetItem>
+          </ActionsheetItem>  
+        </ActionsheetContent>   
       </Actionsheet>
     </Modal>
   );
