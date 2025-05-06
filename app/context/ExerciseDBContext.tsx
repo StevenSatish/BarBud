@@ -1,6 +1,6 @@
 // app/context/ExerciseDBContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 
@@ -12,7 +12,7 @@ type ExerciseSectionType = {
 type ExerciseDBContextType = {
   exerciseSections: ExerciseSectionType[];
   loading: boolean;
-  createExercise: (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => Promise<void>;
+  createExercise: (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => Promise<{ success: boolean; error?: string }>;
 };
 
 const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undefined);
@@ -23,24 +23,34 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
 
   const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => {
     const user = FIREBASE_AUTH.currentUser;
-    if (!user?.email) return;
+    if (!user?.email) return { success: false, error: "No user logged in" };
 
     const exerciseId = `${exerciseName}-${category}`.toLowerCase().replace(/\s+/g, '-');
+    
+    // Check if exercise already exists
+    const exerciseRef = doc(FIREBASE_DB, `users/${user.email}/exercises/${exerciseId}`);
+    const exerciseDoc = await getDoc(exerciseRef);
+    
+    if (exerciseDoc.exists()) {
+      return { success: false, error: "An exercise with this name and category already exists" };
+    }
     
     const exerciseData = {
       name: exerciseName,
       category,
-      'exercise-id': exerciseId,
+      exerciseId,
       muscleGroup,
       secondaryMuscles: secondaryMuscleGroups,
-      trackingMethods
+      trackingMethods: trackingMethods.map(method => method.toLowerCase())
     };
 
     try {
-      await setDoc(doc(FIREBASE_DB, `users/${user.email}/exercises/${exerciseId}`), exerciseData);
+      await setDoc(exerciseRef, exerciseData);
       await fetchExercises(); // Refresh the exercises list
+      return { success: true };
     } catch (error) {
       console.error('Error adding exercise:', error);
+      return { success: false, error: "Failed to create exercise" };
     }
   };
 

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Box } from '@/components/ui/box'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
@@ -11,11 +11,13 @@ import { CheckIcon } from "@/components/ui/icon"
 import { Input, InputField } from "@/components/ui/input"
 import { useWorkout } from '../context/WorkoutContext'
 import { TouchableOpacity } from 'react-native'
+import { FormControl } from "@/components/ui/form-control"
 import * as Haptics from 'expo-haptics'
 
 function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   const { updateSet, updateSetCompleted } = useWorkout();
-
+  const [setInvalid, setSetInvalid] = useState<{ [key: string]: boolean }>({});
+  
   const handleInputChange = (method: string, value: string) => {
     const newTrackingData = {
       ...set.trackingData,
@@ -25,6 +27,27 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   };
 
   const toggleCompleted = () => {
+    console.log(set)
+    if (!set.completed) {
+      // Check if any tracking method is empty
+      const newInvalidState: { [key: string]: boolean } = {};
+      let hasInvalid = false;
+
+      trackingMethods.forEach((method: string) => {
+        if (!set.trackingData[method]) {
+          newInvalidState[method] = true;
+          hasInvalid = true;
+        }
+      });
+
+      setSetInvalid(newInvalidState);
+
+      if (hasInvalid) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+    }
+
     updateSetCompleted(exerciseId, set.setId, !set.completed);
 
     if (set.completed) {
@@ -43,7 +66,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
         <Text size="lg" className="text-typography-900 text-center">-</Text>
       </Box>
       {trackingMethods.map((method: any) => (
-        <Box key={method} className="w-16 flex items-center justify-center">
+        <FormControl key={method} className="w-16 flex items-center justify-center" isInvalid={setInvalid[method]}>
           <Input size="md" className="bg-background-100">
             <InputField
               className="text-typography-900 text-center text-lg"
@@ -52,7 +75,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
               onChangeText={(value) => handleInputChange(method, value)}
             />
           </Input>
-        </Box>
+        </FormControl>
       ))}
       <TouchableOpacity 
         onPress={toggleCompleted}
@@ -62,7 +85,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
         <Checkbox 
           size="lg"
           value="completed"
-          isChecked={set.completed}
+          isChecked={set.completed && !Object.values(setInvalid).some(invalid => invalid)}
           onChange={toggleCompleted}
         >
           <CheckboxIndicator>

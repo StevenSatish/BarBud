@@ -217,7 +217,8 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
               ...exercise,
               sets: [...existingSets, {
                 setId: `${exerciseId}-${existingSets.length + 1}`,
-                trackingData: newTrackingData
+                trackingData: newTrackingData,
+                completed: false
               }]
             };
           }
