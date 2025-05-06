@@ -11,7 +11,7 @@ import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
 import { router } from 'expo-router';
 import { useWorkout } from '../context/WorkoutContext';
 import NewExerciseModal from '../components/newExerciseModal';
-
+import { useTheme } from '@/app/context/ThemeContext';
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -38,7 +38,7 @@ const ExerciseItem = ({ item, isSelected, onToggle }) => {
           backgroundColor: isSelected ? '#174161' : 'transparent', // info-200 fallback
         }}
       >
-        <Text className="text-xl font-bold text-blue-100">
+        <Text className="text-xl font-bold text-typography-900">
           {item.name} ({item.category})
         </Text>
         <HStack space="md" className="justify-between w-full">
@@ -58,6 +58,7 @@ const ExerciseItem = ({ item, isSelected, onToggle }) => {
 };
 
 export default function AddExerciseDatabase() {
+  const { theme } = useTheme();
   const { exerciseSections, loading} = useExerciseDB();
   const { addExercises } = useWorkout();
   const [searchQuery, setSearchQuery] = useState('');
@@ -153,14 +154,14 @@ export default function AddExerciseDatabase() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background-0">
+      <View className={`flex-1 items-center justify-center bg-${theme}-background`}>
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
   }
   
   return (
-    <View className="flex-1 bg-background-0">
+    <View className={`flex-1 bg-${theme}-background`}>
       <NewExerciseModal 
         isOpen={showNewExerciseModal} 
         onClose={() => setShowNewExerciseModal(false)} 

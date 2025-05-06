@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from './context/AuthProvider';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 import { ExerciseDBProvider } from './context/ExerciseDBContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -51,13 +52,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView>
       <GluestackUIProvider mode="dark">
-        <AuthProvider>
-          <WorkoutProvider>
-            <ExerciseDBProvider>
-              <AppLayout />
-            </ExerciseDBProvider>
-          </WorkoutProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <WorkoutProvider>
+              <ExerciseDBProvider>
+                <AppLayout />
+              </ExerciseDBProvider>
+            </WorkoutProvider>
+          </AuthProvider>
+        </ThemeProvider>
         <StatusBar style="auto" />
       </GluestackUIProvider>
     </GestureHandlerRootView>

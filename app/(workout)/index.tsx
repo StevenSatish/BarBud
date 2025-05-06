@@ -20,11 +20,12 @@ import Exercise from './exercise';
 import WorkoutTimer from './workoutTimer';
 import { Heading } from '@/components/ui/heading';
 import { router } from 'expo-router';
+import { useTheme } from '@/app/context/ThemeContext';
 
 export default function WorkoutScreen() {
+  const { theme } = useTheme();
   const { cancelWorkout, minimizeWorkout, endWorkout, endWorkoutWarnings, workoutState } = useWorkout();
   const [showEndWorkoutAlert, setShowEndWorkoutAlert] = useState(false);
-
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function WorkoutScreen() {
   }, [workoutState.workoutData.startTime]);
 
   return (
-    <SafeAreaView className="bg-background-0 flex-1">
+    <SafeAreaView className={`bg-${theme}-background flex-1`}>
       <AlertDialog isOpen={showEndWorkoutAlert} size="md">
         <AlertDialogBackdrop />
         <AlertDialogContent className="bg-background-0 border-outline-100">
@@ -78,7 +79,7 @@ export default function WorkoutScreen() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <HStack className="w-full py-4 px-2 bg-background-0 items-center justify-between">
+      <HStack className={`w-full py-4 px-2 bg-${theme}-background items-center justify-between`}>
         <Box className="w-24 pl-2 flex items-start">
           <FontAwesome5 onPress={minimizeWorkout} name="chevron-down" size={24} color="white" />
         </Box>

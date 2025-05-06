@@ -21,8 +21,10 @@ import {
 } from "@/components/ui/actionsheet"
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
+import { useTheme } from '@/app/context/ThemeContext';
 
 function Exercise({ exercise }: any) {
+  const { theme } = useTheme();
   const { addSet, deleteSet, deleteExercise } = useWorkout();
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
   const [showActionsheet, setShowActionsheet] = useState(false)
@@ -68,7 +70,7 @@ function Exercise({ exercise }: any) {
   }
 
   return (
-    <Box className="w-full bg-background-0 mb-2">
+    <Box className={`w-full mb-2 bg-${theme}-background`}>
       <VStack space="md">
         <HStack className="justify-between items-center px-2">
           <Text size="xl" className="text-typography-900 font-bold">{`${exercise.name} ${exercise.category != 'Other' ? `(${exercise.category})` : ''}`}</Text>
