@@ -13,11 +13,13 @@ import { useWorkout } from '../context/WorkoutContext'
 import { TouchableOpacity } from 'react-native'
 import { FormControl } from "@/components/ui/form-control"
 import * as Haptics from 'expo-haptics'
+import { useTheme } from '@/app/context/ThemeContext';
 
 function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   const { updateSet, updateSetCompleted } = useWorkout();
   const [setInvalid, setSetInvalid] = useState<{ [key: string]: boolean }>({});
-  
+  const { theme } = useTheme();
+
   const handleInputChange = (method: string, value: string) => {
     const newTrackingData = {
       ...set.trackingData,
@@ -58,7 +60,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   };
 
   return (
-    <HStack className={`justify-between items-center py-3 ${set.completed ? 'bg-success-100' : 'bg-background-0'}`}>
+    <HStack className={`justify-between items-center py-3 ${set.completed ? 'bg-success-100' : `bg-${theme}-background`}`}>
       <Box className="w-12 flex items-center justify-center">
         <Text size="lg" className="text-typography-900 text-center">{index + 1}</Text>
       </Box>
@@ -73,7 +75,9 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
               defaultValue={set.trackingData[method]?.toString()}
               keyboardType="numeric"
               onChangeText={(value) => handleInputChange(method, value)}
-            />
+              selectTextOnFocus={true}
+              textAlign="center"
+              />
           </Input>
         </FormControl>
       ))}

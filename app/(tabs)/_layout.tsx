@@ -3,15 +3,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { Box } from '@/components/ui/box';
 import WorkoutIndicator from '../components/workoutIndicator';
 import { View } from 'react-native';
+import { useTheme } from '@/app/context/ThemeContext';
 
 export default function TabsLayout() {
+  const { theme } = useTheme();
   return (
-    <View style={{ flex: 1 }}>
-      <Tabs 
+    <View className={`flex-1 bg-${theme}-background`}>
+      <Tabs
         screenOptions={{
           tabBarStyle: {
-            backgroundColor: '#121212',
-            borderTopWidth: 2,
+            backgroundColor: 'rgb(var(--color-blue-background))',
+            borderTopWidth: 1,
             borderTopColor: '#222222',
           },
           headerShown: false,

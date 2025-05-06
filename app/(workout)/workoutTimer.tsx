@@ -17,5 +17,5 @@ const formatTime = (seconds: number) => {
 };
 
 export default function WorkoutTimer({ elapsedSeconds }: WorkoutTimerProps) {
-  return <Text size="3xl" className="text-typography-800">{formatTime(elapsedSeconds)}</Text>;
+  return <Text size="3xl" className="text-typography-900">{formatTime(elapsedSeconds)}</Text>;
 }

@@ -5,17 +5,18 @@ import {
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-  AlertDialogBody,
   AlertDialogBackdrop,
 } from "@/components/ui/alert-dialog"
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { useState } from 'react';
+import { useTheme } from '@/app/context/ThemeContext';
 
 export default function Settings() {
   const [showAlertDialog, setShowAlertDialog] = useState(false);
   const handleClose = () => setShowAlertDialog(false);
+  const { theme } = useTheme();
 
   const { signOut } = useAuth();
 
@@ -29,7 +30,7 @@ export default function Settings() {
   };
 
   return (
-    <View className="flex-1 justify-center items-center bg-background-0">
+    <View className={`flex-1 justify-center items-center bg-${theme}-background`}>
       <Text className="text-white text-2xl font-bold mb-2">Settings Page</Text>
       <Button onPress={() => setShowAlertDialog(true)}>
         <ButtonText>Sign Out</ButtonText>

@@ -14,6 +14,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        blue: {
+          background: 'rgb(var(--color-blue-background)/<alpha-value>)',
+          100: 'rgb(var(--color-blue-100)/<alpha-value>)',
+          200: 'rgb(var(--color-blue-200)/<alpha-value>)',
+          300: 'rgb(var(--color-blue-300)/<alpha-value>)',
+          primary: 'rgb(var(--color-blue-primary)/<alpha-value>)',
+          secondary: 'rgb(var(--color-blue-secondary)/<alpha-value>)',
+          hello: 'rgb(var(--color-blue-hello)/<alpha-value>)',
+        },
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',

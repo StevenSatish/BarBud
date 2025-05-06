@@ -157,11 +157,12 @@ export const config = {
   dark: vars({
 
     /* Theme Colors */
+    '--color-blue-background': '17 19 26', /*rgb(17, 19, 26) */
     '--color-blue-primary': '59 130 246', /* #3B82F6 */
     '--color-blue-200': '37 99 235', /* #2563EB */
     '--color-blue-secondary': '96 165 250', /* #60A5FA */
     '--color-blue-hello': '30 58 138', /* #1E3A8A */
-    '--color-blue-300': '26 31 45', /* #1A1F2D    #93C5FD */
+    '--color-blue-300': '93 196 253', /*rgb(0, 0, 0) */
     '--color-blue-100': '26 31 45', /* #1A1F2D */
 
     '--color-yellow-100': '45 42 26', /* #2D2A1A */

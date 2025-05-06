@@ -10,8 +10,10 @@ export default function WorkoutLayout() {
           headerShown: true,
           title: "Add Exercises",
           headerTintColor: "white",
-          headerStyle: { backgroundColor: "#121212" },
-          headerBackButtonDisplayMode: "minimal"}} 
+          headerStyle: { backgroundColor: "#11131A" },
+          headerBackButtonDisplayMode: "minimal",
+          headerShadowVisible: false
+        }} 
       />
     </Stack>
   );
