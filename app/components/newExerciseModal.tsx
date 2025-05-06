@@ -45,11 +45,13 @@ import {
   FormControlHelperText,
 } from "@/components/ui/form-control"
 import useExerciseDB from '../context/ExerciseDBContext'
+import { Alert } from '@/components/ui/alert'
 
 export default function NewExerciseModal({ isOpen, onClose }: any) {
   const { createExercise } = useExerciseDB();
   const [category, setCategory] = useState<string>('');
   const [categoryError, setCategoryError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [muscleGroup, setMuscleGroup] = useState<string>('');
   const [muscleGroupError, setMuscleGroupError] = useState(false);
@@ -105,8 +107,12 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
       setExerciseNameError(false);
     }
     if (!hasErrors) {
-      await createExercise(exerciseName, category, muscleGroup, secondaryMuscleGroups, trackingMethods.map(method => method.toLowerCase()));
-      onClose();
+      const result = await createExercise(exerciseName, category, muscleGroup, secondaryMuscleGroups, trackingMethods);
+      if (result.success) {
+        onClose();
+      } else {
+        setError(result.error || "Failed to create exercise");
+      }
     }
   };
 
@@ -138,6 +144,11 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
         </ModalHeader>
         <ModalBody>
           <VStack space="lg">
+            {error && (
+              <Alert variant="solid" className="mb-4 bg-red-500">
+                <Text className="text-white">{error}</Text>
+              </Alert>
+            )}
             <FormControl isRequired isInvalid={exerciseNameError}>
               <FormControlLabel>
                 <FormControlLabelText>Exercise Name</FormControlLabelText>
