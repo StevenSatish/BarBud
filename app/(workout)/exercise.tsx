@@ -117,7 +117,7 @@ function Exercise({ exercise }: any) {
           })}
         </VStack>
         <Button 
-          className='bg-background-200'
+          className={`bg-${theme}-button`}
           onPress={() => addSet(exercise.exerciseId)}
         >
           <ButtonText className='text-typography-800'>+ Add Set</ButtonText>

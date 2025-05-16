@@ -8,7 +8,7 @@ module.exports = {
   safelist: [
     {
       pattern:
-        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|muted|success|info|light|dark|primary)/,
+        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator|blue|cyan|pink|green|gold)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|accent|button|muted|success|info|light|dark|background)/,
     },
   ],
   theme: {
@@ -16,13 +16,30 @@ module.exports = {
       colors: {
         blue: {
           background: 'rgb(var(--color-blue-background)/<alpha-value>)',
-          100: 'rgb(var(--color-blue-100)/<alpha-value>)',
-          200: 'rgb(var(--color-blue-200)/<alpha-value>)',
-          300: 'rgb(var(--color-blue-300)/<alpha-value>)',
-          primary: 'rgb(var(--color-blue-primary)/<alpha-value>)',
-          secondary: 'rgb(var(--color-blue-secondary)/<alpha-value>)',
-          hello: 'rgb(var(--color-blue-hello)/<alpha-value>)',
+          accent: 'rgb(var(--color-blue-accent)/<alpha-value>)',
+          button: 'rgb(var(--color-blue-button)/<alpha-value>)',
         },
+        cyan: {
+          background: 'rgb(var(--color-cyan-background)/<alpha-value>)',
+          accent: 'rgb(var(--color-cyan-accent)/<alpha-value>)',
+          button: 'rgb(var(--color-cyan-button)/<alpha-value>)',
+        },
+        pink: {
+          background: 'rgb(var(--color-pink-background)/<alpha-value>)',
+          accent: 'rgb(var(--color-pink-accent)/<alpha-value>)',
+          button: 'rgb(var(--color-pink-button)/<alpha-value>)',
+        },
+        green: {
+          background: 'rgb(var(--color-green-background)/<alpha-value>)',
+          accent: 'rgb(var(--color-green-accent)/<alpha-value>)',
+          button: 'rgb(var(--color-green-button)/<alpha-value>)',
+        },
+        gold: {
+          background: 'rgb(var(--color-gold-background)/<alpha-value>)',
+          accent: 'rgb(var(--color-gold-accent)/<alpha-value>)',
+          button: 'rgb(var(--color-gold-button)/<alpha-value>)',
+        },
+
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',

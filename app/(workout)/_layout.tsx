@@ -1,6 +1,9 @@
 import { Stack } from 'expo-router';
+import { useTheme } from '@/app/context/ThemeContext';
 
 export default function WorkoutLayout() {
+  const {colors} = useTheme();
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
@@ -10,7 +13,7 @@ export default function WorkoutLayout() {
           headerShown: true,
           title: "Add Exercises",
           headerTintColor: "white",
-          headerStyle: { backgroundColor: "#11131A" },
+          headerStyle: { backgroundColor: colors.background },
           headerBackButtonDisplayMode: "minimal",
           headerShadowVisible: false
         }} 

@@ -74,7 +74,6 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
   }, [workoutState]);
 
   const startWorkout = () => {
-    console.log("starting workout!");
     setWorkoutState({
       isActive: true,
       isMinimized: false,

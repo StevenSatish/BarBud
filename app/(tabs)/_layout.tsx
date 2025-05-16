@@ -6,17 +6,21 @@ import { View } from 'react-native';
 import { useTheme } from '@/app/context/ThemeContext';
 
 export default function TabsLayout() {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
+
+  console.log(colors)
+  
   return (
-    <View className={`flex-1 bg-${theme}-background`}>
+    <View style={{ flex: 1}}>
       <Tabs
         screenOptions={{
           tabBarStyle: {
-            backgroundColor: 'rgb(var(--color-blue-background))',
-            borderTopWidth: 1,
-            borderTopColor: '#222222',
+            backgroundColor: colors.tabBar,
+            borderTopWidth: 0,
+            borderTopColor: colors.accent,
           },
           headerShown: false,
+          tabBarActiveTintColor: colors.accent,
         }}
       >
         <Tabs.Screen
