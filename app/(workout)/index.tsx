@@ -109,10 +109,10 @@ export default function WorkoutScreen() {
               exercise={exercise}
             />
           ))}
-          <Button onPress={() => router.push('/AddExersiceDatabase')} className="mt-auto">
+          <Button onPress={() => router.push('/AddExersiceDatabase')} className={`mt-auto bg-${theme}-accent`}>
             <ButtonText>Add Exercise</ButtonText>
           </Button>
-          <Button onPress={() => setShowEndWorkoutAlert(true)} className="mt-auto">
+          <Button onPress={() => setShowEndWorkoutAlert(true)} className={`mt-auto bg-${theme}-accent`}>
             <ButtonText>Finish Workout</ButtonText>
           </Button>
         </VStack>

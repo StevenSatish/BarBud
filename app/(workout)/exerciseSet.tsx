@@ -29,7 +29,6 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   };
 
   const toggleCompleted = () => {
-    console.log(set)
     if (!set.completed) {
       // Check if any tracking method is empty
       const newInvalidState: { [key: string]: boolean } = {};

@@ -10,8 +10,8 @@ export default function StartWorkoutTab() {
   
   return (
     <Box className={`flex-1 justify-center items-center bg-${theme}-background`}>
-      <Button onPress={startWorkout}>
-        <ButtonText>
+      <Button onPress={startWorkout} className={`bg-${theme}-accent`}>
+        <ButtonText className='text-typography-800'>
           Start Workout
         </ButtonText>
       </Button>

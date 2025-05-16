@@ -155,21 +155,32 @@ export const config = {
     '--color-indicator-error': '185 28 28',
   }),
   dark: vars({
-
     /* Theme Colors */
-    '--color-blue-background': '17 19 26', /*rgb(17, 19, 26) */
-    '--color-blue-primary': '59 130 246', /* #3B82F6 */
-    '--color-blue-200': '37 99 235', /* #2563EB */
-    '--color-blue-secondary': '96 165 250', /* #60A5FA */
-    '--color-blue-hello': '30 58 138', /* #1E3A8A */
-    '--color-blue-300': '93 196 253', /*rgb(0, 0, 0) */
-    '--color-blue-100': '26 31 45', /* #1A1F2D */
 
-    '--color-yellow-100': '45 42 26', /* #2D2A1A */
-    '--color-red-100': '45 26 26', /* #2D1A1A */
-    '--color-green-100': '26 45 34', /* #1A2D22 */
-    '--color-pink-100': '45 26 37', /* #2D1A25 */
-    '--color-cyan-100': '26 45 45', /* #1A2D2D */
+    /* Blue Theme */
+    '--color-blue-background': '15 23 42', /*rgb(15, 23, 42) */
+    '--color-blue-accent': '71 136 207',   /*rgb(71, 136, 207) */  /* slightly darker than 96 165 250 */
+    '--color-blue-button': '30 41 70',     /*rgb(30, 41, 70) */
+
+    /* Cyan Theme */
+    '--color-cyan-background': '12 28 32',  /*rgb(12, 28, 32) */
+    '--color-cyan-accent': '60 193 174',    /*rgb(60, 193, 174) */  /* slightly darker than 94 234 212 */
+    '--color-cyan-button': '20 40 45',      /*rgb(20, 40, 45) */
+
+    /* Pink Theme */
+    '--color-pink-background': '32 18 28',  /*rgb(32, 18, 28) */
+    '--color-pink-accent': '219 80 153',    /*rgb(219, 80, 153) */  /* slightly darker than 244 114 182 */
+    '--color-pink-button': '59 28 48',      /*rgb(59, 28, 48) */
+
+    /* Green Theme */
+    '--color-green-background': '17 24 21',  /*rgb(17, 24, 21) */
+    '--color-green-accent': '102 207 140',   /*rgb(102, 207, 140) */  /* slightly darker than 134 239 172 */
+    '--color-green-button': '34 54 42',      /*rgb(34, 54, 42) */
+
+    /* Gold Theme */
+    '--color-gold-background': '30 18 12',  /*rgb(30, 18, 12) */
+    '--color-gold-accent': '223 154 95',    /*rgb(223, 154, 95) */  /* slightly darker than 253 186 116 */
+    '--color-gold-button': '60 30 20',      /*rgb(60, 30, 20) */
 
 
     /* Primary */

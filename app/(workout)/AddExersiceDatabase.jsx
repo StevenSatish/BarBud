@@ -24,18 +24,19 @@ const CATEGORIES = [
 ];
 
 const ExerciseItem = ({ item, isSelected, onToggle }) => {
+  const { theme } = useTheme();
   return (
     <TouchableOpacity 
       onPress={onToggle}
       style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
     >
       <VStack 
-        space="xs" 
+        space="xs"
+        className={isSelected ? `bg-${theme}-button` : ""}
         style={{
           paddingVertical: 16,
           paddingHorizontal: 24,
-          width: '100%',
-          backgroundColor: isSelected ? '#174161' : 'transparent', // info-200 fallback
+          width: '100%'
         }}
       >
         <Text className="text-xl font-bold text-typography-900">
@@ -180,7 +181,7 @@ export default function AddExerciseDatabase() {
               <Ionicons name="search" size={20} color="white" />
             </InputSlot>
           </Input>
-          <Button onPress={handleAddExercises} className="rounded-full bg-info-200">
+          <Button onPress={handleAddExercises} className={`rounded-full bg-${theme}-accent`}>
             <ButtonText>{`Add (${Object.keys(selectedExercises).length})`}</ButtonText>
           </Button>
         </HStack>
@@ -190,7 +191,7 @@ export default function AddExerciseDatabase() {
             offset={0}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedMuscleGroup ? 'bg-info-200' : 'bg-background-800'}`}>
+                <Button {...triggerProps} className={`rounded-full ${selectedMuscleGroup ? `bg-${theme}-accent` : ""}`}>
                   <ButtonText>{selectedMuscleGroup || "Any Muscle Group"}</ButtonText>
                 </Button>
               )
@@ -201,7 +202,7 @@ export default function AddExerciseDatabase() {
               key={group} 
               textValue={group} 
               onPress={() => handleMuscleGroupSelect(group)}
-              className={`w-40 ${selectedMuscleGroup === group ? "bg-info-200" : ""}`}
+              className={`w-40 ${selectedMuscleGroup === group ? `bg-${theme}-accent` : ""}`}
             >    
               <MenuItemLabel size="lg">{group}</MenuItemLabel>
             </MenuItem>
@@ -212,7 +213,7 @@ export default function AddExerciseDatabase() {
             offset={0}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedCategory ? 'bg-info-200' : 'bg-background-800'}`}>
+                <Button {...triggerProps} className={`rounded-full ${selectedCategory ? `bg-${theme}-accent` : 'bg-background-800'}`}>
                   <ButtonText>{selectedCategory || "Any Category"}</ButtonText>
                 </Button>
               )
@@ -223,7 +224,7 @@ export default function AddExerciseDatabase() {
               key={category} 
               textValue={category} 
               onPress={() => handleCategorySelect(category)}
-              className={selectedCategory === category ? "bg-info-200" : ""}
+              className={selectedCategory === category ? `bg-${theme}-accent` : ""}
             >    
               <MenuItemLabel size="lg">{category}</MenuItemLabel>
             </MenuItem>

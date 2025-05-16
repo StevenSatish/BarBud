@@ -2,10 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useWorkout } from '../context/WorkoutContext';
 import { router } from 'expo-router';
+import { useTheme } from '../context/ThemeContext';
 
 export default function WorkoutIndicator() {
   const { workoutState, maximizeWorkout, endWorkout } = useWorkout();
-  
+  const { theme } = useTheme();
   // Don't render if no active workout or if it's not minimized
   if (!workoutState.isActive || !workoutState.isMinimized) {
     return null;
@@ -17,55 +18,20 @@ export default function WorkoutIndicator() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.mainButton} onPress={handleMaximize}>
-        <Text style={styles.text}>Continue Workout</Text>
+    <View className={`absolute bottom-[50px] left-0 right-0 bg-${theme}-accent flex-row h-[50px] items-center px-4 rounded-t-xl shadow-lg`}>
+      <TouchableOpacity 
+        className="flex-1 h-full justify-center"
+        onPress={handleMaximize}
+      >
+        <Text className="text-white font-bold text-base">Continue Workout</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.closeButton} onPress={endWorkout}>
-        <Text style={styles.closeText}>✕</Text>
+      <TouchableOpacity 
+        className="w-10 h-10 justify-center items-center"
+        onPress={endWorkout}
+      >
+        <Text className="text-white text-lg">✕</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 50, // Position above tab bar
-    left: 0,
-    right: 0,
-    backgroundColor: '#3498db',
-    flexDirection: 'row',
-    height: 50,
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  mainButton: {
-    flex: 1,
-    height: '100%',
-    justifyContent: 'center',
-  },
-  text: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeText: {
-    color: 'white',
-    fontSize: 18,
-  },
-});
