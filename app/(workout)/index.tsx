@@ -101,6 +101,8 @@ export default function WorkoutScreen() {
         contentContainerStyle={{ 
           flexGrow: 1, 
         }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         <VStack space="md" className="w-full">
           { workoutState.workoutData.exercises.length > 0 && workoutState.workoutData.exercises.map((exercise: any) => (
