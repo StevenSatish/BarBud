@@ -3,28 +3,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 
+// ===== Types =====
 export type TrackingMethod = 'weight' | 'reps' | 'time' | 'distance' | 'rpe';
 
 export type SetEntity = {
-  id: string;           // stable UUID
-  order: number;        // 1-based order for UI
+  id: string;            // stable UUID
+  order: number;         // 1-based order for UI
   completed: boolean;
   trackingData: Partial<Record<TrackingMethod, number | null>>;
-  timestamp: string;    // ISO
+  timestamp: string;     // ISO
 };
 
 export type ExerciseEntity = {
-  exerciseId: string;   // catalog ID for the exercise
-  name: string;         // display label
+  exerciseId: string;    // catalog ID for the exercise
+  name: string;          // display label
   category: string;
   muscleGroup: string;
   secondaryMuscles?: string[];
   trackingMethods: TrackingMethod[];
-  setIds: string[];     // ordered list of set IDs
+  setIds: string[];      // ordered list of set IDs
 };
 
 export type WorkoutData = {
-  startTimeISO: string; // ISO start time
+  startTimeISO: string;  // ISO start time
   exercises: ExerciseEntity[];
   setsById: Record<string, SetEntity>;
 };
@@ -35,7 +36,7 @@ export type WorkoutState = {
   workout: WorkoutData | null;
 };
 
-export type WarningItem = { level: 'error'|'warn'; message: string; ids?: string[] };
+export type WarningItem = { level: 'error' | 'warn'; message: string; ids?: string[] };
 
 export type EndSummary = {
   durationMin: number;
@@ -51,6 +52,7 @@ export type EndSummary = {
   totals: { volume: number };
 };
 
+// ===== Reducer =====
 type Action =
   | { type: 'START' }
   | { type: 'CANCEL' }
@@ -69,13 +71,12 @@ const STORAGE_KEY = 'workoutState';
 const initialState: WorkoutState = {
   isActive: false,
   isMinimized: false,
-  workout: null
+  workout: {
+    startTimeISO: new Date().toISOString(),
+    exercises: [],
+    setsById: {},
+  },
 };
-
-function revive(state: WorkoutState): WorkoutState {
-  // Nothing special to revive — dates are ISO strings; you can new Date() them on use.
-  return state;
-}
 
 function reducer(state: WorkoutState, action: Action): WorkoutState {
   switch (action.type) {
@@ -86,23 +87,28 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
         workout: {
           startTimeISO: new Date().toISOString(),
           exercises: [],
-          setsById: {}
-        }
+          setsById: {},
+        },
       };
     }
-    case 'CANCEL': {
+    case 'CANCEL':
       return initialState;
-    }
-    case 'MINIMIZE': return { ...state, isMinimized: true };
-    case 'MAXIMIZE': return { ...state, isMinimized: false };
-    case 'HYDRATE': return revive(action.payload);
+
+    case 'MINIMIZE':
+      return { ...state, isMinimized: true };
+
+    case 'MAXIMIZE':
+      return { ...state, isMinimized: false };
+
+    case 'HYDRATE':
+      return action.payload;
 
     case 'ADD_EXERCISES': {
       if (!state.workout) return state;
       const payload = action.payload.map(e => ({ ...e, setIds: [] as string[] }));
       return {
         ...state,
-        workout: { ...state.workout, exercises: [...state.workout.exercises, ...payload] }
+        workout: { ...state.workout, exercises: [...state.workout.exercises, ...payload] },
       };
     }
 
@@ -110,15 +116,19 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       if (!state.workout) return state;
       const ex = state.workout.exercises.find(e => e.exerciseId === action.exerciseId);
       if (!ex) return state;
+
       const setsById = { ...state.workout.setsById };
-      ex.setIds.forEach(id => { delete setsById[id]; });
+      ex.setIds.forEach(id => {
+        delete setsById[id];
+      });
+
       return {
         ...state,
         workout: {
           ...state.workout,
           exercises: state.workout.exercises.filter(e => e.exerciseId !== action.exerciseId),
-          setsById
-        }
+          setsById,
+        },
       };
     }
 
@@ -126,6 +136,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       if (!state.workout) return state;
       const idx = state.workout.exercises.findIndex(e => e.exerciseId === action.exerciseId);
       if (idx < 0) return state;
+
       const ex = state.workout.exercises[idx];
       const lastSet = ex.setIds.length ? state.workout.setsById[ex.setIds[ex.setIds.length - 1]] : undefined;
 
@@ -136,32 +147,39 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
         completed: false,
         trackingData: ex.trackingMethods.reduce((acc, m) => {
           const prev = lastSet?.trackingData?.[m];
-          acc[m] = (prev ?? null) as any;
+          acc[m] = (prev ?? null) as number | null;
           return acc;
-        }, {} as any),
-        timestamp: new Date().toISOString()
+        }, {} as Partial<Record<TrackingMethod, number | null>>),
+        timestamp: new Date().toISOString(),
       };
 
       const setsById = { ...state.workout.setsById, [newId]: newSet };
-      const exercises = state.workout.exercises.map((e, i) => i === idx ? { ...e, setIds: [...e.setIds, newId] } : e);
+      const exercises = state.workout.exercises.map((e, i) =>
+        i === idx ? { ...e, setIds: [...e.setIds, newId] } : e
+      );
+
       return { ...state, workout: { ...state.workout, setsById, exercises } };
     }
 
     case 'DELETE_SET': {
       if (!state.workout) return state;
+
       const exIdx = state.workout.exercises.findIndex(e => e.exerciseId === action.exerciseId);
       if (exIdx < 0) return state;
+
       const ex = state.workout.exercises[exIdx];
       if (!ex.setIds.includes(action.setId)) return state;
 
       const setsById = { ...state.workout.setsById };
       delete setsById[action.setId];
 
-      // keep stable IDs, only recompute 'order'
+      // Keep stable IDs; only recompute 'order'
       const remaining = ex.setIds.filter(id => id !== action.setId);
       const reordered = remaining.map((id, i) => ({ ...setsById[id], order: i + 1 }));
       const patchedSetsById = { ...setsById };
-      reordered.forEach(s => { patchedSetsById[s.id] = s; });
+      reordered.forEach(s => {
+        patchedSetsById[s.id] = s;
+      });
 
       const exercises = state.workout.exercises.map((e, i) =>
         i === exIdx ? { ...e, setIds: remaining } : e
@@ -174,15 +192,16 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       if (!state.workout) return state;
       const set = state.workout.setsById[action.setId];
       if (!set) return state;
+
       return {
         ...state,
         workout: {
           ...state.workout,
           setsById: {
             ...state.workout.setsById,
-            [action.setId]: { ...set, trackingData: { ...set.trackingData, ...action.data } }
-          }
-        }
+            [action.setId]: { ...set, trackingData: { ...set.trackingData, ...action.data } },
+          },
+        },
       };
     }
 
@@ -190,22 +209,25 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       if (!state.workout) return state;
       const set = state.workout.setsById[action.setId];
       if (!set) return state;
+
       return {
         ...state,
         workout: {
           ...state.workout,
           setsById: {
             ...state.workout.setsById,
-            [action.setId]: { ...set, completed: action.completed }
-          }
-        }
+            [action.setId]: { ...set, completed: action.completed },
+          },
+        },
       };
     }
 
-    default: return state;
+    default:
+      return state;
   }
 }
 
+// ===== Context API =====
 type Ctx = {
   workoutState: WorkoutState;
   startWorkout: () => void;
@@ -224,10 +246,10 @@ type Ctx = {
 
 const WorkoutContext = createContext<Ctx | undefined>(undefined);
 
-export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // hydrate once
+  // Load from storage once
   useEffect(() => {
     (async () => {
       try {
@@ -242,7 +264,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     })();
   }, []);
 
-  // persist on every change (active or not)
+  // Persist on every change
   useEffect(() => {
     (async () => {
       try {
@@ -253,7 +275,7 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     })();
   }, [state]);
 
-  // actions (API compatible with your current usage)
+  // Actions
   const startWorkout = () => {
     dispatch({ type: 'START' });
     router.replace('/(workout)');
@@ -275,15 +297,15 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     router.replace('/(workout)');
   };
 
-  const addExercises: Ctx['addExercises'] = (exercises) => {
+  const addExercises: Ctx['addExercises'] = exercises => {
     dispatch({ type: 'ADD_EXERCISES', payload: exercises });
   };
 
-  const deleteExercise: Ctx['deleteExercise'] = (exerciseId) => {
+  const deleteExercise: Ctx['deleteExercise'] = exerciseId => {
     dispatch({ type: 'DELETE_EXERCISE', exerciseId });
   };
 
-  const addSet: Ctx['addSet'] = (exerciseId) => {
+  const addSet: Ctx['addSet'] = exerciseId => {
     dispatch({ type: 'ADD_SET', exerciseId });
   };
 
@@ -299,33 +321,22 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     dispatch({ type: 'UPDATE_SET_COMPLETED', exerciseId, setId, completed });
   };
 
-  // helpers
+  // Helpers
   const estimate1RM = (weight?: number | null, reps?: number | null): number | undefined => {
     if (weight == null || reps == null) return undefined;
     if (!Number.isFinite(weight) || !Number.isFinite(reps)) return undefined;
     if (reps <= 0 || reps > 6) return undefined;
-    // Epley formula (simple, consistent)
-    return Math.round(weight * (1 + reps / 30));
+    return Math.round(weight * (1 + reps / 30)); // Epley
   };
 
   const endWorkoutWarnings = (): WarningItem[] => {
     const ws = state.workout;
     if (!state.isActive || !ws) return [];
-
-    const warnings: WarningItem[] = [];
-
-    // Count uncompleted sets
     const uncompletedCount = Object.values(ws.setsById).filter(set => !set.completed).length;
-    
-    if (uncompletedCount > 0) {
-      warnings.push({ 
-        level: 'warn', 
-        message: `${uncompletedCount} uncompleted set(s) will be ignored`, 
-        ids: [] 
-      });
-    }
 
-    return warnings;
+    return uncompletedCount > 0
+      ? [{ level: 'warn', message: `${uncompletedCount} uncompleted set(s) will be ignored`, ids: [] }]
+      : [];
   };
 
   const endWorkout = (): EndSummary => {
@@ -356,81 +367,52 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
       });
 
       totalVolume += volume;
+
       return {
         exerciseId: ex.exerciseId,
         name: ex.name,
         setCount: ex.setIds.length,
         topWeight: topWeight || undefined,
         volume: volume || undefined,
-        bestEst1RM: bestEst || undefined
+        bestEst1RM: bestEst || undefined,
       };
     });
 
-    // Optional: console log summary for now (MVP parity with your logs)
-    // You can replace with a UI modal/snackbar.
-    // eslint-disable-next-line no-console
+    // Basic console log for now (MVP)
     console.log('🏋️ WORKOUT COMPLETED 🏋️');
-    // eslint-disable-next-line no-console
     console.log('=====================================');
-    // eslint-disable-next-line no-console
     console.log(`Start Time: ${new Date(ws.startTimeISO)}`);
-    // eslint-disable-next-line no-console
     console.log(`End Time: ${new Date(end)}`);
-    // eslint-disable-next-line no-console
     console.log(`Duration: ${Math.max(1, Math.round((end - start) / 1000 / 60))} minutes`);
-    // eslint-disable-next-line no-console
     console.log(`Total Exercises: ${ws.exercises.length}`);
-    // eslint-disable-next-line no-console
     console.log('=====================================');
-    ws.exercises.forEach((exercise, exerciseIndex) => {
-      // eslint-disable-next-line no-console
-      console.log(`\n${exerciseIndex + 1}. ${exercise.name}`);
-      // eslint-disable-next-line no-console
-      console.log(`   Category: ${exercise.category ?? 'N/A'}`);
-      // eslint-disable-next-line no-console
-      console.log(`   Muscle Groups: ${exercise.muscleGroup|| 'N/A'}`);
-      // eslint-disable-next-line no-console
+    ws.exercises.forEach((exercise, i) => {
+      console.log(`\n${i + 1}. ${exercise.name}`);
+      console.log(`   Category: ${exercise.category}`);
+      console.log(`   Muscle Group: ${exercise.muscleGroup}`);
       console.log(`   Tracking Methods: ${exercise.trackingMethods.join(', ')}`);
-      // eslint-disable-next-line no-console
       console.log(`   Sets: ${exercise.setIds.length}`);
-      exercise.setIds.forEach((sid, i) => {
+      exercise.setIds.forEach((sid, j) => {
         const set = ws.setsById[sid];
-        // eslint-disable-next-line no-console
-        console.log(`   Set ${i + 1}:`);
-        // eslint-disable-next-line no-console
+        console.log(`   Set ${j + 1}:`);
         console.log(`     Completed: ${set.completed ? '✅' : '❌'}`);
-        // eslint-disable-next-line no-console
         console.log(`     Tracking Data:`, set.trackingData);
       });
     });
-    // eslint-disable-next-line no-console
     console.log('\n=====================================');
-    // eslint-disable-next-line no-console
     console.log('🏋️ END OF WORKOUT LOG 🏋️');
 
     const summary: EndSummary = {
       durationMin: Math.max(1, Math.round((end - start) / 1000 / 60)),
       totalExercises: ws.exercises.length,
       perExercise,
-      totals: { volume: totalVolume }
+      totals: { volume: totalVolume },
     };
 
-    // Navigate back, then clear storage/state
+    // Navigate away and reset
     router.replace('/(tabs)');
-    setTimeout(() => {
-      AsyncStorage.removeItem(STORAGE_KEY);
-    }, 0);
-
-    // reset reducer after the nav tick
-    setTimeout(() => {
-      // Fire-and-forget reset; avoids state updates during route transition
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      (async () => {
-        try {
-          // no-op; reducer holds state, APP reload will start fresh anyway
-        } catch {}
-      })();
-    }, 0);
+    AsyncStorage.removeItem(STORAGE_KEY);
+    dispatch({ type: 'CANCEL' });
 
     return summary;
   };
@@ -448,14 +430,10 @@ export const WorkoutProvider: React.FC<{children: React.ReactNode}> = ({ childre
     deleteSet,
     addExercises,
     deleteExercise,
-    addSet
+    addSet,
   };
 
-  return (
-    <WorkoutContext.Provider value={value}>
-      {children}
-    </WorkoutContext.Provider>
-  );
+  return <WorkoutContext.Provider value={value}>{children}</WorkoutContext.Provider>;
 };
 
 export const useWorkout = () => {
