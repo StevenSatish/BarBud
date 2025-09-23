@@ -7,8 +7,6 @@ import { useTheme } from '@/app/context/ThemeContext';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
-
-  console.log(colors)
   
   return (
     <View style={{ flex: 1}}>
