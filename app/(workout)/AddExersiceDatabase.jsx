@@ -1,6 +1,6 @@
 import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import useExerciseDB  from '../context/ExerciseDBContext';
 import { Input, InputField, InputSlot } from '@/components/ui/input';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -23,7 +23,7 @@ const CATEGORIES = [
   "Barbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
 ];
 
-const ExerciseItem = ({ item, isSelected, onToggle }) => {
+const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
   const { theme } = useTheme();
   return (
     <TouchableOpacity 
@@ -56,7 +56,7 @@ const ExerciseItem = ({ item, isSelected, onToggle }) => {
       </VStack>
     </TouchableOpacity>
   );
-};
+}, (prev, next) => prev.isSelected === next.isSelected && prev.item.id === next.item.id);
 
 export default function AddExerciseDatabase() {
   const { theme } = useTheme();
@@ -68,9 +68,9 @@ export default function AddExerciseDatabase() {
   const [selectedExercises, setSelectedExercises] = useState({});
   const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
 
-  const handleExerciseToggle = (exercise) => {
+  const handleExerciseToggle = useCallback((exercise) => {
     setSelectedExercises(prev => {
-      const newSelected = {...prev};
+      const newSelected = { ...prev };
       if (newSelected[exercise.id]) {
         delete newSelected[exercise.id];
       } else {
@@ -78,7 +78,7 @@ export default function AddExerciseDatabase() {
       }
       return newSelected;
     });
-  };
+  }, []);
 
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim() && !selectedMuscleGroup && !selectedCategory) {
@@ -126,9 +126,8 @@ export default function AddExerciseDatabase() {
     setSelectedCategory(value === selectedCategory ? '' : value);
   };
   
-  const renderExerciseItem = ({ item, index, section }) => {
+  const renderExerciseItem = useCallback(({ item, index, section }) => {
     const isSelected = Boolean(selectedExercises[item.id]);
-    
     return (
       <ExerciseItem 
         item={item} 
@@ -138,7 +137,7 @@ export default function AddExerciseDatabase() {
         onToggle={() => handleExerciseToggle(item)}
       />
     );
-  };
+  }, [selectedExercises, handleExerciseToggle]);
 
   const renderSectionHeader = ({ section }) => (
     <View className="py-2 px-6 bg-background-100">
@@ -243,6 +242,12 @@ export default function AddExerciseDatabase() {
           renderItem={renderExerciseItem}
           renderSectionHeader={renderSectionHeader}
           keyExtractor={(item) => item.id}
+          extraData={selectedExercises}
+          initialNumToRender={20}
+          maxToRenderPerBatch={100}
+          windowSize={10}
+          removeClippedSubviews={true}
+          updateCellsBatchingPeriod={50}
           contentContainerStyle={{ paddingVertical: 8 }}
           stickySectionHeadersEnabled={true}
           ListEmptyComponent={
