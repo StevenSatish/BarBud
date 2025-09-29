@@ -146,13 +146,13 @@ export default function WorkoutScreen() {
           keyboardDismissMode="on-drag"
         >
           <VStack space="md" className="w-full px-2 pb-4">
-            {currentWorkout.exercises.length > 0 &&
-              currentWorkout.exercises.map((exercise) => (
-                <Exercise
-                  key={exercise.exerciseId}
-                  exercise={exercise} // <-- removed setsById prop
-                />
-              ))}
+              {currentWorkout.exercises.length > 0 &&
+                currentWorkout.exercises.map((exercise) => (
+                  <Exercise
+                    key={exercise.instanceId}
+                    exercise={exercise}
+                  />
+                ))}
 
             <Button
               onPress={() => router.push('/AddExersiceDatabase')}

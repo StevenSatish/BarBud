@@ -6,6 +6,7 @@ import {KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } fro
 import { Heading } from "@/components/ui/heading"
 import {createUserWithEmailAndPassword  } from "firebase/auth";
 import {useAuth} from "../context/AuthProvider"
+import useExerciseDB from "../context/ExerciseDBContext"
 import { VStack } from '@/components/ui/vstack';
 import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorText, FormControlHelper, FormControlHelperText, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
@@ -33,6 +34,7 @@ export default function Signup() {
 
     const auth = FIREBASE_AUTH;
     const {user, loading} = useAuth();
+    const { fetchExercises } = useExerciseDB();
 
     if (user) return <Redirect href="../(tabs)" />;
 
@@ -75,7 +77,7 @@ export default function Signup() {
             const response = await createUserWithEmailAndPassword(auth, email, password);
             console.log(response);
             
-            await setDoc(doc(FIREBASE_DB, 'users', email), {
+            await setDoc(doc(FIREBASE_DB, 'users', response.user.uid), {
                 email: email,
                 createdAt: serverTimestamp(),
                 username: username
@@ -93,15 +95,16 @@ export default function Signup() {
                 const userExerciseRef = doc(
                     FIREBASE_DB, 
                     'users', 
-                    email, 
+                    response.user.uid, 
                     'exercises', 
                     exerciseDoc.id
                 );
                 batch.set(userExerciseRef, exerciseData);
             });
             
-            // Commit the batch
+            // Commit the batch, then refresh exercise cache
             await batch.commit();
+            await fetchExercises();
             
             console.log("User profile and exercises created successfully");
             

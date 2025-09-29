@@ -24,7 +24,7 @@ import {
   SelectDragIndicatorWrapper,
   SelectItem,
 } from "@/components/ui/select"
-import { ChevronDownIcon, CircleIcon, CheckIcon } from "@/components/ui/icon"
+import { ChevronDownIcon, CircleIcon } from "@/components/ui/icon"
 import { useState } from 'react'
 import { Text } from '@/components/ui/text'
 import { Pressable } from '@/components/ui/pressable'
@@ -76,7 +76,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   ];
 
   const TRACKING_METHODS = [
-    "Reps", "Weight", "Time", "Distance"
+    "Reps", "Weight", "Time"
   ];
 
   const handleAddExercise = async () => {

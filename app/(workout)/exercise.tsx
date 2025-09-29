@@ -27,6 +27,7 @@ import { useTheme } from '@/app/context/ThemeContext';
 
 type Props = {
   exercise: {
+    instanceId: string;
     exerciseId: string;
     name: string;
     category: string;
@@ -55,7 +56,7 @@ function Exercise({ exercise }: Props) {
 
   const handleClose = () => setShowActionsheet(false);
   const handleDeletion = () => {
-    deleteExercise(exercise.exerciseId);
+    deleteExercise(exercise.instanceId);
     setShowActionsheet(false);
   };
 
@@ -86,7 +87,7 @@ function Exercise({ exercise }: Props) {
                 backgroundColor: pressed ? '#dc2626' : 'transparent',
               },
             ]}
-            onPress={() => deleteSet(exercise.exerciseId, setId)}
+            onPress={() => deleteSet(exercise.instanceId, setId)}
             android_ripple={{ color: '#dc2626' }}
           >
             <FontAwesome name="trash-o" size={24} color="white" />
@@ -141,7 +142,7 @@ function Exercise({ exercise }: Props) {
                     set={set} // has setId alias
                     index={index}
                     trackingMethods={exercise.trackingMethods}
-                    exerciseId={exercise.exerciseId}
+                    exerciseId={exercise.instanceId}
                   />
                 </Swipeable>
               </Fragment>
@@ -149,7 +150,7 @@ function Exercise({ exercise }: Props) {
           })}
         </VStack>
 
-        <Button className={`bg-${theme}-button`} onPress={() => addSet(exercise.exerciseId)}>
+        <Button className={`bg-${theme}-button`} onPress={() => addSet(exercise.instanceId)}>
           <ButtonText className="text-typography-800">+ Add Set</ButtonText>
         </Button>
       </VStack>

@@ -13,6 +13,7 @@ type ExerciseDBContextType = {
   exerciseSections: ExerciseSectionType[];
   loading: boolean;
   createExercise: (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => Promise<{ success: boolean; error?: string }>;
+  fetchExercises: () => Promise<void>;
 };
 
 const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undefined);
@@ -23,12 +24,12 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
 
   const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => {
     const user = FIREBASE_AUTH.currentUser;
-    if (!user?.email) return { success: false, error: "No user logged in" };
+    if (!user?.uid) return { success: false, error: "No user logged in" };
 
     const exerciseId = `${exerciseName}-${category}`.toLowerCase().replace(/\s+/g, '-');
     
     // Check if exercise already exists
-    const exerciseRef = doc(FIREBASE_DB, `users/${user.email}/exercises/${exerciseId}`);
+    const exerciseRef = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exerciseId}`);
     const exerciseDoc = await getDoc(exerciseRef);
     
     if (exerciseDoc.exists()) {
@@ -64,7 +65,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
         return;
       }
 
-      const exercisesRef = collection(FIREBASE_DB, 'users', currentUser.email!, 'exercises');
+      const exercisesRef = collection(FIREBASE_DB, 'users', currentUser.uid!, 'exercises');
       const exercisesSnapshot = await getDocs(exercisesRef);
       
       const exercisesList = exercisesSnapshot.docs.map((doc) => ({
@@ -119,6 +120,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
         exerciseSections,
         loading,
         createExercise,
+        fetchExercises,
       }}
     >
       {children}
