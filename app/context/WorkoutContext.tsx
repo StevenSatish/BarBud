@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDoc } from 'firebase/firestore';
 
 // ===== Types =====
 export type TrackingMethod = 'weight' | 'reps' | 'time';
@@ -467,6 +467,85 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await batch.commit();
   };
 
+  const writeExerciseMetricsForSession = async (uid: string, ws: WorkoutData, sessionId: string) => {
+    const lastBatch = writeBatch(FIREBASE_DB);
+    const allTimeBatch = writeBatch(FIREBASE_DB);
+
+    const startDate = new Date(ws.startTimeISO);
+
+    // Compute per-exercise metrics from this session (completed sets only)
+    for (const ex of ws.exercises) {
+      const completedSets = ex.setIds
+        .map(id => ws.setsById[id])
+        .filter(s => s && s.completed);
+
+      let lastTopWeight = 0;
+      let lastTopRepsAtTopWeight = 0;
+      let lastVolume = 0;
+      let lastBestEst1RM = 0;
+      let totalSets = 0;
+      let totalReps = 0;
+
+      completedSets.forEach(s => {
+        const w = (s.trackingData.weight ?? 0) as number;
+        const r = (s.trackingData.reps ?? 0) as number;
+        if (Number.isFinite(w) && Number.isFinite(r) && r > 0) {
+          if (w >= lastTopWeight) {
+            lastTopWeight = w;
+            lastTopRepsAtTopWeight = Math.max(lastTopRepsAtTopWeight, r);
+          }
+          lastVolume += w * r;
+          totalReps += r;
+          totalSets += 1;
+        }
+        const est = estimate1RM(s.trackingData.weight ?? null, s.trackingData.reps ?? null);
+        if (est && est > lastBestEst1RM) lastBestEst1RM = est;
+      });
+
+      // Write last session metrics
+      const lastRef = doc(FIREBASE_DB, `users/${uid}/exercises/${ex.exerciseId}/metrics/lastSessionMetrics`);
+      lastBatch.set(lastRef, {
+        lastPerformedAt: startDate,
+        lastSessionId: sessionId,
+        lastTopWeight: lastTopWeight || undefined,
+        lastTopRepsAtTopWeight: lastTopRepsAtTopWeight || undefined,
+        lastVolume: lastVolume || undefined,
+        lastBestEst1RM: lastBestEst1RM || undefined,
+      }, { merge: true });
+
+      // Read current all-time metrics, then update totals and PRs
+      const allTimeRef = doc(FIREBASE_DB, `users/${uid}/exercises/${ex.exerciseId}/metrics/allTimeMetrics`);
+      const snap = await getDoc(allTimeRef);
+      const prev = (snap.exists() ? snap.data() : {}) as any;
+
+      const nextTotals = {
+        totalSets: (prev.totalSets ?? 0) + totalSets,
+        totalReps: (prev.totalReps ?? 0) + totalReps,
+        totalVolumeAllTime: (prev.totalVolumeAllTime ?? 0) + lastVolume,
+      };
+
+      // Update maxTopWeight and maxTopRepsAtTopWeight ONLY together when topWeight increases
+      let maxTopWeight = prev.maxTopWeight ?? 0;
+      let maxTopRepsAtTopWeight = prev.maxTopRepsAtTopWeight ?? 0;
+      if (lastTopWeight > (prev.maxTopWeight ?? 0)) {
+        maxTopWeight = lastTopWeight;
+        maxTopRepsAtTopWeight = lastTopRepsAtTopWeight || 0;
+      }
+
+      const maxBestEst1RM = Math.max(prev.maxBestEst1RM ?? 0, lastBestEst1RM ?? 0);
+
+      allTimeBatch.set(allTimeRef, {
+        ...nextTotals,
+        maxTopWeight: maxTopWeight || undefined,
+        maxTopRepsAtTopWeight: maxTopRepsAtTopWeight || undefined,
+        maxBestEst1RM: maxBestEst1RM || undefined,
+      }, { merge: true });
+    }
+
+    await lastBatch.commit();
+    await allTimeBatch.commit();
+  };
+
   const endWorkoutWarnings = (): WarningItem[] => {
     const ws = state.workout;
     if (!state.isActive || !ws) return [];
@@ -554,7 +633,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const uid = user.uid;
 
       // 1) Write session + subdocs, collect instance aggregates
-      const { sessionId, date: sessionDate, instances } = await writeSessionAndCollectInstances(
+      const { sessionId, instances } = await writeSessionAndCollectInstances(
         uid,
         ws,
         start,
@@ -563,6 +642,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // 2) Write exercise instances under users/{uid}/exercises/{exerciseId}/instances
       await writeExerciseInstances(uid, instances);
+
+      await writeExerciseMetricsForSession(uid, ws, sessionId);
     } catch (err) {
       console.error('Failed to write session to Firestore:', err);
     }
