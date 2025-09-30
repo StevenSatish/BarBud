@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
+import { KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
-import { router } from 'expo-router';
+import { Link, useRootNavigationState } from 'expo-router';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { useWorkout } from '../context/WorkoutContext';
@@ -33,6 +34,7 @@ export default function WorkoutScreen() {
     endWorkout,
     endWorkoutWarnings,
   } = useWorkout();
+  const navigationState = useRootNavigationState();
 
   const [showEndWorkoutAlert, setShowEndWorkoutAlert] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -70,6 +72,12 @@ export default function WorkoutScreen() {
   }
 
   const warnings = endWorkoutWarnings();
+  // Safely prefetch Add Exercise screen only after root navigation is ready
+  useEffect(() => {
+    if (!navigationState?.key) return;
+    // Prefetch by rendering an offscreen Link to warm bundle after nav is ready
+    // No-op here; the visible Link will be enough now that nav is mounted
+  }, [navigationState?.key]);
 
   return (
     <SafeAreaView className={`bg-${theme}-background flex-1`}>
@@ -154,12 +162,13 @@ export default function WorkoutScreen() {
                   />
                 ))}
 
-            <Button
-              onPress={() => router.push('/AddExersiceDatabase')}
-              className={`mt-auto bg-${theme}-accent`}
-            >
-              <ButtonText>Add Exercise</ButtonText>
-            </Button>
+            <Link href="/AddExersiceDatabase" asChild>
+              <Button
+                className={`mt-auto bg-${theme}-accent`}
+              >
+                <ButtonText>Add Exercise</ButtonText>
+              </Button>
+            </Link>
 
             <Button
               onPress={() => setShowEndWorkoutAlert(true)}

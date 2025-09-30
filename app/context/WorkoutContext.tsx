@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useReducer } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
@@ -176,19 +176,13 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       const setsById = { ...state.workout.setsById };
       delete setsById[action.setId];
 
-      // Keep stable IDs; only recompute 'order'
+      // Only update the exercise's setIds; avoid rewriting remaining sets
       const remaining = ex.setIds.filter(id => id !== action.setId);
-      const reordered = remaining.map((id, i) => ({ ...setsById[id], order: i + 1 }));
-      const patchedSetsById = { ...setsById };
-      reordered.forEach(s => {
-        patchedSetsById[s.id] = s;
-      });
-
       const exercises = state.workout.exercises.map((e, i) =>
         i === exIdx ? { ...e, setIds: remaining } : e
       );
 
-      return { ...state, workout: { ...state.workout, setsById: patchedSetsById, exercises } };
+      return { ...state, workout: { ...state.workout, setsById, exercises } };
     }
 
     case 'UPDATE_SET_DATA': {
@@ -251,6 +245,7 @@ const WorkoutContext = createContext<Ctx | undefined>(undefined);
 
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load from storage once
   useEffect(() => {
@@ -267,15 +262,27 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     })();
   }, []);
 
-  // Persist on every change
+  // Persist on change (debounced to reduce UI stalls)
   useEffect(() => {
-    (async () => {
-      try {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) {
-        console.error('Error saving workout state:', e);
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = setTimeout(() => {
+      (async () => {
+        try {
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.error('Error saving workout state:', e);
+        }
+      })();
+    }, 300);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
       }
-    })();
+    };
   }, [state]);
 
   // Actions

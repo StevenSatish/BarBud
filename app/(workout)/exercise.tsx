@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useMemo } from 'react';
+import React, { useState, Fragment, useMemo, useCallback } from 'react';
 import { Pressable } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
@@ -46,10 +46,8 @@ function Exercise({ exercise }: Props) {
   const setsById = workoutState.workout?.setsById ?? {};
 
   // Build the sets for this exercise from setIds.
-  // Also alias id -> setId to keep ExerciseSet working without changes.
   const mappedSets = useMemo(() => {
-    const list = (exercise.setIds || []).map((id) => setsById[id]).filter(Boolean);
-    return list.map((s) => ({ ...s, setId: s.id }));
+    return (exercise.setIds || []).map((id) => setsById[id]).filter(Boolean);
   }, [exercise.setIds, setsById]);
 
   const capitalize = (str: string) => (str ? str.charAt(0).toUpperCase() + str.slice(1) : '');
@@ -60,7 +58,7 @@ function Exercise({ exercise }: Props) {
     setShowActionsheet(false);
   };
 
-  function renderRightActions(setId: string) {
+  const renderRightActions = useCallback((setId: string) => {
     return (drag: SharedValue<number>) => {
       const animatedStyle = useAnimatedStyle(() => {
         'worklet';
@@ -95,7 +93,7 @@ function Exercise({ exercise }: Props) {
         </Reanimated.View>
       );
     };
-  }
+  }, [deleteSet, exercise.instanceId]);
 
   return (
     <Box className={`w-full mb-2 bg-${theme}-background`}>
@@ -125,29 +123,24 @@ function Exercise({ exercise }: Props) {
         </HStack>
 
         <VStack>
-          {mappedSets.map((set: any, index: number) => {
-            // Keep keys stable using the new set.id
-            const swipeableKey = `${set.id}-${mappedSets.length}`;
-            return (
-              <Fragment key={set.id}>
-                <Swipeable
-                  key={swipeableKey}
-                  renderRightActions={renderRightActions(set.id)}
-                  friction={1}
-                  rightThreshold={100}
-                  overshootRight={false}
-                  containerStyle={{ overflow: 'hidden' }}
-                >
-                  <ExerciseSet
-                    set={set} // has setId alias
-                    index={index}
-                    trackingMethods={exercise.trackingMethods}
-                    exerciseId={exercise.instanceId}
-                  />
-                </Swipeable>
-              </Fragment>
-            );
-          })}
+          {mappedSets.map((set: any, index: number) => (
+            <Swipeable
+              key={set.id}
+              renderRightActions={renderRightActions(set.id)}
+              friction={1}
+              rightThreshold={100}
+              overshootRight={false}
+              containerStyle={{ overflow: 'hidden' }}
+            >
+              <ExerciseSet
+                set={set}
+                setId={set.id}
+                index={index}
+                trackingMethods={exercise.trackingMethods}
+                exerciseId={exercise.instanceId}
+              />
+            </Swipeable>
+          ))}
         </VStack>
 
         <Button className={`bg-${theme}-button`} onPress={() => addSet(exercise.instanceId)}>

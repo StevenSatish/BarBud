@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { memo, useState } from 'react'
 import { Box } from '@/components/ui/box'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
@@ -10,12 +10,11 @@ import {
 import { CheckIcon } from "@/components/ui/icon"
 import { Input, InputField } from "@/components/ui/input"
 import { useWorkout } from '../context/WorkoutContext'
-import { TouchableOpacity } from 'react-native'
 import { FormControl } from "@/components/ui/form-control"
 import * as Haptics from 'expo-haptics'
 import { useTheme } from '@/app/context/ThemeContext';
 
-function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
+function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }: any) {
   const { updateSet, updateSetCompleted } = useWorkout();
   const [setInvalid, setSetInvalid] = useState<{ [key: string]: boolean }>({});
   const { theme } = useTheme();
@@ -25,7 +24,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
       ...set.trackingData,
       [method]: parseInt(value) || null
     };
-    updateSet(exerciseId, set.setId, newTrackingData);
+    updateSet(exerciseId, setId, newTrackingData);
   };
 
   const toggleCompleted = () => {
@@ -49,7 +48,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
       }
     }
 
-    updateSetCompleted(exerciseId, set.setId, !set.completed);
+    updateSetCompleted(exerciseId, setId, !set.completed);
 
     if (set.completed) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -59,7 +58,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
   };
 
   return (
-    <HStack className={`justify-between items-center py-3 ${set.completed ? 'bg-success-100' : `bg-${theme}-background`}`}>
+    <HStack className={`justify-between items-center py-3 ${set.completed ? `bg-${theme}-button` : `bg-${theme}-background`}`}>
       <Box className="w-12 flex items-center justify-center">
         <Text size="lg" className="text-typography-900 text-center">{index + 1}</Text>
       </Box>
@@ -80,11 +79,7 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
           </Input>
         </FormControl>
       ))}
-      <TouchableOpacity 
-        onPress={toggleCompleted}
-        style={{ paddingHorizontal: 8, paddingVertical: 8 }}
-        activeOpacity={0.7}
-      >
+      <Box className="px-2">
         <Checkbox 
           size="lg"
           value="completed"
@@ -95,9 +90,11 @@ function ExerciseSet({ set, index, trackingMethods, exerciseId }: any) {
             <CheckboxIcon as={CheckIcon} />
           </CheckboxIndicator>
         </Checkbox>
-      </TouchableOpacity>
+      </Box>
     </HStack>
   )
 }
 
+const ExerciseSet = memo(ExerciseSetComponent)
 export default ExerciseSet
+export { ExerciseSet }

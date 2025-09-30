@@ -1,5 +1,6 @@
 // app/context/ExerciseDBContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
@@ -21,6 +22,7 @@ const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undef
 export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [exerciseSections, setExerciseSections] = useState<ExerciseSectionType[]>([]);
   const [loading, setLoading] = useState(true);
+  const STORAGE_KEY = 'exerciseSectionsCache';
 
   const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => {
     const user = FIREBASE_AUTH.currentUser;
@@ -94,6 +96,10 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
         }));
       
       setExerciseSections(sections);
+      // Persist cache
+      try {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(sections));
+      } catch {}
     } catch (error) {
       console.error('Error fetching exercises:', error);
     } finally {
@@ -101,11 +107,24 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
     }
   };
 
-  // Load exercises when the user is authenticated
+  // Load exercises when the user is authenticated. Show cached immediately (SWR).
   useEffect(() => {
     const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
       if (user) {
-        fetchExercises();
+        (async () => {
+          try {
+            const cached = await AsyncStorage.getItem(STORAGE_KEY);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed)) {
+                setExerciseSections(parsed);
+                setLoading(false);
+              }
+            }
+          } catch {}
+          // Revalidate in background
+          fetchExercises();
+        })();
       } else {
         setExerciseSections([]);
       }

@@ -15,7 +15,9 @@ export default function WorkoutLayout() {
           headerTintColor: "white",
           headerStyle: { backgroundColor: colors.background },
           headerBackButtonDisplayMode: "minimal",
-          headerShadowVisible: false
+          headerShadowVisible: false,
+          animation: 'slide_from_bottom',
+          animationDuration: 200
         }} 
       />
     </Stack>
