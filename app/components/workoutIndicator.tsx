@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { Text } from '@/components/ui/text';
 import { useWorkout } from '../context/WorkoutContext';
 import { router } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 
 export default function WorkoutIndicator() {
-  const { workoutState, maximizeWorkout, endWorkout } = useWorkout();
+  const { workoutState, maximizeWorkout } = useWorkout();
   const { theme } = useTheme();
   // Don't render if no active workout or if it's not minimized
   if (!workoutState.isActive || !workoutState.isMinimized) {
@@ -23,15 +24,9 @@ export default function WorkoutIndicator() {
         className="flex-1 h-full justify-center"
         onPress={handleMaximize}
       >
-        <Text className="text-white font-bold text-base">Continue Workout</Text>
+        <Text size="lg" className="text-white font-bold text-center">Continue Workout</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity 
-        className="w-10 h-10 justify-center items-center"
-        onPress={endWorkout}
-      >
-        <Text className="text-white text-lg">✕</Text>
-      </TouchableOpacity>
+    
     </View>
   );
 }

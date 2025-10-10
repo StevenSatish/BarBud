@@ -33,6 +33,7 @@ export default function WorkoutScreen() {
     minimizeWorkout,
     endWorkout,
     endWorkoutWarnings,
+    cancelWorkout,
   } = useWorkout();
   const navigationState = useRootNavigationState();
 
@@ -41,6 +42,15 @@ export default function WorkoutScreen() {
 
   const currentWorkout = workoutState.workout;
   const startTimeISO = currentWorkout?.startTimeISO;
+
+  // Always compute warnings and run effects before any early returns
+  const warnings = endWorkoutWarnings();
+  // Safely prefetch Add Exercise screen only after root navigation is ready
+  useEffect(() => {
+    if (!navigationState?.key) return;
+    // Prefetch by rendering an offscreen Link to warm bundle after nav is ready
+    // No-op here; the visible Link will be enough now that nav is mounted
+  }, [navigationState?.key]);
 
   // Timer
   useEffect(() => {
@@ -70,14 +80,6 @@ export default function WorkoutScreen() {
       </SafeAreaView>
     );
   }
-
-  const warnings = endWorkoutWarnings();
-  // Safely prefetch Add Exercise screen only after root navigation is ready
-  useEffect(() => {
-    if (!navigationState?.key) return;
-    // Prefetch by rendering an offscreen Link to warm bundle after nav is ready
-    // No-op here; the visible Link will be enough now that nav is mounted
-  }, [navigationState?.key]);
 
   return (
     <SafeAreaView className={`bg-${theme}-background flex-1`}>
@@ -175,6 +177,12 @@ export default function WorkoutScreen() {
               className={`mt-2 bg-${theme}-button`}
             >
               <ButtonText className={`text-primary-800`}>Finish Workout</ButtonText>
+            </Button>
+            <Button
+              variant="link"
+              onPress={() => cancelWorkout()}
+            >
+              <ButtonText className="text-error-700">Cancel Workout</ButtonText>
             </Button>
           </VStack>
         </ScrollView>
