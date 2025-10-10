@@ -12,7 +12,7 @@ export default function WorkoutLayout() {
         options={{ 
           headerShown: true,
           title: "Add Exercises",
-          headerTintColor: "white",
+          headerTintColor: colors.light,
           headerStyle: { backgroundColor: colors.background },
           headerBackButtonDisplayMode: "minimal",
           headerShadowVisible: false,

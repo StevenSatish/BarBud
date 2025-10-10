@@ -157,30 +157,56 @@ export const config = {
   dark: vars({
     /* Theme Colors */
 
-    /* Blue Theme */
-    '--color-blue-background': '15 23 42', /*rgb(15, 23, 42) */
-    '--color-blue-accent': '71 136 207',   /*rgb(71, 136, 207) */  /* slightly darker than 96 165 250 */
-    '--color-blue-button': '30 41 70',     /*rgb(30, 41, 70) */
+/* =========================
+   🔵 Blue Theme
+   ========================= */
+   '--color-blue-background': '10 15 28',     /* rgb(10, 15, 28)  — darker navy background */
+   '--color-blue-button':     '22 32 56',     /* rgb(22, 32, 56)  — deep blue-gray button */
+   '--color-blue-accent':     '58 112 172',   /* rgb(58, 112, 172) — muted blue accent */
+   '--color-blue-light':      '140 175 220',  /* rgb(140, 175, 220) — soft light blue highlight */
+   '--color-blue-steelGray':  '85 95 110',    /* rgb(85, 95, 110) — dark steel-blue neutral */
+   '--color-blue-lightGray':  '120 135 155',  /* rgb(120, 135, 155) — muted gray-blue panels */
 
-    /* Cyan Theme */
-    '--color-cyan-background': '12 28 32',  /*rgb(12, 28, 32) */
-    '--color-cyan-accent': '60 193 174',    /*rgb(60, 193, 174) */  /* slightly darker than 94 234 212 */
-    '--color-cyan-button': '20 40 45',      /*rgb(20, 40, 45) */
+/* =========================
+   🟦 Cyan Theme
+   ========================= */
+   '--color-cyan-background': '8 18 22',      /* rgb(8, 18, 22) — deep teal-black background */
+   '--color-cyan-button':     '18 36 44',     /* rgb(18, 36, 44) — dark cyan-gray button */
+   '--color-cyan-accent':     '45 150 160',   /* rgb(45, 150, 160) — muted teal accent */
+   '--color-cyan-light':      '130 195 200',  /* rgb(130, 195, 200) — soft pale teal highlight */
+   '--color-cyan-steelGray':  '85 105 110',   /* rgb(85, 105, 110) — dark cyan-gray neutral */
+   '--color-cyan-lightGray':  '130 150 155',  /* rgb(130, 150, 155) — desaturated cyan-gray panel */
 
-    /* Pink Theme */
-    '--color-pink-background': '32 18 28',  /*rgb(32, 18, 28) */
-    '--color-pink-accent': '219 80 153',    /*rgb(219, 80, 153) */  /* slightly darker than 244 114 182 */
-    '--color-pink-button': '59 28 48',      /*rgb(59, 28, 48) */
+/* =========================
+   💗 Pink Theme
+   ========================= */
+   '--color-pink-background': '25 12 20',     /* rgb(25, 12, 20) — dark wine background */
+   '--color-pink-button':     '45 20 35',     /* rgb(45, 20, 35) — deep burgundy-pink button */
+   '--color-pink-accent':     '185 75 130',   /* rgb(185, 75, 130) — muted rose accent */
+   '--color-pink-light':      '225 155 185',  /* rgb(225, 155, 185) — soft pink highlight */
+   '--color-pink-steelGray':  '100 85 95',    /* rgb(100, 85, 95) — gray with pink undertone */
+   '--color-pink-lightGray':  '145 130 140',  /* rgb(145, 130, 140) — desaturated rose-gray panel */
 
-    /* Green Theme */
-    '--color-green-background': '17 24 21',  /*rgb(17, 24, 21) */
-    '--color-green-accent': '102 207 140',   /*rgb(102, 207, 140) */  /* slightly darker than 134 239 172 */
-    '--color-green-button': '34 54 42',      /*rgb(34, 54, 42) */
+/* =========================
+   🟢 Green Theme
+   ========================= */
+   '--color-green-background': '8 15 10',     /* rgb(8, 15, 10) — near-black green background */
+   '--color-green-button':     '20 45 28',    /* rgb(20, 45, 28) — deep moss green button */
+   '--color-green-accent':     '70 150 95',   /* rgb(70, 150, 95) — muted forest green accent */
+   '--color-green-light':      '150 195 160', /* rgb(150, 195, 160) — pale forest highlight */
+   '--color-green-steelGray':  '90 105 95',   /* rgb(90, 105, 95) — cool gray-green neutral */
+   '--color-green-lightGray':  '140 155 145', /* rgb(140, 155, 145) — moss-gray panel */
 
-    /* Gold Theme */
-    '--color-gold-background': '30 18 12',  /*rgb(30, 18, 12) */
-    '--color-gold-accent': '223 154 95',    /*rgb(223, 154, 95) */  /* slightly darker than 253 186 116 */
-    '--color-gold-button': '60 30 20',      /*rgb(60, 30, 20) */
+/* =========================
+   🟠 Orange Theme
+   ========================= */
+   '--color-orange-background': '18 10 6',     /* rgb(18, 10, 6) — very dark brown-black background */
+   '--color-orange-button':     '45 25 15',    /* rgb(45, 25, 15) — deep bronze-orange button */
+   '--color-orange-accent':     '200 120 60',  /* rgb(200, 120, 60) — muted amber accent */
+   '--color-orange-light':      '225 175 130', /* rgb(225, 175, 130) — soft orange highlight */
+   '--color-orange-steelGray':  '100 90 80',   /* rgb(100, 90, 80) — dark neutral brown-gray */
+   '--color-orange-lightGray':  '150 135 120',
+
 
 
     /* Primary */

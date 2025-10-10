@@ -4,6 +4,7 @@ import { Box } from '@/components/ui/box';
 import WorkoutIndicator from '../components/workoutIndicator';
 import { View } from 'react-native';
 import { useTheme } from '@/app/context/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
@@ -13,9 +14,14 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           tabBarStyle: {
-            backgroundColor: colors.tabBar,
+            backgroundColor: colors.tab,
             borderTopWidth: 0,
             borderTopColor: colors.accent,
+            paddingTop: 15,
+            height: 100,
+          },
+          tabBarIconStyle: {
+            marginBottom: 4, 
           },
           headerShown: false,
           tabBarActiveTintColor: colors.accent,
@@ -26,7 +32,7 @@ export default function TabsLayout() {
           options={{
             title: 'History',
             tabBarIcon: ({ color }) => (
-              <Ionicons name="calendar-sharp" size={24} color={color} />
+              <Ionicons name="calendar-sharp" size={28} color={color} />
             ),
           }}
         />
@@ -35,7 +41,7 @@ export default function TabsLayout() {
           options={{
             title: 'Workout',
             tabBarIcon: ({ color }) => (
-              <Ionicons name="add-circle-sharp" size={24} color={color} />
+              <Ionicons name="add-circle-sharp" size={28} color={color} />
             ),
           }}
         />
@@ -44,7 +50,7 @@ export default function TabsLayout() {
           options={{
             title: 'Exercises',
             tabBarIcon: ({ color }) => (
-              <Ionicons name="barbell-outline" size={24} color={color} />
+              <Ionicons name="barbell-outline" size={28} color={color} />
             ),
           }}
         />
@@ -53,7 +59,7 @@ export default function TabsLayout() {
           options={{
             title: 'Settings',
             tabBarIcon: ({ color }) => (
-              <Ionicons name="settings" size={24} color={color} />
+              <Ionicons name="settings" size={28} color={color} />
             ),
           }}
         />

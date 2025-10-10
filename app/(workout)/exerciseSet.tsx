@@ -67,7 +67,7 @@ function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }
       </Box>
       {trackingMethods.map((method: any) => (
         <FormControl key={method} className="w-16 flex items-center justify-center" isInvalid={setInvalid[method]}>
-          <Input size="md" className="bg-background-100">
+          <Input variant="underlined" size="md" className="">
             <InputField
               className="text-typography-900 text-center text-lg"
               defaultValue={set.trackingData[method]?.toString()}

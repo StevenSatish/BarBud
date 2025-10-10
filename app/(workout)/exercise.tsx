@@ -20,7 +20,7 @@ import {
   ActionsheetDragIndicatorWrapper,
   ActionsheetBackdrop,
 } from '@/components/ui/actionsheet';
-
+import { Divider } from '@/components/ui/divider';
 import ExerciseSet from './exerciseSet';
 import { useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -98,12 +98,13 @@ function Exercise({ exercise }: Props) {
   return (
     <Box className={`w-full mb-2 bg-${theme}-background`}>
       <VStack space="md">
-        <HStack className="justify-between items-center px-2">
-          <Text size="xl" className="text-typography-900 font-bold">
+        <HStack className={`justify-between items-center px-2`}>
+          <Text size="lg" className="text-typography-900 font-bold ">
             {`${exercise.name} ${exercise.category !== 'Other' ? `(${exercise.category})` : ''}`}
           </Text>
           <Entypo name="dots-three-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)} />
         </HStack>
+        <Divider className={`bg-${theme}-button`} orientation="horizontal" />
 
         <HStack className="justify-between items-center px-1">
           <Box className="w-12 flex items-center justify-center">
@@ -143,7 +144,7 @@ function Exercise({ exercise }: Props) {
           ))}
         </VStack>
 
-        <Button className={`bg-${theme}-button`} onPress={() => addSet(exercise.instanceId)}>
+        <Button className={`bg-${theme}-accent`} onPress={() => addSet(exercise.instanceId)}>
           <ButtonText className="text-typography-800">+ Add Set</ButtonText>
         </Button>
       </VStack>

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { ChevronDownIcon } from "@/components/ui/icon";
 
-const themeOptions: ThemeType[] = ['blue', 'cyan', 'pink', 'green', 'gold'];
+const themeOptions: ThemeType[] = ['blue', 'cyan', 'pink', 'green', 'orange', ];
 
 export default function Settings() {
   const [showAlertDialog, setShowAlertDialog] = useState(false);

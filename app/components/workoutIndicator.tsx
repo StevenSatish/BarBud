@@ -18,7 +18,7 @@ export default function WorkoutIndicator() {
   };
 
   return (
-    <View className={`absolute bottom-[50px] left-0 right-0 bg-${theme}-accent flex-row h-[50px] items-center px-4 rounded-t-xl shadow-lg`}>
+    <View className={`absolute bottom-[60px] left-0 right-0 bg-${theme}-accent flex-row h-[50px] items-center px-4 rounded-t-xl shadow-lg`}>
       <TouchableOpacity 
         className="flex-1 h-full justify-center"
         onPress={handleMaximize}

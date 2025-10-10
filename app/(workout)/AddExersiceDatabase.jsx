@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { useWorkout } from '../context/WorkoutContext';
 import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
+import { Divider } from '@/components/ui/divider';
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -129,22 +130,29 @@ export default function AddExerciseDatabase() {
   const renderExerciseItem = useCallback(({ item, index, section }) => {
     const isSelected = Boolean(selectedExercises[item.id]);
     return (
-      <ExerciseItem 
-        item={item} 
-        index={index}
-        section={section}
-        isSelected={isSelected}
-        onToggle={() => handleExerciseToggle(item)}
-      />
+      <>  
+        <ExerciseItem 
+          item={item} 
+          index={index}
+          section={section}
+          isSelected={isSelected}
+          onToggle={() => handleExerciseToggle(item)}
+        />
+        {index < section.data.length - 1 && (
+          <Divider className={`bg-${theme}-accent`} orientation="horizontal" />
+        )}
+      </>
     );
   }, [selectedExercises, handleExerciseToggle]);
 
   const renderSectionHeader = ({ section }) => (
-    <View className="py-2 px-6 bg-background-100">
-      <Text className="text-white text-xl font-bold">
+    <>
+    <View className={`py-2 px-2 bg-${theme}-steelGray`}>
+      <Text className="text-white font-bold">
         {section.title}
       </Text>
     </View>
+    </>
   );
   
   const handleAddExercises = () => {
@@ -168,7 +176,7 @@ export default function AddExerciseDatabase() {
       />
       <KeyboardAvoidingView behavior="padding" className="flex-1">
         <HStack className="w-full items-center justify-between px-4 my-2">
-          <Input className="h-12 rounded-full bg-background-100 w-2/3">
+          <Input className="h-12 rounded-full bg-background-100 w-3/4">
             <InputField 
               autoComplete="off"
               placeholder="Search" 
@@ -180,18 +188,33 @@ export default function AddExerciseDatabase() {
               <Ionicons name="search" size={20} color="white" />
             </InputSlot>
           </Input>
-          <Button onPress={handleAddExercises} className={`rounded-full bg-${theme}-accent`}>
-            <ButtonText>{`Add (${Object.keys(selectedExercises).length})`}</ButtonText>
-          </Button>
+          {(() => {
+            const selectedCount = Object.keys(selectedExercises).length;
+            const isAddEnabled = selectedCount > 0;
+            return (
+              <Button
+                onPress={isAddEnabled ? handleAddExercises : undefined}
+                disabled={!isAddEnabled}
+                isDisabled={!isAddEnabled}
+                accessibilityState={{ disabled: !isAddEnabled }}
+                variant="link"
+                action="default"
+              >
+                <ButtonText className={isAddEnabled ? `text-${theme}-light` : `text-${theme}-lightGray`}>
+                  {`Add (${selectedCount})`}
+                </ButtonText>
+              </Button>
+            );
+          })()}
         </HStack>
-        <HStack className="w-full items-center justify-center gap-2">
+        <HStack className="w-full items-center justify-center gap-2 pb-1">
           <Menu
             placement="bottom"
             offset={0}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedMuscleGroup ? `bg-${theme}-accent` : ""}`}>
-                  <ButtonText>{selectedMuscleGroup || "Any Muscle Group"}</ButtonText>
+                <Button {...triggerProps} className={`rounded-full ${selectedMuscleGroup ? `bg-${theme}-light` : 'bg-background-800'}`}>
+                  <ButtonText className={`text-${theme}-background`}>{selectedMuscleGroup || "Any Muscle Group"}</ButtonText>
                 </Button>
               )
             }}
@@ -212,8 +235,8 @@ export default function AddExerciseDatabase() {
             offset={0}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedCategory ? `bg-${theme}-accent` : 'bg-background-800'}`}>
-                  <ButtonText>{selectedCategory || "Any Category"}</ButtonText>
+                <Button {...triggerProps} className={`rounded-full ${selectedCategory ? `bg-${theme}-light` : 'bg-background-800'}`}>
+                  <ButtonText >{selectedCategory || "Any Category"}</ButtonText>
                 </Button>
               )
             }}

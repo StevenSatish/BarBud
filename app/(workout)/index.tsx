@@ -139,9 +139,9 @@ export default function WorkoutScreen() {
             <WorkoutTimer elapsedSeconds={elapsedSeconds} />
           </Box>
 
-          <Box className="w-24 flex items-end pr-2">
-            <Button size="md" onPress={() => setShowEndWorkoutAlert(true)}>
-              <ButtonText>Finish</ButtonText>
+          <Box className={`w-24 flex items-end pr-2`}>
+            <Button size="md" onPress={() => setShowEndWorkoutAlert(true)} className={`bg-primary-800`}>
+              <ButtonText className={`text-secondary-0`}>Finish</ButtonText>
             </Button>
           </Box>
         </HStack>
@@ -164,17 +164,17 @@ export default function WorkoutScreen() {
 
             <Link href="/AddExersiceDatabase" asChild>
               <Button
-                className={`mt-auto bg-${theme}-accent`}
+                className={`mt-auto bg-${theme}-button`}
               >
-                <ButtonText>Add Exercise</ButtonText>
+                <ButtonText className={`text-primary-800`}>Add Exercise</ButtonText>
               </Button>
             </Link>
 
             <Button
               onPress={() => setShowEndWorkoutAlert(true)}
-              className={`mt-2 bg-${theme}-accent`}
+              className={`mt-2 bg-${theme}-button`}
             >
-              <ButtonText>Finish Workout</ButtonText>
+              <ButtonText className={`text-primary-800`}>Finish Workout</ButtonText>
             </Button>
           </VStack>
         </ScrollView>
