@@ -178,11 +178,15 @@ export default function AddExerciseDatabase() {
         <HStack className="w-full items-center justify-between px-4 my-2">
           <Input className="h-12 rounded-full bg-background-100 w-3/4">
             <InputField 
-              autoComplete="off"
-              placeholder="Search" 
-              placeholderTextColor="#9ca3af"
+              placeholder="Search"
               value={searchQuery}
               onChangeText={setSearchQuery}
+              autoCorrect={false}
+              spellCheck={false}
+              autoCapitalize="none"
+              autoComplete="off"
+              keyboardType="ascii-capable"
+              textContentType="oneTimeCode"
             />
             <InputSlot className="pr-4">
               <Ionicons name="search" size={20} color="white" />
@@ -265,6 +269,7 @@ export default function AddExerciseDatabase() {
           renderItem={renderExerciseItem}
           renderSectionHeader={renderSectionHeader}
           keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
           extraData={selectedExercises}
           initialNumToRender={20}
           maxToRenderPerBatch={100}
