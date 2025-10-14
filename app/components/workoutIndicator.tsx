@@ -14,7 +14,6 @@ export default function WorkoutIndicator() {
   }
   
   const handleMaximize = () => {
-    router.navigate('/(tabs)');
     maximizeWorkout();
   };
 

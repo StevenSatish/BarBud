@@ -58,29 +58,32 @@ function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }
   };
 
   return (
-    <HStack className={`justify-between items-center py-3 ${set.completed ? `bg-${theme}-button` : `bg-${theme}-background`}`}>
-      <Box className="w-12 flex items-center justify-center">
+    <HStack className={`items-center py-3 ${set.completed ? `bg-${theme}-button` : `bg-${theme}-background`}`}>
+      <Box className="flex-[0.75] items-center justify-center">
         <Text size="lg" className="text-typography-900 text-center">{index + 1}</Text>
       </Box>
-      <Box className="w-16 flex items-center justify-center">
+      <Box className="flex-[1] items-center justify-center">
         <Text size="lg" className="text-typography-900 text-center">-</Text>
       </Box>
       {trackingMethods.map((method: any) => (
-        <FormControl key={method} className="w-16 flex items-center justify-center" isInvalid={setInvalid[method]}>
-          <Input variant="underlined" size="md" className="">
-            <InputField
-              className="text-typography-900 text-center text-lg"
-              defaultValue={set.trackingData[method]?.toString()}
-              keyboardType="numeric"
-              onChangeText={(value) => handleInputChange(method, value)}
-              selectTextOnFocus={true}
-              textAlign="center"
-              />
-          </Input>
-        </FormControl>
+        <Box key={method} style={{ flex: 2 / trackingMethods.length }} className="items-center justify-center">
+          <FormControl className="w-full max-w-[90px]" isInvalid={setInvalid[method]}>
+            <Input className="mx-2" variant="outline" size="md">
+              <InputField
+                className="text-typography-900 text-center text-lg"
+                value={set.trackingData[method]?.toString() || ''}
+                keyboardType="numeric"
+                onChangeText={(value) => handleInputChange(method, value)}
+                selectTextOnFocus={true}
+                textAlign="center"
+                />
+            </Input>
+          </FormControl>
+        </Box>
       ))}
-      <Box className="px-2">
-        <Checkbox 
+      <Box className="flex-[0.75] items-center justify-center">
+        <Checkbox
+          className="w-full items-center justify-center"
           size="lg"
           value="completed"
           isChecked={set.completed && !Object.values(setInvalid).some(invalid => invalid)}

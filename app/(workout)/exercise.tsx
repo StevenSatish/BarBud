@@ -106,19 +106,19 @@ function Exercise({ exercise }: Props) {
         </HStack>
         <Divider className={`bg-${theme}-button`} orientation="horizontal" />
 
-        <HStack className="justify-between items-center px-1">
-          <Box className="w-12 flex items-center justify-center">
+        <HStack className="items-center">
+          <Box className="flex-[0.75] items-center justify-center">
             <Text className="text-typography-900 text-center">Set</Text>
           </Box>
-          <Box className="w-16 flex items-center justify-center">
+          <Box className="flex-[1] items-center justify-center">
             <Text className="text-typography-900 text-center">Previous</Text>
           </Box>
           {exercise.trackingMethods.map((method) => (
-            <Box key={method} className="w-16 flex items-center justify-center">
+            <Box key={method} style={{ flex: 2 / exercise.trackingMethods.length }} className="items-center justify-center">
               <Text className="text-typography-900 text-center">{capitalize(method)}</Text>
             </Box>
           ))}
-          <Box className="pr-2">
+          <Box className="flex-[0.75] items-center justify-center">
             <AntDesign name="check" size={24} color="white" />
           </Box>
         </HStack>
