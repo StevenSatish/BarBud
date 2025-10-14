@@ -11,6 +11,7 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
+import { Platform } from 'react-native';
 
 
 function AppLayout() {
@@ -22,7 +23,11 @@ function AppLayout() {
   const { workoutState } = useWorkout();
 
   if (loading) return null;
-  
+
+  const platform = Platform.OS;
+  const workoutAnimation = platform === "ios" ? "ios_from_right" : "slide_from_right";
+  const tabsAnimation = platform === "ios" ? "ios_from_left" : "slide_from_left";
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {!user ? (
@@ -31,7 +36,7 @@ function AppLayout() {
         <Stack.Screen 
           name="(workout)" 
           options={{
-            animation: "slide_from_bottom",
+            animation: workoutAnimation,
             presentation: "modal",
             headerShown: false,
           }}
@@ -39,7 +44,7 @@ function AppLayout() {
       ) : (
         <Stack.Screen name="(tabs)" 
         options={{
-          animation: "slide_from_bottom",
+          animation: tabsAnimation,
           presentation: "modal",
           headerShown: false,
         }}/>

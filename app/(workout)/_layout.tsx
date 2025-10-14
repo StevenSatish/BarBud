@@ -1,8 +1,12 @@
 import { Stack } from 'expo-router';
 import { useTheme } from '@/app/context/ThemeContext';
+import { Platform } from 'react-native';
 
 export default function WorkoutLayout() {
   const {colors} = useTheme();
+
+  const platform = Platform.OS;
+  const animation = platform === "ios" ? "ios_from_right" : "slide_from_right";
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -12,11 +16,11 @@ export default function WorkoutLayout() {
         options={{ 
           headerShown: true,
           title: "Add Exercises",
-          headerTintColor: colors.light,
+          headerTintColor: "white",
           headerStyle: { backgroundColor: colors.background },
           headerBackButtonDisplayMode: "minimal",
           headerShadowVisible: false,
-          animation: 'slide_from_bottom',
+          animation: animation,
           animationDuration: 200
         }} 
       />

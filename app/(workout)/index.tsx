@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Link, useRootNavigationState } from 'expo-router';
@@ -128,14 +128,17 @@ export default function WorkoutScreen() {
         </AlertDialog>
 
         <HStack className={`w-full py-4 px-2 bg-${theme}-background items-center justify-between`}>
-          <Box className="w-24 pl-2 flex items-start">
+          <Pressable 
+            onPress={minimizeWorkout}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
+            className="w-24 pl-2 flex items-start"
+          >
             <FontAwesome5
-              onPress={minimizeWorkout}
-              name="chevron-down"
+              name="chevron-left"
               size={24}
               color="white"
             />
-          </Box>
+          </Pressable>
 
         <Box className="flex-1 flex items-center justify-center">
             <WorkoutTimer elapsedSeconds={elapsedSeconds} />
