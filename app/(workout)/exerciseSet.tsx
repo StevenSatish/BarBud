@@ -25,6 +25,17 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
       [method]: parseInt(value) || null
     };
     updateSet(instanceId, setId, newTrackingData);
+    
+    // Check if any tracking method is now empty and unselect checkbox if so
+    const hasEmptyTracking = trackingMethods.some((trackingMethod: string) => {
+      const trackingValue = trackingMethod === method ? (parseInt(value) || null) : set.trackingData[trackingMethod];
+      return !trackingValue;
+    });
+    
+    // If any tracking method is empty and the set is currently completed, mark it as not completed
+    if (hasEmptyTracking && set.completed) {
+      updateSetCompleted(instanceId, setId, false);
+    }
   };
 
   const getPlaceholder = (method: string) => {
