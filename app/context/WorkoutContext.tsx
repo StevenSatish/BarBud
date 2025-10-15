@@ -425,6 +425,20 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     startMs: number,
     endMs: number
   ): Promise<{ sessionId: string; date: Date; instances: ExerciseInstanceInput[] }> => {
+    // Check if there are any completed sets across all exercises
+    const hasAnyCompletedSets = ws.exercises.some(ex => 
+      ex.setIds.some(id => {
+        const set = ws.setsById[id];
+        return set && set.completed;
+      })
+    );
+
+    // If no completed sets, return empty result without writing anything
+    if (!hasAnyCompletedSets) {
+      console.log('No completed sets found, skipping session write');
+      return { sessionId: '', date: new Date(), instances: [] };
+    }
+
     const sessionId = Crypto.randomUUID();
     const sessionRef = doc(FIREBASE_DB, `users/${uid}/sessions/${sessionId}`);
     const batch = writeBatch(FIREBASE_DB);
@@ -536,6 +550,19 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const writeExerciseMetricsForSession = async (uid: string, ws: WorkoutData, sessionId: string) => {
+    // Check if there are any completed sets across all exercises
+    const hasAnyCompletedSets = ws.exercises.some(ex => 
+      ex.setIds.some(id => {
+        const set = ws.setsById[id];
+        return set && set.completed;
+      })
+    );
+
+    // If no completed sets, don't write anything
+    if (!hasAnyCompletedSets) {
+      return;
+    }
+
     const lastBatch = writeBatch(FIREBASE_DB);
     const allTimeBatch = writeBatch(FIREBASE_DB);
 
@@ -546,6 +573,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const completedSets = ex.setIds
         .map(id => ws.setsById[id])
         .filter(s => s && s.completed);
+
+      // Skip exercises with no completed sets
+      if (completedSets.length === 0) continue;
 
       let lastTopWeight = 0;
       let lastTopRepsAtTopWeight = 0;
