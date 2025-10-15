@@ -14,7 +14,7 @@ import { FormControl } from "@/components/ui/form-control"
 import * as Haptics from 'expo-haptics'
 import { useTheme } from '@/app/context/ThemeContext';
 
-function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }: any) {
+function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, previousSets, setIds }: any) {
   const { updateSet, updateSetCompleted } = useWorkout();
   const [setInvalid, setSetInvalid] = useState<{ [key: string]: boolean }>({});
   const { theme } = useTheme();
@@ -24,7 +24,13 @@ function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }
       ...set.trackingData,
       [method]: parseInt(value) || null
     };
-    updateSet(exerciseId, setId, newTrackingData);
+    updateSet(instanceId, setId, newTrackingData);
+  };
+
+  const getPlaceholder = (method: string) => {
+    if (method === 'weight') return 'lbs';
+    if (method === 'time') return 's';
+    return 'reps';
   };
 
   const toggleCompleted = () => {
@@ -48,7 +54,7 @@ function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }
       }
     }
 
-    updateSetCompleted(exerciseId, setId, !set.completed);
+    updateSetCompleted(instanceId, setId, !set.completed);
 
     if (set.completed) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -63,7 +69,35 @@ function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }
         <Text size="lg" className="text-typography-900 text-center">{index + 1}</Text>
       </Box>
       <Box className="flex-[1] items-center justify-center">
-        <Text size="lg" className="text-typography-900 text-center">-</Text>
+         <Text size="md" className={`text-typography-900 text-center text-white`}>
+           {(() => {
+             // Get previous session data for this set position (not order)
+             if (!previousSets) return '-';
+             
+             // Find the current set's position in the exercise's setIds array
+             const currentSetIndex = setIds.findIndex((id: string) => id === setId);
+             if (currentSetIndex === -1) return '-';
+             
+             // Get previous data by position (0-based index)
+             const previousSet = previousSets[currentSetIndex];
+             if (!previousSet) return '-';
+             
+             const { trackingData } = previousSet;
+             const parts = [];
+             
+             if (trackingData.weight && trackingData.reps) {
+               parts.push(`${trackingData.weight} x ${trackingData.reps}`);
+             } else if (trackingData.weight && trackingData.time) {
+               parts.push(`${trackingData.weight} x ${trackingData.time}s`);
+             } else if (trackingData.reps) {
+               parts.push(`${trackingData.reps}`);
+             } else if (trackingData.time) {
+               parts.push(`${trackingData.time}s`);
+             }
+             
+             return parts.length > 0 ? parts.join(', ') : '-';
+           })()}
+         </Text>
       </Box>
       {trackingMethods.map((method: any) => (
         <Box key={method} style={{ flex: 2 / trackingMethods.length }} className="items-center justify-center">
@@ -71,6 +105,7 @@ function ExerciseSetComponent({ set, setId, index, trackingMethods, exerciseId }
             <Input className="mx-2" variant="outline" size="md">
               <InputField
                 className="text-typography-900 text-center text-lg"
+                placeholder={getPlaceholder(method)}
                 value={set.trackingData[method]?.toString() || ''}
                 keyboardType="numeric"
                 onChangeText={(value) => handleInputChange(method, value)}

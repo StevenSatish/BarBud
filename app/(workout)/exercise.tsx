@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/actionsheet';
 import { Divider } from '@/components/ui/divider';
 import ExerciseSet from './exerciseSet';
-import { useWorkout } from '../context/WorkoutContext';
+import { PreviousSetData, useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
 
 type Props = {
@@ -35,6 +35,7 @@ type Props = {
     secondaryMuscles?: string[];
     trackingMethods: string[];
     setIds: string[];
+    previousSets?: PreviousSetData[];
   };
 };
 
@@ -137,8 +138,10 @@ function Exercise({ exercise }: Props) {
                 set={set}
                 setId={set.id}
                 index={index}
+                instanceId={exercise.instanceId}
                 trackingMethods={exercise.trackingMethods}
-                exerciseId={exercise.instanceId}
+                previousSets={exercise?.previousSets}
+                setIds={exercise.setIds}
               />
             </Swipeable>
           ))}

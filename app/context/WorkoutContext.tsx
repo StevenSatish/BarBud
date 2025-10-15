@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { collection, doc, writeBatch, getDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 // ===== Types =====
 export type TrackingMethod = 'weight' | 'reps' | 'time';
@@ -25,6 +25,12 @@ export type ExerciseEntity = {
   secondaryMuscles?: string[];
   trackingMethods: TrackingMethod[];
   setIds: string[];      // ordered list of set IDs
+  previousSets?: PreviousSetData[]; // Previous session data for pre-population
+};
+
+export type PreviousSetData = {
+  order: number;
+  trackingData: Partial<Record<TrackingMethod, number | null>>;
 };
 
 export type WorkoutData = {
@@ -235,7 +241,7 @@ type Ctx = {
   maximizeWorkout: () => void;
   updateSet: (exerciseInstanceId: string, setId: string, newData: Partial<SetEntity['trackingData']>) => void;
   updateSetCompleted: (exerciseInstanceId: string, setId: string, completed: boolean) => void;
-  addExercises: (exercises: Omit<ExerciseEntity, 'setIds' | 'instanceId'>[]) => void;
+  addExercises: (exercises: Omit<ExerciseEntity, 'setIds' | 'instanceId' | 'previousSets'>[]) => Promise<void>;
   deleteSet: (exerciseInstanceId: string, setId: string) => void;
   deleteExercise: (exerciseInstanceId: string) => void;
   addSet: (exerciseInstanceId: string) => void;
@@ -307,8 +313,63 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     router.replace('/(workout)');
   };
 
-  const addExercises: Ctx['addExercises'] = exercises => {
-    dispatch({ type: 'ADD_EXERCISES', payload: exercises });
+  // Fetch previous session data for an exercise
+  const fetchPreviousSessionData = async (exerciseId: string): Promise<PreviousSetData[]> => {
+    try {
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user) return [];
+
+      // Get the most recent session for this exercise
+      const instancesRef = collection(FIREBASE_DB, `users/${user.uid}/exercises/${exerciseId}/instances`);
+      const instancesQuery = query(instancesRef, orderBy('date', 'desc'), limit(1));
+      const instancesSnapshot = await getDocs(instancesQuery);
+      
+      if (instancesSnapshot.empty) return [];
+
+      const instanceDoc = instancesSnapshot.docs[0];
+      const instanceData = instanceDoc.data();
+      const { sessionId, exerciseInSessionId } = instanceData;
+
+      // Get the session data
+      const sessionRef = doc(FIREBASE_DB, `users/${user.uid}/sessions/${sessionId}`);
+      const sessionDoc = await getDoc(sessionRef);
+      
+      if (!sessionDoc.exists()) return [];
+
+      // Get the exercise data from the session
+      const exerciseRef = doc(FIREBASE_DB, `users/${user.uid}/sessions/${sessionId}/exercises/${exerciseInSessionId}`);
+      const exerciseDoc = await getDoc(exerciseRef);
+      
+      if (!exerciseDoc.exists()) return [];
+
+      const exerciseData = exerciseDoc.data();
+      const sets = exerciseData.sets || [];
+
+      // Convert to PreviousSetData format
+      return sets.map((set: any) => ({
+        order: set.order,
+        trackingData: set.trackingData || {}
+      }));
+
+    } catch (error) {
+      console.error('Error fetching previous session data:', error);
+      return [];
+    }
+  };
+
+  const addExercises: Ctx['addExercises'] = async exercises => {
+    // Fetch previous session data for each exercise
+    const exercisesWithPreviousData = await Promise.all(
+      exercises.map(async (exercise) => {
+        const previousSets = await fetchPreviousSessionData(exercise.exerciseId);
+        return {
+          ...exercise,
+          previousSets
+        };
+      })
+    );
+    
+    dispatch({ type: 'ADD_EXERCISES', payload: exercisesWithPreviousData });
   };
 
   const deleteExercise: Ctx['deleteExercise'] = exerciseInstanceId => {
@@ -511,14 +572,18 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // Write last session metrics
       const lastRef = doc(FIREBASE_DB, `users/${uid}/exercises/${ex.exerciseId}/metrics/lastSessionMetrics`);
-      lastBatch.set(lastRef, {
+      const lastSessionData: any = {
         lastPerformedAt: startDate,
         lastSessionId: sessionId,
-        lastTopWeight: lastTopWeight || undefined,
-        lastTopRepsAtTopWeight: lastTopRepsAtTopWeight || undefined,
-        lastVolume: lastVolume || undefined,
-        lastBestEst1RM: lastBestEst1RM || undefined,
-      }, { merge: true });
+      };
+      
+      // Only include fields that have values
+      if (lastTopWeight > 0) lastSessionData.lastTopWeight = lastTopWeight;
+      if (lastTopRepsAtTopWeight > 0) lastSessionData.lastTopRepsAtTopWeight = lastTopRepsAtTopWeight;
+      if (lastVolume > 0) lastSessionData.lastVolume = lastVolume;
+      if (lastBestEst1RM > 0) lastSessionData.lastBestEst1RM = lastBestEst1RM;
+      
+      lastBatch.set(lastRef, lastSessionData, { merge: true });
 
       // Read current all-time metrics, then update totals and PRs
       const allTimeRef = doc(FIREBASE_DB, `users/${uid}/exercises/${ex.exerciseId}/metrics/allTimeMetrics`);
@@ -541,12 +606,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       const maxBestEst1RM = Math.max(prev.maxBestEst1RM ?? 0, lastBestEst1RM ?? 0);
 
-      allTimeBatch.set(allTimeRef, {
-        ...nextTotals,
-        maxTopWeight: maxTopWeight || undefined,
-        maxTopRepsAtTopWeight: maxTopRepsAtTopWeight || undefined,
-        maxBestEst1RM: maxBestEst1RM || undefined,
-      }, { merge: true });
+      const allTimeData: any = { ...nextTotals };
+      
+      // Only include fields that have values
+      if (maxTopWeight > 0) allTimeData.maxTopWeight = maxTopWeight;
+      if (maxTopRepsAtTopWeight > 0) allTimeData.maxTopRepsAtTopWeight = maxTopRepsAtTopWeight;
+      if (maxBestEst1RM > 0) allTimeData.maxBestEst1RM = maxBestEst1RM;
+      
+      allTimeBatch.set(allTimeRef, allTimeData, { merge: true });
     }
 
     await lastBatch.commit();
