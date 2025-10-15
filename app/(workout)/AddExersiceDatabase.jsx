@@ -147,7 +147,7 @@ export default function AddExerciseDatabase() {
 
   const renderSectionHeader = ({ section }) => (
     <>
-    <View className={`py-2 px-2 bg-${theme}-steelGray`}>
+    <View className={`py-2 px-2`}>
       <Text className="text-white font-bold">
         {section.title}
       </Text>

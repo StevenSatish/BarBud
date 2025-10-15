@@ -46,12 +46,14 @@ import {
 } from "@/components/ui/form-control"
 import useExerciseDB from '../context/ExerciseDBContext'
 import { Alert } from '@/components/ui/alert'
+import { useTheme } from '@/app/context/ThemeContext';
 
 export default function NewExerciseModal({ isOpen, onClose }: any) {
   const { createExercise } = useExerciseDB();
   const [category, setCategory] = useState<string>('');
   const [categoryError, setCategoryError] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
 
   const [muscleGroup, setMuscleGroup] = useState<string>('');
   const [muscleGroupError, setMuscleGroupError] = useState(false);
@@ -135,7 +137,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalBackdrop />
-      <ModalContent>
+      <ModalContent className={`bg-${theme}-background border-${theme}-lightGray`}>
         <ModalHeader>
           <Text className="text-xl font-bold text-typography-900">Create New Exercise</Text>
           <ModalCloseButton onPress={onClose}>
@@ -163,7 +165,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
             </FormControl>
 
             <HStack className="justify-between">
-              <FormControl isRequired className="w-1/2" isInvalid={categoryError}>
+              <FormControl isRequired isInvalid={categoryError} className="w-1/2">
                 <FormControlLabel>
                   <FormControlLabelText>Category</FormControlLabelText>
                 </FormControlLabel>
@@ -194,6 +196,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
                   <Select 
                     selectedValue={muscleGroup} 
                     onValueChange={(value: string) => setMuscleGroup(value)}
+
                   >
                     <SelectTrigger className="flex-row justify-between items-center">
                       <SelectInput placeholder="Select muscle" />
@@ -225,14 +228,14 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
                   </FormControlLabel>
                   <Pressable
                     onPress={() => setShowTrackingMethods(true)}
-                    className="border rounded-lg p-3 bg-background-0 border-background-300 flex-row justify-between items-center"
+                    className={`border rounded-lg p-3 border-background-300 flex-row justify-between items-center`}
                   >
                     <Text className={trackingMethods.length === 0 ? "text-gray-400" : "text-white"}>
                       {trackingMethods.length > 0 
                         ? trackingMethods.join(', ')
                         : "Select tracking methods"}
                     </Text>
-                    <ChevronDownIcon className="text-gray-400" />
+                    <ChevronDownIcon className="text-typography-900" />
                   </Pressable>
                   <FormControlHelper>
                     <FormControlHelperText>
@@ -249,7 +252,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
               </FormControlLabel>
               <Pressable
                 onPress={() => setShowSecondaryMuscles(true)}
-                className="border rounded-lg p-3 bg-background-0 border-background-300"
+                className={`border rounded-lg p-3 border-background-300 flex-row justify-between items-center`}
               >
                 <Text className={secondaryMuscleGroups.length === 0 ? "text-gray-400" : "text-white"}>
                   {secondaryMuscleGroups.length > 0 
