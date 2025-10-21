@@ -29,7 +29,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
     if (!user?.uid) return { success: false, error: "No user logged in" };
 
     // Trim whitespace from text fields
-    const trimmedExerciseName = exerciseName.trim();
+    const trimmedExerciseName = exerciseName.trim().charAt(0).toUpperCase() + exerciseName.trim().slice(1);
     const trimmedCategory = category.trim();
     const trimmedMuscleGroup = muscleGroup.trim();
     const trimmedSecondaryMuscleGroups = secondaryMuscleGroups.map(group => group.trim()).filter(group => group.length > 0);

@@ -388,6 +388,9 @@ export async function writeExerciceMetricsReps(
   const maxTopReps = Math.max(prev.maxTopReps ?? 0, lastTopReps);
   if (maxTopReps > 0) allTimeData.maxTopReps = maxTopReps;
 
+  const maxTotalReps = Math.max(prev.maxTotalReps ?? 0, lastTotalReps);
+  if (maxTotalReps > 0) allTimeData.maxTotalReps = maxTotalReps;
+
   allTimeBatch.set(allTimeRef, allTimeData, { merge: true });
 }
 

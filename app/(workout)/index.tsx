@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
-import { Link, useRootNavigationState } from 'expo-router';
+import { Link, useRootNavigationState, router } from 'expo-router';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { useWorkout } from '../context/WorkoutContext';
@@ -32,6 +32,7 @@ export default function WorkoutScreen() {
     workoutState,
     minimizeWorkout,
     endWorkout,
+    endWorkoutWithProgressions,
     endWorkoutWarnings,
     cancelWorkout,
   } = useWorkout();
@@ -63,9 +64,11 @@ export default function WorkoutScreen() {
     return () => clearInterval(interval);
   }, [startTimeISO]);
 
-  const handleConfirmFinish = () => {
-    endWorkout();
+  const handleConfirmFinish = async () => {
     setShowEndWorkoutAlert(false);
+    const res = await endWorkoutWithProgressions();
+    // Navigate to full-screen progressions page with serialized data
+    router.replace({ pathname: '/(workout)/progressions', params: { data: JSON.stringify(res) } });
   };
 
   // No active workout placeholder
@@ -156,7 +159,7 @@ export default function WorkoutScreen() {
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
+          keyboardDismissMode="none"
         >
           <VStack space="md" className="w-full px-2 pb-4">
               {currentWorkout.exercises.length > 0 &&

@@ -3,13 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { collection, doc, writeBatch, getDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { 
   writeSessionAndCollectInstances, 
   writeExerciseInstances, 
   writeExerciseMetricsForSession,
   estimate1RM,
 } from '../services/workoutDatabase';
+import { calculateProgressionsForWorkout, ProgressionsResult } from '../services/progressionService';
 
 // ===== Types =====
 export type TrackingMethod = 'weight' | 'reps' | 'time';
@@ -241,6 +242,7 @@ type Ctx = {
   workoutState: WorkoutState;
   startWorkout: () => void;
   endWorkout: () => Promise<EndSummary>;
+  endWorkoutWithProgressions: () => Promise<ProgressionsResult>;
   endWorkoutWarnings: () => WarningItem[];
   cancelWorkout: () => void;
   minimizeWorkout: () => void;
@@ -508,10 +510,51 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return summary;
   };
 
+  const endWorkoutWithProgressions = async (): Promise<ProgressionsResult> => {
+    const ws = state.workout;
+    if (!state.isActive || !ws) {
+      return { title: 'Workout Progressions', items: [] };
+    }
+
+    const user = FIREBASE_AUTH.currentUser;
+    const uid = user?.uid ?? '';
+
+    // 1) Compute progressions first (no writes yet)
+    const progressions = await calculateProgressionsForWorkout(uid, ws);
+
+    // 2) Kick off writes in the background on next tick so UI can render modal first
+    setTimeout(() => {
+      (async () => {
+        try {
+          if (!user) return; // skip writes if not authenticated
+
+          const start = new Date(ws.startTimeISO).getTime();
+          const end = Date.now();
+
+          const { sessionId, instances } = await writeSessionAndCollectInstances(
+            uid,
+            ws,
+            start,
+            end
+          );
+
+          await writeExerciseInstances(uid, instances);
+          await writeExerciseMetricsForSession(uid, ws, sessionId);
+        } catch (err) {
+          console.error('Failed to write session to Firestore (background):', err);
+        }
+      })();
+    }, 0);
+
+    // 3) Return progressions so UI can show popup immediately
+    return progressions;
+  };
+
   const value: Ctx = {
     workoutState: state,
     startWorkout,
     endWorkout,
+    endWorkoutWithProgressions,
     endWorkoutWarnings,
     cancelWorkout,
     minimizeWorkout,
