@@ -80,7 +80,7 @@ export default function Signup() {
             await setDoc(doc(FIREBASE_DB, 'users', response.user.uid), {
                 email: email,
                 createdAt: serverTimestamp(),
-                username: username
+                username: username.trim()
             });
             
             // 3. Copy preset exercises to user's collection

@@ -28,7 +28,13 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
     const user = FIREBASE_AUTH.currentUser;
     if (!user?.uid) return { success: false, error: "No user logged in" };
 
-    const exerciseId = `${exerciseName}-${category}`.toLowerCase().replace(/\s+/g, '-');
+    // Trim whitespace from text fields
+    const trimmedExerciseName = exerciseName.trim();
+    const trimmedCategory = category.trim();
+    const trimmedMuscleGroup = muscleGroup.trim();
+    const trimmedSecondaryMuscleGroups = secondaryMuscleGroups.map(group => group.trim()).filter(group => group.length > 0);
+
+    const exerciseId = `${trimmedExerciseName}-${trimmedCategory}`.toLowerCase().replace(/\s+/g, '-');
     
     // Check if exercise already exists
     const exerciseRef = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exerciseId}`);
@@ -39,12 +45,26 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
     }
     
     const exerciseData = {
-      name: exerciseName,
-      category,
+      name: trimmedExerciseName,
+      category: trimmedCategory,
       exerciseId,
-      muscleGroup,
-      secondaryMuscles: secondaryMuscleGroups,
-      trackingMethods: trackingMethods.map(method => method.toLowerCase())
+      muscleGroup: trimmedMuscleGroup,
+      secondaryMuscles: trimmedSecondaryMuscleGroups,
+      trackingMethods: trackingMethods.map(method => {
+        // Map single tracking method to array of individual tracking methods
+        switch (method.toLowerCase()) {
+          case 'weight x reps':
+            return ['weight', 'reps'];
+          case 'weight x time':
+            return ['weight', 'time'];
+          case 'reps':
+            return ['reps'];
+          case 'time':
+            return ['time'];
+          default:
+            return [method.toLowerCase()];
+        }
+      }).flat()
     };
 
     try {

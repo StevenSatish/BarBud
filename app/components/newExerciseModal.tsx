@@ -48,6 +48,22 @@ import useExerciseDB from '../context/ExerciseDBContext'
 import { Alert } from '@/components/ui/alert'
 import { useTheme } from '@/app/context/ThemeContext';
 
+// Separate component for the exercise name input to prevent re-renders
+const ExerciseNameInput = ({ value, onChangeText, hasError }: { value: string, onChangeText: (text: string) => void, hasError: boolean }) => (
+  <FormControl isRequired isInvalid={hasError}>
+    <FormControlLabel>
+      <FormControlLabelText>Exercise Name</FormControlLabelText>
+    </FormControlLabel>
+    <Input>
+      <InputField 
+        placeholder="Exercise Name"
+        value={value}
+        onChangeText={onChangeText}
+      />
+    </Input>
+  </FormControl>
+);
+
 export default function NewExerciseModal({ isOpen, onClose }: any) {
   const { createExercise } = useExerciseDB();
   const [category, setCategory] = useState<string>('');
@@ -64,9 +80,8 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   const [secondaryMuscleGroups, setSecondaryMuscleGroups] = useState<string[]>([]);
   const [showSecondaryMuscles, setShowSecondaryMuscles] = useState(false);
 
-  const [trackingMethods, setTrackingMethods] = useState<string[]>([]);
-  const [showTrackingMethods, setShowTrackingMethods] = useState(false);
-  const [trackingMethodsError, setTrackingMethodsError] = useState(false);
+  const [trackingMethod, setTrackingMethod] = useState<string>('');
+  const [trackingMethodError, setTrackingMethodError] = useState(false);
 
   const MUSCLE_GROUPS = [
     "Abs", "Back", "Biceps", "Chest", "Shoulders", "Quads", 
@@ -78,7 +93,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   ];
 
   const TRACKING_METHODS = [
-    "Reps", "Weight", "Time"
+    "Weight x Reps", "Weight x Time", "Reps", "Time"
   ];
 
   const handleAddExercise = async () => {
@@ -96,11 +111,11 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
     } else {
       setMuscleGroupError(false);
     }
-    if (trackingMethods.length === 0) {
-      setTrackingMethodsError(true);
+    if (!trackingMethod) {
+      setTrackingMethodError(true);
       hasErrors = true;
     } else {
-      setTrackingMethodsError(false);
+      setTrackingMethodError(false);
     }
     if (!exerciseName) {
       setExerciseNameError(true);
@@ -109,7 +124,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
       setExerciseNameError(false);
     }
     if (!hasErrors) {
-      const result = await createExercise(exerciseName, category, muscleGroup, secondaryMuscleGroups, trackingMethods);
+      const result = await createExercise(exerciseName, category, muscleGroup, secondaryMuscleGroups, [trackingMethod]);
       if (result.success) {
         onClose();
       } else {
@@ -118,13 +133,6 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
     }
   };
 
-  const toggleTrackingMethod = (method: string) => {
-    if (trackingMethods.includes(method)) {
-      setTrackingMethods(trackingMethods.filter(m => m !== method));
-    } else {
-      setTrackingMethods([...trackingMethods, method]);
-    }
-  };
 
   const toggleSecondaryMuscle = (muscle: string) => {
     if (secondaryMuscleGroups.includes(muscle)) {
@@ -151,18 +159,11 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
                 <Text className="text-white">{error}</Text>
               </Alert>
             )}
-            <FormControl isRequired isInvalid={exerciseNameError}>
-              <FormControlLabel>
-                <FormControlLabelText>Exercise Name</FormControlLabelText>
-              </FormControlLabel>
-              <Input>
-                <InputField 
-                  placeholder="Exercise Name"
-                  value={exerciseName}
-                  onChangeText={setExerciseName}
-                />
-              </Input>
-            </FormControl>
+            <ExerciseNameInput 
+              value={exerciseName}
+              onChangeText={setExerciseName}
+              hasError={exerciseNameError}
+            />
 
             <HStack className="justify-between">
               <FormControl isRequired isInvalid={categoryError} className="w-1/2">
@@ -222,21 +223,31 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
                   </FormControlHelper>
                 </FormControl>
 
-                <FormControl isRequired isInvalid={trackingMethodsError}>
+                <FormControl isRequired isInvalid={trackingMethodError}>
                   <FormControlLabel>
-                    <FormControlLabelText>Tracking Methods</FormControlLabelText>
+                    <FormControlLabelText>Tracking Method</FormControlLabelText>
                   </FormControlLabel>
-                  <Pressable
-                    onPress={() => setShowTrackingMethods(true)}
-                    className={`border rounded-lg p-3 border-background-300 flex-row justify-between items-center`}
+                  <Select 
+                    selectedValue={trackingMethod} 
+                    onValueChange={(value: string) => setTrackingMethod(value)}
                   >
-                    <Text className={trackingMethods.length === 0 ? "text-gray-400" : "text-white"}>
-                      {trackingMethods.length > 0 
-                        ? trackingMethods.join(', ')
-                        : "Select tracking methods"}
-                    </Text>
-                    <ChevronDownIcon className="text-typography-900" />
-                  </Pressable>
+                    <SelectTrigger className="flex-row justify-between items-center">
+                      <SelectInput placeholder="Select method" />
+                      <SelectIcon className="mr-2" as={ChevronDownIcon} />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        {TRACKING_METHODS.map((method) => (
+                          <SelectItem key={method} label={method} value={method} />
+                        ))}
+                        <SelectItem label="" value="" />
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
                   <FormControlHelper>
                     <FormControlHelperText>
                       How this exercise will be tracked
@@ -312,27 +323,6 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
         </ActionsheetContent>
       </Actionsheet>
 
-      <Actionsheet isOpen={showTrackingMethods} onClose={() => setShowTrackingMethods(false)}>
-        <ActionsheetBackdrop />
-        <ActionsheetContent>
-          <ActionsheetDragIndicatorWrapper>
-            <ActionsheetDragIndicator/>
-          </ActionsheetDragIndicatorWrapper>
-          {TRACKING_METHODS.map((method) => (
-            <ActionsheetItem key={method} 
-            className={`${trackingMethods.includes(method) ? "bg-[#174161]" : ""} rounded-xs`}
-            onPress={() => toggleTrackingMethod(method)}>
-              <ActionsheetItemText size="md">{method}</ActionsheetItemText>
-            </ActionsheetItem>
-          ))}
-          <ActionsheetItem onPress={() => setShowTrackingMethods(false)}>
-            <ActionsheetItemText size="md" className="text-center font-bold">Done</ActionsheetItemText>
-          </ActionsheetItem>
-          {/* blank item to add space */}
-          <ActionsheetItem>
-          </ActionsheetItem>  
-        </ActionsheetContent>   
-      </Actionsheet>
     </Modal>
   );
 } 
