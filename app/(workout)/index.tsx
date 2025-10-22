@@ -32,7 +32,6 @@ export default function WorkoutScreen() {
     workoutState,
     minimizeWorkout,
     endWorkout,
-    endWorkoutWithProgressions,
     endWorkoutWarnings,
     cancelWorkout,
   } = useWorkout();
@@ -66,7 +65,7 @@ export default function WorkoutScreen() {
 
   const handleConfirmFinish = async () => {
     setShowEndWorkoutAlert(false);
-    const res = await endWorkoutWithProgressions();
+    const res = await endWorkout();
     // Navigate to full-screen progressions page with serialized data
     router.replace({ pathname: '/(workout)/progressions', params: { data: JSON.stringify(res) } });
   };

@@ -229,7 +229,7 @@ export const writeExerciseInstances = async (uid: string, instances: ExerciseIns
 };
 
 // New metrics writers split by tracking method
-export async function writeExerciseMetricsWeightReps(
+export default async function writeExerciseMetricsWeightReps(
   uid: string,
   ex: ExerciseEntity,
   completedSets: SetEntity[],

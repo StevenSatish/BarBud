@@ -12,8 +12,14 @@ import { Button, ButtonText } from '@/components/ui/button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Confetti, ConfettiMethods } from 'react-native-fast-confetti';
 
+function formatOrdinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"] as const;
+  const v = n % 100;
+  return `${n}${(s as any)[(v - 20) % 10] || (s as any)[v] || s[0]}`;
+}
+
 type ProgressionItem = { label: string; change: string; kind: 'allTime' | 'lastSession'; exerciseId: string };
-type ProgressionsResult = { title: string; items: ProgressionItem[] };
+type ProgressionsResult = { title: string; items: ProgressionItem[]; workoutsCompletedBefore?: number };
 
 export default function ProgressionsScreen() {
   const confettiRef = useRef<ConfettiMethods>(null);
@@ -61,7 +67,12 @@ export default function ProgressionsScreen() {
       <VStack className="flex-1 px-4 py-6" space="lg">
         <Heading size="xl" className="text-typography-900 font-semibold mb-2">
           {`Congratulations${usernameFromDb ? ` ${usernameFromDb}!` : '!'}`}
-        </Heading> 
+        </Heading>
+        {typeof data.workoutsCompletedBefore === 'number' && (
+          <Text size="lg" className="text-typography-800 mb-2">
+            {`You've completed your ${formatOrdinal((data.workoutsCompletedBefore ?? 0) + 1)} workout!`}
+          </Text>
+        )}
 
         <Heading size="xl" className="text-typography-900 font-semibold mb-2">
           {data.title}

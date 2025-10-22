@@ -13,10 +13,11 @@ export type ProgressionItem = {
 export type ProgressionsResult = {
 	title: string;
 	items: ProgressionItem[];
+	workoutsCompletedBefore?: number;
 };
 
 // Dummy implementation for now: return a hardcoded value
-export async function calculateProgressionsForWorkout(
+export default async function calculateProgressionsForWorkout(
 	uid: string,
 	ws: WorkoutData
 ): Promise<ProgressionsResult> {

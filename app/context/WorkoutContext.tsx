@@ -3,14 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { collection, doc, getDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, query, orderBy, limit, getDocs, increment, setDoc } from 'firebase/firestore';
 import { 
   writeSessionAndCollectInstances, 
   writeExerciseInstances, 
   writeExerciseMetricsForSession,
   estimate1RM,
 } from '../services/workoutDatabase';
-import { calculateProgressionsForWorkout, ProgressionsResult } from '../services/progressionService';
+import calculateProgressionsForWorkout, { ProgressionsResult } from '../services/progressionService';
 
 // ===== Types =====
 export type TrackingMethod = 'weight' | 'reps' | 'time';
@@ -241,8 +241,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
 type Ctx = {
   workoutState: WorkoutState;
   startWorkout: () => void;
-  endWorkout: () => Promise<EndSummary>;
-  endWorkoutWithProgressions: () => Promise<ProgressionsResult>;
+  endWorkout: () => Promise<ProgressionsResult>;
   endWorkoutWarnings: () => WarningItem[];
   cancelWorkout: () => void;
   minimizeWorkout: () => void;
@@ -410,107 +409,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       : [];
   };
 
-  const endWorkout = async (): Promise<EndSummary> => {
-    const ws = state.workout;
-    if (!state.isActive || !ws) {
-      return { durationMin: 0, totalExercises: 0, perExercise: [], totals: { volume: 0 } };
-    }
-
-    const start = new Date(ws.startTimeISO).getTime();
-    const end = Date.now();
-    let totalVolume = 0;
-
-    const perExercise = ws.exercises.map(ex => {
-      let topWeight = 0;
-      let volume = 0;
-      let bestEst = 0;
-
-      ex.setIds.forEach(id => {
-        const s = ws.setsById[id];
-        const w = (s.trackingData.weight ?? 0) as number;
-        const r = (s.trackingData.reps ?? 0) as number;
-        if (s.completed && Number.isFinite(w) && Number.isFinite(r)) {
-          topWeight = Math.max(topWeight, w);
-          volume += w * r;
-          const e1 = estimate1RM(w, r);
-          if (e1) bestEst = Math.max(bestEst, e1);
-        }
-      });
-
-      totalVolume += volume;
-
-      return {
-        exerciseId: ex.exerciseId,
-        name: ex.name,
-        setCount: ex.setIds.length,
-        topWeight: topWeight || undefined,
-        volume: volume || undefined,
-        bestEst1RM: bestEst || undefined,
-      };
-    });
-
-    // Basic console log for now (MVP)
-    console.log('🏋️ WORKOUT COMPLETED 🏋️');
-    console.log('=====================================');
-    console.log(`Start Time: ${new Date(ws.startTimeISO)}`);
-    console.log(`End Time: ${new Date(end)}`);
-    console.log(`Duration: ${Math.max(1, Math.round((end - start) / 1000 / 60))} minutes`);
-    console.log(`Total Exercises: ${ws.exercises.length}`);
-    console.log('=====================================');
-    ws.exercises.forEach((exercise, i) => {
-      console.log(`\n${i + 1}. ${exercise.name}`);
-      console.log(`   Category: ${exercise.category}`);
-      console.log(`   Muscle Group: ${exercise.muscleGroup}`);
-      console.log(`   Tracking Methods: ${exercise.trackingMethods.join(', ')}`);
-      console.log(`   Sets: ${exercise.setIds.length}`);
-      exercise.setIds.forEach((sid, j) => {
-        const set = ws.setsById[sid];
-        console.log(`   Set ${j + 1}:`);
-        console.log(`     Completed: ${set.completed ? '✅' : '❌'}`);
-        console.log(`     Tracking Data:`, set.trackingData);
-      });
-    });
-    console.log('\n=====================================');
-    console.log('🏋️ END OF WORKOUT LOG 🏋️');
-
-    const summary: EndSummary = {
-      durationMin: Math.max(1, Math.round((end - start) / 1000 / 60)),
-      totalExercises: ws.exercises.length,
-      perExercise,
-      totals: { volume: totalVolume },
-    };
-
-    // ===== Firestore Write (sessions + subcollection exercises) =====
-    try {
-      const user = FIREBASE_AUTH.currentUser;
-      if (!user) throw new Error('Not authenticated');
-      const uid = user.uid;
-
-      // 1) Write session + subdocs, collect instance aggregates
-      const { sessionId, instances } = await writeSessionAndCollectInstances(
-        uid,
-        ws,
-        start,
-        end
-      );
-
-      // 2) Write exercise instances under users/{uid}/exercises/{exerciseId}/instances
-      await writeExerciseInstances(uid, instances);
-
-      await writeExerciseMetricsForSession(uid, ws, sessionId);
-    } catch (err) {
-      console.error('Failed to write session to Firestore:', err);
-    }
-
-    // Navigate away and reset
-    router.replace('/(tabs)');
-    AsyncStorage.removeItem(STORAGE_KEY);
-    dispatch({ type: 'CANCEL' });
-
-    return summary;
-  };
-
-  const endWorkoutWithProgressions = async (): Promise<ProgressionsResult> => {
+  const endWorkout = async (): Promise<ProgressionsResult> => {
     const ws = state.workout;
     if (!state.isActive || !ws) {
       return { title: 'Workout Progressions', items: [] };
@@ -521,6 +420,20 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // 1) Compute progressions first (no writes yet)
     const progressions = await calculateProgressionsForWorkout(uid, ws);
+
+    // 1a) Fetch workoutsCompleted BEFORE increment
+    let workoutsCompletedBefore = 0;
+    try {
+      if (uid) {
+        const userRef = doc(FIREBASE_DB, 'users', uid);
+        const snap = await getDoc(userRef);
+        const data = snap.exists() ? (snap.data() as any) : {};
+        const raw = data?.workoutsCompleted;
+        if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 0) {
+          workoutsCompletedBefore = raw;
+        }
+      }
+    } catch {}
 
     // 2) Kick off writes in the background on next tick so UI can render modal first
     setTimeout(() => {
@@ -540,6 +453,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
           await writeExerciseInstances(uid, instances);
           await writeExerciseMetricsForSession(uid, ws, sessionId);
+
+          // Increment workoutsCompleted counter on user doc
+          try {
+            const userRef = doc(FIREBASE_DB, 'users', uid);
+            await setDoc(userRef, { workoutsCompleted: increment(1) }, { merge: true });
+          } catch (e) {
+            console.error('Failed to increment workoutsCompleted (background):', e);
+          }
         } catch (err) {
           console.error('Failed to write session to Firestore (background):', err);
         }
@@ -547,14 +468,13 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, 0);
 
     // 3) Return progressions so UI can show popup immediately
-    return progressions;
+    return { ...progressions, workoutsCompletedBefore };
   };
 
   const value: Ctx = {
     workoutState: state,
     startWorkout,
     endWorkout,
-    endWorkoutWithProgressions,
     endWorkoutWarnings,
     cancelWorkout,
     minimizeWorkout,
