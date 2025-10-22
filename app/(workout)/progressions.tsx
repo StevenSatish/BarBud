@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -11,12 +11,14 @@ import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
+import { Confetti, ConfettiMethods } from 'react-native-fast-confetti';
 
 type ProgressionItem = { label: string; change: string; kind: 'allTime' | 'lastSession'; exerciseId: string };
 type ProgressionsResult = { title: string; items: ProgressionItem[] };
 
 export default function ProgressionsScreen() {
-  const { theme } = useTheme();
+  const confettiRef = useRef<ConfettiMethods>(null);
+  const { theme, colors } = useTheme();
   const { cancelWorkout } = useWorkout();
   const params = useLocalSearchParams();
   const [usernameFromDb, setUsernameFromDb] = useState<string>('');
@@ -60,11 +62,14 @@ export default function ProgressionsScreen() {
 
   return (
     <SafeAreaView className={`bg-${theme}-background flex-1`}>
-      <VStack className="flex-1 px-4 py-6" space="lg">
+      
+      <Confetti ref={confettiRef} isInfinite={false} fallDuration={6000}
+      colors={[colors['accent'], colors['light'], colors['lightGray']]} fadeOutOnEnd={true}/>
 
+      <VStack className="flex-1 px-4 py-6" space="lg">
         <Heading size="xl" className="text-typography-900 font-semibold mb-2">
           {`Congratulations${usernameFromDb ? ` ${usernameFromDb}!` : '!'}`}
-        </Heading>
+        </Heading> 
 
         <Heading size="xl" className="text-typography-900 font-semibold mb-2">
           {data.title}

@@ -1,4 +1,3 @@
-// app/services/progressionService.ts
 import { WorkoutData, ExerciseEntity, SetEntity, estimate1RM } from './workoutDatabase';
 import { doc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';

@@ -4,7 +4,6 @@ import { Box } from '@/components/ui/box';
 import WorkoutIndicator from '../components/workoutIndicator';
 import { View } from 'react-native';
 import { useTheme } from '@/app/context/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
