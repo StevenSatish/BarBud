@@ -1,4 +1,4 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import React from 'react'
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
@@ -6,6 +6,8 @@ import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard} fro
 import { Heading } from "@/components/ui/heading"
 import {signInWithEmailAndPassword  } from "firebase/auth";
 import {useAuth} from "../context/AuthProvider"
+import { doc, getDoc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VStack } from '@/components/ui/vstack';
 import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorText, FormControlHelper, FormControlHelperText, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
 import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
@@ -43,6 +45,15 @@ export default function Login() {
         try{
             const response = await signInWithEmailAndPassword(auth, email, password);
             console.log(response);
+            try {
+                const snap = await getDoc(doc(FIREBASE_DB, 'users', response.user.uid));
+                const name = (snap.data() as any)?.username;
+                if (typeof name === 'string' && name.trim()) {
+                    await AsyncStorage.setItem('username', name.trim());
+                } else {
+                    await AsyncStorage.removeItem('username');
+                }
+            } catch {}
         } catch (error: any){
             console.log(error);
             alert("Email/Password is incorrect")

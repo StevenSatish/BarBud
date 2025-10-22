@@ -1,4 +1,5 @@
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react'
 import { useState } from 'react';
 import { Redirect } from 'expo-router';
@@ -82,6 +83,10 @@ export default function Signup() {
                 createdAt: serverTimestamp(),
                 username: username.trim()
             });
+
+      try {
+        await AsyncStorage.setItem('username', username.trim());
+      } catch {}
             
             // 3. Copy preset exercises to user's collection
             const presetExercisesRef = collection(FIREBASE_DB, 'presetExercises');

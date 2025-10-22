@@ -9,8 +9,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
-import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Confetti, ConfettiMethods } from 'react-native-fast-confetti';
 
 type ProgressionItem = { label: string; change: string; kind: 'allTime' | 'lastSession'; exerciseId: string };
@@ -34,18 +33,11 @@ export default function ProgressionsScreen() {
   }, [params.data]);
 
   useEffect(() => {
-    const uid = FIREBASE_AUTH.currentUser?.uid;
-    if (!uid) return;
     (async () => {
       try {
-        const snap = await getDoc(doc(FIREBASE_DB, 'users', uid));
-        if (snap.exists()) {
-          const name = (snap.data() as any)?.username;
-          if (typeof name === 'string' && name.trim()) setUsernameFromDb(name.trim());
-        }
-      } catch (_) {
-        // ignore
-      }
+        const name = await AsyncStorage.getItem('username');
+        if (typeof name === 'string' && name.trim()) setUsernameFromDb(name.trim());
+      } catch {}
     })();
   }, []);
 
