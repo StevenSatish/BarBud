@@ -3,11 +3,13 @@ import { doc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 
 export type ProgressionItem = {
-	label: string;
-	change: string;
-	kind: 'allTime' | 'lastSession';
-	exerciseId: string;
-	category: 'standard' | 'est1RM';
+    exerciseName: string;
+    changeType: 'Best Set' | 'Total' | 'Estimated 1RM';
+    changeSpec: 'Weight' | 'Reps' | 'Time' | 'Volume' | '1RM';
+    change: string;
+    kind: 'allTime' | 'lastSession';
+    exerciseId: string;
+    category: 'standard' | 'est1RM';
 };
 
 export type ProgressionsResult = {
@@ -16,7 +18,6 @@ export type ProgressionsResult = {
 	workoutsCompletedBefore?: number;
 };
 
-// Dummy implementation for now: return a hardcoded value
 export default async function calculateProgressionsForWorkout(
 	uid: string,
 	ws: WorkoutData
@@ -106,33 +107,39 @@ export default async function calculateProgressionsForWorkout(
 
 		if (hasWeight && hasReps) {
 			// AllTime priorities
-			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevAll.maxTopWeight ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Weight`,
-					change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
-			}
+            if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevAll.maxTopWeight ?? 0)) {
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Weight',
+                    change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
+            }
 			if (!chosen && lastTopWeight === (prevAll.maxTopWeight ?? 0) && Number.isFinite(lastTopRepsAtTopWeight) && lastTopRepsAtTopWeight > (prevAll.maxTopRepsAtTopWeight ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Reps`,
-					change: formatIncrease(prevAll.maxTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Reps',
+                    change: formatIncrease(prevAll.maxTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// lastSession priorities
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevLast.lastTopWeight ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Weight`,
-					change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Weight',
+                    change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// Only consider Best Set Reps if top weight is unchanged from last session
 			if (
@@ -141,28 +148,34 @@ export default async function calculateProgressionsForWorkout(
 				Number.isFinite(lastTopRepsAtTopWeight) &&
 				lastTopRepsAtTopWeight > (prevLast.lastTopRepsAtTopWeight ?? 0)
 			) {
-				chosen = {
-					label: `${ex.name}: Best Set Reps`,
-					change: formatIncrease(prevLast.lastTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Reps',
+                    change: formatIncrease(prevLast.lastTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			if (!chosen && Number.isFinite(lastVolume) && lastVolume > (prevLast.lastVolume ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Total Volume`,
-					change: formatIncrease(prevLast.lastVolume ?? 0, lastVolume),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Total',
+                    changeSpec: 'Volume',
+                    change: formatIncrease(prevLast.lastVolume ?? 0, lastVolume),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 
 			// Independent Estimated 1RM PRs (do not affect chosen)
 			if (Number.isFinite(lastBestEst1RM) && lastBestEst1RM > (prevAll.maxBestEst1RM ?? 0)) {
 				items.push({
-					label: `${ex.name}: New Estimated 1RM!`,
+                    exerciseName: ex.name,
+                    changeType: 'Estimated 1RM',
+                    changeSpec: '1RM',
 					change: `${lastBestEst1RM}lbs`,
 					kind: 'allTime',
 					exerciseId: ex.exerciseId,
@@ -172,32 +185,38 @@ export default async function calculateProgressionsForWorkout(
 		} else if (hasWeight && hasTime) {
 			// AllTime priorities
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevAll.maxTopWeight ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Weight`,
-					change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Weight',
+                    change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			if (!chosen && lastTopWeight === (prevAll.maxTopWeight ?? 0) && Number.isFinite(lastTopTimeAtTopWeight) && lastTopTimeAtTopWeight > (prevAll.maxTopTimeAtTopWeight ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Time`,
-					change: formatIncrease(prevAll.maxTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Time',
+                    change: formatIncrease(prevAll.maxTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// lastSession priorities
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevLast.lastTopWeight ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Weight`,
-					change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Weight',
+                    change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// Only consider Best Set Time if top weight is unchanged from last session
 			if (
@@ -206,94 +225,112 @@ export default async function calculateProgressionsForWorkout(
 				Number.isFinite(lastTopTimeAtTopWeight) &&
 				lastTopTimeAtTopWeight > (prevLast.lastTopTimeAtTopWeight ?? 0)
 			) {
-				chosen = {
-					label: `${ex.name}: Best Set Time`,
-					change: formatIncrease(prevLast.lastTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Time',
+                    change: formatIncrease(prevLast.lastTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 		} else if (hasReps) {
 			// AllTime priorities
 			if (!chosen && Number.isFinite(lastTopReps) && lastTopReps > (prevAll.maxTopReps ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Reps`,
-					change: formatIncrease(prevAll.maxTopReps ?? 0, lastTopReps),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Reps',
+                    change: formatIncrease(prevAll.maxTopReps ?? 0, lastTopReps),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// AllTime lowest priority: maxTotalReps
 			if (!chosen && Number.isFinite(lastTotalReps) && lastTotalReps > (prevAll.maxTotalReps ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Total Reps`,
-					change: formatIncrease(prevAll.maxTotalReps ?? 0, lastTotalReps),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Total',
+                    changeSpec: 'Reps',
+                    change: formatIncrease(prevAll.maxTotalReps ?? 0, lastTotalReps),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// lastSession priorities
 			if (!chosen && Number.isFinite(lastTopReps) && lastTopReps > (prevLast.lastTopReps ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Reps`,
-					change: formatIncrease(prevLast.lastTopReps ?? 0, lastTopReps),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Reps',
+                    change: formatIncrease(prevLast.lastTopReps ?? 0, lastTopReps),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			if (!chosen && Number.isFinite(lastTotalReps) && lastTotalReps > (prevLast.lastTotalReps ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Total Reps`,
-					change: formatIncrease(prevLast.lastTotalReps ?? 0, lastTotalReps),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Total',
+                    changeSpec: 'Reps',
+                    change: formatIncrease(prevLast.lastTotalReps ?? 0, lastTotalReps),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 		} else if (hasTime) {
 			// AllTime priorities
 			if (!chosen && Number.isFinite(lastTopTime) && lastTopTime > (prevAll.maxTopTime ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Time`,
-					change: formatIncrease(prevAll.maxTopTime ?? 0, lastTopTime),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Time',
+                    change: formatIncrease(prevAll.maxTopTime ?? 0, lastTopTime),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// AllTime lowest priority: maxTotalTime
 			if (!chosen && Number.isFinite(lastTotalTime) && lastTotalTime > (prevAll.maxTotalTime ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Total Time`,
-					change: formatIncrease(prevAll.maxTotalTime ?? 0, lastTotalTime),
-					kind: 'allTime',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Total',
+                    changeSpec: 'Time',
+                    change: formatIncrease(prevAll.maxTotalTime ?? 0, lastTotalTime),
+                    kind: 'allTime',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// lastSession priorities
 			if (!chosen && Number.isFinite(lastTopTime) && lastTopTime > (prevLast.lastTopTime ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Best Set Time`,
-					change: formatIncrease(prevLast.lastTopTime ?? 0, lastTopTime),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Best Set',
+                    changeSpec: 'Time',
+                    change: formatIncrease(prevLast.lastTopTime ?? 0, lastTopTime),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 			// LastSession lowest priority: lastTotalTime
 			if (!chosen && Number.isFinite(lastTotalTime) && lastTotalTime > (prevLast.lastTotalTime ?? 0)) {
-				chosen = {
-					label: `${ex.name}: Total Time`,
-					change: formatIncrease(prevLast.lastTotalTime ?? 0, lastTotalTime),
-					kind: 'lastSession',
-					exerciseId: ex.exerciseId,
-					category: 'standard',
-				};
+                chosen = {
+                    exerciseName: ex.name,
+                    changeType: 'Total',
+                    changeSpec: 'Time',
+                    change: formatIncrease(prevLast.lastTotalTime ?? 0, lastTotalTime),
+                    kind: 'lastSession',
+                    exerciseId: ex.exerciseId,
+                    category: 'standard',
+                };
 			}
 		}
 

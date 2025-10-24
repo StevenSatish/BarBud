@@ -75,7 +75,7 @@ export default function ProgressionsScreen() {
         )}
 
         <Heading size="xl" className="text-typography-900 font-semibold mb-2">
-          {data.title}
+          Workout Progressions
         </Heading>
 
         {/* All-Time PRs first, preserving workout order */}
