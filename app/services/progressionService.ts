@@ -4,8 +4,8 @@ import { FIREBASE_DB } from '@/FirebaseConfig';
 
 export type ProgressionItem = {
     exerciseName: string;
-    changeType: 'Best Set' | 'Total' | 'Estimated 1RM';
-    changeSpec: 'Weight' | 'Reps' | 'Time' | 'Volume' | '1RM';
+    changeType: 'Top Set' | 'Total' | 'New Estimated';
+    changeSpec: 'Weight' | 'Reps' | 'Time' | 'Volume' | '1RM:';
     change: string;
     kind: 'allTime' | 'lastSession';
     exerciseId: string;
@@ -110,7 +110,7 @@ export default async function calculateProgressionsForWorkout(
             if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevAll.maxTopWeight ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
                     kind: 'allTime',
@@ -121,7 +121,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && lastTopWeight === (prevAll.maxTopWeight ?? 0) && Number.isFinite(lastTopRepsAtTopWeight) && lastTopRepsAtTopWeight > (prevAll.maxTopRepsAtTopWeight ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevAll.maxTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
                     kind: 'allTime',
@@ -133,7 +133,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevLast.lastTopWeight ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
                     kind: 'lastSession',
@@ -141,7 +141,7 @@ export default async function calculateProgressionsForWorkout(
                     category: 'standard',
                 };
 			}
-			// Only consider Best Set Reps if top weight is unchanged from last session
+			// Only consider Top Set Reps if top weight is unchanged from last session
 			if (
 				!chosen &&
 				lastTopWeight === (prevLast.lastTopWeight ?? 0) &&
@@ -150,7 +150,7 @@ export default async function calculateProgressionsForWorkout(
 			) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevLast.lastTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
                     kind: 'lastSession',
@@ -174,8 +174,8 @@ export default async function calculateProgressionsForWorkout(
 			if (Number.isFinite(lastBestEst1RM) && lastBestEst1RM > (prevAll.maxBestEst1RM ?? 0)) {
 				items.push({
                     exerciseName: ex.name,
-                    changeType: 'Estimated 1RM',
-                    changeSpec: '1RM',
+                    changeType: 'New Estimated',
+                    changeSpec: '1RM:',
 					change: `${lastBestEst1RM}lbs`,
 					kind: 'allTime',
 					exerciseId: ex.exerciseId,
@@ -187,7 +187,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevAll.maxTopWeight ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
                     kind: 'allTime',
@@ -198,7 +198,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && lastTopWeight === (prevAll.maxTopWeight ?? 0) && Number.isFinite(lastTopTimeAtTopWeight) && lastTopTimeAtTopWeight > (prevAll.maxTopTimeAtTopWeight ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevAll.maxTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
                     kind: 'allTime',
@@ -210,7 +210,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevLast.lastTopWeight ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
                     kind: 'lastSession',
@@ -218,7 +218,7 @@ export default async function calculateProgressionsForWorkout(
                     category: 'standard',
                 };
 			}
-			// Only consider Best Set Time if top weight is unchanged from last session
+			// Only consider Top Set Time if top weight is unchanged from last session
 			if (
 				!chosen &&
 				lastTopWeight === (prevLast.lastTopWeight ?? 0) &&
@@ -227,7 +227,7 @@ export default async function calculateProgressionsForWorkout(
 			) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevLast.lastTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
                     kind: 'lastSession',
@@ -240,7 +240,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopReps) && lastTopReps > (prevAll.maxTopReps ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevAll.maxTopReps ?? 0, lastTopReps),
                     kind: 'allTime',
@@ -264,7 +264,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopReps) && lastTopReps > (prevLast.lastTopReps ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevLast.lastTopReps ?? 0, lastTopReps),
                     kind: 'lastSession',
@@ -288,7 +288,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopTime) && lastTopTime > (prevAll.maxTopTime ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevAll.maxTopTime ?? 0, lastTopTime),
                     kind: 'allTime',
@@ -312,7 +312,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopTime) && lastTopTime > (prevLast.lastTopTime ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
-                    changeType: 'Best Set',
+                    changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevLast.lastTopTime ?? 0, lastTopTime),
                     kind: 'lastSession',
