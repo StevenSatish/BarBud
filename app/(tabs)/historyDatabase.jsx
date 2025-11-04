@@ -1,4 +1,4 @@
-import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
+import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView, Pressable } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { VStack } from '@/components/ui/vstack';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
 import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
+import { router } from 'expo-router';
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -104,38 +105,49 @@ export default function HistoryDatabase() {
     return `${d} ${d === 1 ? 'day' : 'days'} ago`;
   }, []);
 
+  const handleOpenExercise = useCallback((exercise) => {
+    try {
+      router.push({
+        pathname: '/(exerciseHistory)',
+        params: { exerciseId: exercise.id, data: JSON.stringify(exercise) },
+      });
+    } catch {}
+  }, []);
+
   const renderExerciseItem = useCallback(({ item, index, section }) => {
     const lastPerformedLabel = formatLastPerformed(item.lastPerformedAt);
     return (
-      <VStack 
-        space="xs"
-        className={``}
-        style={{
-          paddingVertical: 16,
-          paddingHorizontal: 24,
-          width: '100%'
-        }}
-      >
-        <Text className="text-xl font-bold text-typography-900">
-          {item.name} ({item.category})
-        </Text>
-        <HStack space="md" className="justify-between w-full">
-          <Text className="text-gray-400 text-base">
-            {item.muscleGroup}
+      <Pressable onPress={() => handleOpenExercise(item)}>
+        <VStack 
+          space="xs"
+          className={``}
+          style={{
+            paddingVertical: 16,
+            paddingHorizontal: 24,
+            width: '100%'
+          }}
+        >
+          <Text className="text-xl font-bold text-typography-900">
+            {item.name} ({item.category})
           </Text>
-          {lastPerformedLabel ? (
-            <HStack space="xs" className="items-center">
-              <Entypo name="back-in-time" size={12} color="gray" />
-              <Text className="text-gray-400 text-base">{lastPerformedLabel}</Text>
-            </HStack>
-          ) : null}
-        </HStack>
-        {index < section.data.length - 1 && (
-          <View className={`h-px mt-3 w-full bg-${theme}-accent`} />
-        )}
-      </VStack>
+          <HStack space="md" className="justify-between w-full">
+            <Text className="text-gray-400 text-base">
+              {item.muscleGroup}
+            </Text>
+            {lastPerformedLabel ? (
+              <HStack space="xs" className="items-center">
+                <Entypo name="back-in-time" size={12} color="gray" />
+                <Text className="text-gray-400 text-base">{lastPerformedLabel}</Text>
+              </HStack>
+            ) : null}
+          </HStack>
+          {index < section.data.length - 1 && (
+            <View className={`h-px mt-3 w-full bg-${theme}-accent`} />
+          )}
+        </VStack>
+      </Pressable>
     );
-  }, [formatLastPerformed, theme]);
+  }, [formatLastPerformed, theme, handleOpenExercise]);
 
   const renderSectionHeader = ({ section }) => (
     <View className="py-2 px-6 bg-background-100">

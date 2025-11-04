@@ -27,7 +27,7 @@ export default function Login() {
     const auth = FIREBASE_AUTH;
     const {user, loading} = useAuth();
 
-    if (user) return <Redirect href="../(tabs)" />;
+    if (user) return <Redirect href="/(tabs)" />;
 
     const submitForm = () => {
         const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;

@@ -11,7 +11,7 @@ import { Redirect } from 'expo-router';
 export default function index() {
   const router = useRouter();
   const {user, loading} = useAuth();
-    if (user) return <Redirect href="../(tabs)" />;
+    if (user) return <Redirect href="/(tabs)" />;
   
   return (
     <Box className="bg-background-0 flex-1 items-center justify-center">
@@ -23,7 +23,7 @@ export default function index() {
             variant="solid" 
             action="primary"
             className="bg-primary-500"
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/(on-startup)/login')}
           >
             <ButtonText className="font-semibold">Log in</ButtonText>
           </Button>
@@ -31,7 +31,7 @@ export default function index() {
             size="lg" 
             variant="outline"
             className="border-primary-500"
-            onPress={() => router.push('/signup')}
+            onPress={() => router.push('/(on-startup)/signup')}
           >
             <ButtonText className="text-primary-500 font-semibold">Sign up</ButtonText>
           </Button>

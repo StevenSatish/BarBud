@@ -34,10 +34,10 @@ export default function Signup() {
     const [loadingRegister, setLoading] = useState(false);
 
     const auth = FIREBASE_AUTH;
-    const {user, loading} = useAuth();
+    const {user} = useAuth();
     const { fetchExercises } = useExerciseDB();
 
-    if (user) return <Redirect href="../(tabs)" />;
+    if (user) return <Redirect href="/(tabs)" />;
 
     const submitForm = async () => {
         const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
