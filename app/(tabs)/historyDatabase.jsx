@@ -1,6 +1,6 @@
-import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView, Pressable } from 'react-native';
+import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useExerciseDB  from '../context/ExerciseDBContext';
 import { Input, InputField, InputSlot } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import Entypo from '@expo/vector-icons/Entypo';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
+import NewExerciseModal from '../components/newExerciseModal';
+import { useTheme } from '@/app/context/ThemeContext';
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -21,10 +23,12 @@ const CATEGORIES = [
 ];
 
 export default function HistoryDatabase() {
+  const { theme } = useTheme();
   const { exerciseSections, loading } = useExerciseDB();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
   
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim() && !selectedMuscleGroup && !selectedCategory) {
@@ -71,31 +75,67 @@ export default function HistoryDatabase() {
     setSelectedCategory(value === selectedCategory ? '' : value);
   };
   
-  const renderExerciseItem = ({ item, index, section }) => {
+  const formatLastPerformed = useCallback((value) => {
+    if (!value) return null;
+    let date = null;
+    try {
+      if (value && typeof value.toDate === 'function') {
+        date = value.toDate();
+      } else if (value && typeof value === 'object' && typeof value.seconds === 'number') {
+        date = new Date(value.seconds * 1000);
+      } else if (typeof value === 'number') {
+        date = new Date(value);
+      } else if (typeof value === 'string') {
+        const parsed = new Date(value);
+        if (!isNaN(parsed.getTime())) date = parsed;
+      }
+    } catch {}
+    if (!date) return null;
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (!Number.isFinite(diffMs) || diffMs < 0) return null;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hours < 24) {
+      const h = Math.max(1, hours);
+      return `${h} ${h === 1 ? 'hour' : 'hours'} ago`;
+    }
+    const days = Math.floor(hours / 24);
+    const d = Math.max(1, days);
+    return `${d} ${d === 1 ? 'day' : 'days'} ago`;
+  }, []);
+
+  const renderExerciseItem = useCallback(({ item, index, section }) => {
+    const lastPerformedLabel = formatLastPerformed(item.lastPerformedAt);
     return (
-      <Pressable onPress={() => {}}>
-        <VStack 
-          space="xs" 
-          className={`py-4 px-6 w-full ${index === section.data.length - 1 ? '' : 'border-b border-gray-200'}`}
-        >
-          <Text className="text-white text-xl font-bold">
-            {item.name} ({item.category})
+      <VStack 
+        space="xs"
+        className={``}
+        style={{
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          width: '100%'
+        }}
+      >
+        <Text className="text-xl font-bold text-typography-900">
+          {item.name} ({item.category})
+        </Text>
+        <HStack space="md" className="justify-between w-full">
+          <Text className="text-gray-400 text-base">
+            {item.muscleGroup}
           </Text>
-          <HStack space="md" className="justify-between w-full">
-            <Text className="text-gray-400 text-base">
-              {item.muscleGroup}
-            </Text>
+          {lastPerformedLabel ? (
             <HStack space="xs" className="items-center">
               <Entypo name="back-in-time" size={12} color="gray" />
-              <Text className="text-gray-400 text-base">
-                {"x days ago"}
-              </Text>
+              <Text className="text-gray-400 text-base">{lastPerformedLabel}</Text>
             </HStack>
-          </HStack>
-        </VStack>
-      </Pressable>
+          ) : null}
+        </HStack>
+        {index < section.data.length - 1 && (
+          <View className={`h-px mt-3 w-full bg-${theme}-accent`} />
+        )}
+      </VStack>
     );
-  };
+  }, [formatLastPerformed, theme]);
 
   const renderSectionHeader = ({ section }) => (
     <View className="py-2 px-6 bg-background-100">
@@ -107,35 +147,52 @@ export default function HistoryDatabase() {
   
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background-0">
+      <View className={`flex-1 items-center justify-center bg-${theme}-background`}>
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
   }
   
   return (
-    <SafeAreaView className="flex-1 bg-background-0" edges={['top', 'left', 'right']}>
+    <SafeAreaView className={`flex-1 bg-${theme}-background`} edges={['top', 'left', 'right']}>
+      <NewExerciseModal 
+        isOpen={showNewExerciseModal} 
+        onClose={() => setShowNewExerciseModal(false)} 
+      />
       <KeyboardAvoidingView behavior="padding" className="flex-1">
-        <Input className="h-12 mx-4 my-2 rounded-full bg-background-100">
-          <InputField 
-            autoComplete="off"
-            placeholder="Search" 
-            placeholderTextColor="#9ca3af"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <InputSlot className="pr-4">
-            <Ionicons name="search" size={20} color="white" />
-          </InputSlot>
-        </Input>
-        <HStack className="w-full items-center justify-center gap-5">
+        <HStack className="w-full items-center justify-between px-4 my-2">
+          <Input className="h-12 rounded-full bg-background-100 w-3/4 pr-2">
+            <InputField 
+              placeholder="Search"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCorrect={false}
+              spellCheck={false}
+              autoCapitalize="none"
+              autoComplete="off"
+              keyboardType="ascii-capable"
+              textContentType="oneTimeCode"
+            />
+            <InputSlot className="pr-4">
+              <Ionicons name="search" size={20} color="white" />
+            </InputSlot>
+          </Input>
+          <Button 
+            className="rounded-full ml-2 px-3"
+            onPress={() => setShowNewExerciseModal(true)}
+          >
+            <ButtonText>New</ButtonText>
+            <Ionicons name="add" size={18} color="black"/>
+          </Button>
+        </HStack>
+        <HStack className="w-full items-center justify-center gap-2 pb-1">
           <Menu
             placement="bottom"
             offset={0}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedMuscleGroup ? 'bg-info-200' : 'bg-background-800'}`}>
-                  <ButtonText>{selectedMuscleGroup || "Any Muscle Group"}</ButtonText>
+                <Button {...triggerProps} className={`rounded-full ${selectedMuscleGroup ? `bg-${theme}-light` : 'bg-background-800'}`}>
+                  <ButtonText className={`text-${theme}-background`}>{selectedMuscleGroup || "Any Muscle Group"}</ButtonText>
                 </Button>
               )
             }}
@@ -145,14 +202,9 @@ export default function HistoryDatabase() {
               key={group} 
               textValue={group} 
               onPress={() => handleMuscleGroupSelect(group)}
-              className={`w-40 ${selectedMuscleGroup === group ? "bg-info-200" : ""}`}
+              className={`w-40 ${selectedMuscleGroup === group ? `bg-${theme}-accent` : ""}`}
             >    
               <MenuItemLabel size="lg">{group}</MenuItemLabel>
-              {selectedMuscleGroup === group && (
-                <View style={{flexGrow: 1, alignItems: 'flex-end', paddingRight: 8}}>
-                  <Ionicons name="checkmark" size={16} color="white" />
-                </View>
-              )}
             </MenuItem>
             ))}
           </Menu>
@@ -161,8 +213,8 @@ export default function HistoryDatabase() {
             offset={0}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedCategory ? 'bg-info-200' : 'bg-background-800'}`}>
-                  <ButtonText>{selectedCategory || "Any Category"}</ButtonText>
+                <Button {...triggerProps} className={`rounded-full ${selectedCategory ? `bg-${theme}-light` : 'bg-background-800'}`}>
+                  <ButtonText >{selectedCategory || "Any Category"}</ButtonText>
                 </Button>
               )
             }}
@@ -172,14 +224,9 @@ export default function HistoryDatabase() {
               key={category} 
               textValue={category} 
               onPress={() => handleCategorySelect(category)}
-              className={selectedCategory === category ? "bg-info-200" : ""}
+              className={selectedCategory === category ? `bg-${theme}-accent` : ""}
             >    
               <MenuItemLabel size="lg">{category}</MenuItemLabel>
-              {selectedCategory === category && (
-                <View style={{flexGrow: 1, alignItems: 'flex-end', paddingRight: 8}}>
-                  <Ionicons name="checkmark" size={16} color="white" />
-                </View>
-              )}
             </MenuItem>
             ))}
           </Menu>
@@ -189,6 +236,12 @@ export default function HistoryDatabase() {
           renderItem={renderExerciseItem}
           renderSectionHeader={renderSectionHeader}
           keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
+          initialNumToRender={20}
+          maxToRenderPerBatch={100}
+          windowSize={10}
+          removeClippedSubviews={true}
+          updateCellsBatchingPeriod={50}
           contentContainerStyle={{ paddingVertical: 8 }}
           stickySectionHeadersEnabled={true}
           ListEmptyComponent={
