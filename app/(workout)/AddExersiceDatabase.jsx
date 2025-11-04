@@ -26,6 +26,35 @@ const CATEGORIES = [
 
 const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
   const { theme } = useTheme();
+  const formatLastPerformed = (value) => {
+    if (!value) return null;
+    let date = null;
+    try {
+      if (value && typeof value.toDate === 'function') {
+        date = value.toDate();
+      } else if (value && typeof value === 'object' && typeof value.seconds === 'number') {
+        date = new Date(value.seconds * 1000);
+      } else if (typeof value === 'number') {
+        date = new Date(value);
+      } else if (typeof value === 'string') {
+        const parsed = new Date(value);
+        if (!isNaN(parsed.getTime())) date = parsed;
+      }
+    } catch {}
+    if (!date) return null;
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (!Number.isFinite(diffMs) || diffMs < 0) return null;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hours < 24) {
+      const h = Math.max(1, hours);
+      return `${h} ${h === 1 ? 'hour' : 'hours'} ago`;
+    }
+    const days = Math.floor(hours / 24);
+    const d = Math.max(1, days);
+    return `${d} ${d === 1 ? 'day' : 'days'} ago`;
+  };
+  const lastPerformedLabel = formatLastPerformed(item.lastPerformedAt);
   return (
     <TouchableOpacity 
       onPress={onToggle}
@@ -47,12 +76,14 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
           <Text className="text-gray-400 text-base">
             {item.muscleGroup}
           </Text>
-          <HStack space="xs" className="items-center">
-            <Entypo name="back-in-time" size={12} color="gray" />
-            <Text className="text-gray-400 text-base">
-              {"x days ago"}
-            </Text>
-          </HStack>
+          {lastPerformedLabel ? (
+            <HStack space="xs" className="items-center">
+              <Entypo name="back-in-time" size={12} color="gray" />
+              <Text className="text-gray-400 text-base">
+                {lastPerformedLabel}
+              </Text>
+            </HStack>
+          ) : null}
         </HStack>
       </VStack>
     </TouchableOpacity>
