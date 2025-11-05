@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useNavigationState } from '@react-navigation/native';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useTheme } from '@/app/context/ThemeContext';
 import { HStack } from '@/components/ui/hstack';
@@ -12,6 +11,7 @@ import { Heading } from '@/components/ui/heading';
 import AboutTab from './about';
 import HistoryTab from './history';
 import ChartsTab from './charts';
+import { Text } from '@/components/ui/text';
 
 type TabKey = 'about' | 'history' | 'charts';
 
@@ -19,7 +19,6 @@ export default function ExerciseHistoryScreen() {
   const params = useLocalSearchParams();
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<TabKey>('about');
-  const navState = useNavigationState((s) => s);
 
   const exercise = useMemo(() => {
     try {
@@ -31,20 +30,11 @@ export default function ExerciseHistoryScreen() {
   }, [params.data]);
 
   return (
-    <View className={`flex-1 bg-${theme}-background`}>
-      <SafeAreaView edges={['top']}>
-
+      <SafeAreaView className={`flex-1 bg-${theme}-background`}>
         {/* Header with back arrow and title */}
         <HStack className={`w-full py-4 px-2 bg-${theme}-background items-center justify-between`}>
           <Pressable
             onPress={() => {
-              try {
-                // Full navigation state dump for debugging
-                // eslint-disable-next-line no-console
-                console.log('Navigation state:', JSON.stringify(navState, null, 2));
-                // eslint-disable-next-line no-console
-                console.log('router.canGoBack():', router.canGoBack());
-              } catch {}
               if (router.canGoBack()) {
                 router.back();
               } else {
@@ -52,13 +42,13 @@ export default function ExerciseHistoryScreen() {
               }
             }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
-            className="w-24 pl-2 flex items-start"
+            className="w-24 pl-3 flex items-start"
           >
             <FontAwesome5 name="chevron-down" size={28} color="white" />
           </Pressable>
 
           <Box className="flex-1 flex items-center justify-center">
-            <Heading size="lg" className="text-typography-900 font-semibold">
+            <Heading size="lg" className="text-typography-900 font-semibold text-center">
               {`${exercise?.name} ${exercise?.category !== 'Other' ? `(${exercise?.category})` : ''}`}
             </Heading>
           </Box>
@@ -90,7 +80,6 @@ export default function ExerciseHistoryScreen() {
           {activeTab === 'charts' && <ChartsTab exercise={exercise} />}
         </View>
       </SafeAreaView>
-    </View>
   );
 }
 

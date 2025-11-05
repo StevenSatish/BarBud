@@ -1,4 +1,5 @@
-import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView, Pressable } from 'react-native';
+import { View, SectionList, ActivityIndicator, KeyboardAvoidingView, Pressable } from 'react-native';
+import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +13,7 @@ import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
 import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
 import { router } from 'expo-router';
+import { Divider } from '@/components/ui/divider';
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -114,19 +116,12 @@ export default function HistoryDatabase() {
     } catch {}
   }, []);
 
-  const renderExerciseItem = useCallback(({ item, index, section }) => {
-    const lastPerformedLabel = formatLastPerformed(item.lastPerformedAt);
+  const keyExtractor = useCallback((item) => item.id, []);
+
+  const ExerciseRow = React.memo(function ExerciseRow({ item, onPress, theme, lastPerformedLabel }) {
     return (
-      <Pressable onPress={() => handleOpenExercise(item)}>
-        <VStack 
-          space="xs"
-          className={``}
-          style={{
-            paddingVertical: 16,
-            paddingHorizontal: 24,
-            width: '100%'
-          }}
-        >
+      <Pressable onPress={() => onPress(item)}>
+        <VStack space="xs" className="py-4 px-6 w-full">
           <Text className="text-xl font-bold text-typography-900">
             {item.name} ({item.category})
           </Text>
@@ -141,21 +136,32 @@ export default function HistoryDatabase() {
               </HStack>
             ) : null}
           </HStack>
-          {index < section.data.length - 1 && (
-            <View className={`h-px mt-3 w-full bg-${theme}-accent`} />
-          )}
         </VStack>
       </Pressable>
     );
+  });
+
+  const renderExerciseItem = useCallback(({ item }) => {
+    const lastPerformedLabel = formatLastPerformed(item.lastPerformedAt);
+    return (
+      <ExerciseRow
+        item={item}
+        onPress={handleOpenExercise}
+        theme={theme}
+        lastPerformedLabel={lastPerformedLabel}
+      />
+    );
   }, [formatLastPerformed, theme, handleOpenExercise]);
 
-  const renderSectionHeader = ({ section }) => (
-    <View className="py-2 px-6 bg-background-100">
-      <Text className="text-white text-xl font-bold">
-        {section.title}
-      </Text>
+  const renderSectionHeader = useCallback(({ section }) => (
+    <View className={`py-2 px-2 bg-${theme}-background`}>
+      <Text className="text-white font-bold">{section.title}</Text>
     </View>
-  );
+  ), [theme]);
+
+  const ItemSeparator = useCallback(() => (
+    <Divider className={`bg-${theme}-accent`} orientation="horizontal" />
+  ), [theme]);
   
   if (loading) {
     return (
@@ -247,15 +253,16 @@ export default function HistoryDatabase() {
           sections={filteredSections}
           renderItem={renderExerciseItem}
           renderSectionHeader={renderSectionHeader}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           keyboardShouldPersistTaps="handled"
-          initialNumToRender={20}
-          maxToRenderPerBatch={100}
-          windowSize={10}
+          initialNumToRender={12}
+          maxToRenderPerBatch={16}
+          windowSize={8}
           removeClippedSubviews={true}
           updateCellsBatchingPeriod={50}
           contentContainerStyle={{ paddingVertical: 8 }}
           stickySectionHeadersEnabled={true}
+          ItemSeparatorComponent={ItemSeparator}
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center py-20">
               <Text className="text-white text-lg">

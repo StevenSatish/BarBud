@@ -1,4 +1,5 @@
-import { View, Text, SectionList, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { View, SectionList, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo, useCallback } from 'react';
 import useExerciseDB  from '../context/ExerciseDBContext';
@@ -62,12 +63,7 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
     >
       <VStack 
         space="xs"
-        className={isSelected ? `bg-${theme}-button` : ""}
-        style={{
-          paddingVertical: 16,
-          paddingHorizontal: 24,
-          width: '100%'
-        }}
+        className={`${isSelected ? `bg-${theme}-button` : ""} py-4 px-6 w-full`}
       >
         <Text className="text-xl font-bold text-typography-900">
           {item.name} ({item.category})
@@ -158,25 +154,22 @@ export default function AddExerciseDatabase() {
     setSelectedCategory(value === selectedCategory ? '' : value);
   };
   
+  const keyExtractor = useCallback((item) => item.id, []);
+
   const renderExerciseItem = useCallback(({ item, index, section }) => {
     const isSelected = Boolean(selectedExercises[item.id]);
     return (
-      <>  
-        <ExerciseItem 
-          item={item} 
-          index={index}
-          section={section}
-          isSelected={isSelected}
-          onToggle={() => handleExerciseToggle(item)}
-        />
-        {index < section.data.length - 1 && (
-          <Divider className={`bg-${theme}-accent`} orientation="horizontal" />
-        )}
-      </>
+      <ExerciseItem 
+        item={item} 
+        index={index}
+        section={section}
+        isSelected={isSelected}
+        onToggle={() => handleExerciseToggle(item)}
+      />
     );
   }, [selectedExercises, handleExerciseToggle]);
 
-  const renderSectionHeader = ({ section }) => (
+  const renderSectionHeader = useCallback(({ section }) => (
     <>
     <View className={`py-2 px-2`}>
       <Text className="text-white font-bold">
@@ -184,7 +177,11 @@ export default function AddExerciseDatabase() {
       </Text>
     </View>
     </>
-  );
+  ), []);
+
+  const ItemSeparator = useCallback(() => (
+    <Divider className={`bg-${theme}-accent`} orientation="horizontal" />
+  ), [theme]);
   
   const handleAddExercises = () => {
     addExercises(Object.values(selectedExercises));
@@ -299,16 +296,17 @@ export default function AddExerciseDatabase() {
           sections={filteredSections}
           renderItem={renderExerciseItem}
           renderSectionHeader={renderSectionHeader}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           keyboardShouldPersistTaps="handled"
           extraData={selectedExercises}
-          initialNumToRender={20}
-          maxToRenderPerBatch={100}
-          windowSize={10}
+          initialNumToRender={12}
+          maxToRenderPerBatch={16}
+          windowSize={8}
           removeClippedSubviews={true}
           updateCellsBatchingPeriod={50}
           contentContainerStyle={{ paddingVertical: 8 }}
           stickySectionHeadersEnabled={true}
+          ItemSeparatorComponent={ItemSeparator}
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center py-20">
               <Text className="text-white text-lg">
