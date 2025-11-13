@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useTheme } from '@/app/context/ThemeContext';
+import { useAuth } from '@/app/context/AuthProvider';
 import { HStack } from '@/components/ui/hstack';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -12,13 +13,18 @@ import AboutTab from './about';
 import HistoryTab from './history';
 import ChartsTab from './charts';
 import { Text } from '@/components/ui/text';
+import { doc, getDoc } from 'firebase/firestore';
+import { FIREBASE_DB } from '@/FirebaseConfig';
 
 type TabKey = 'about' | 'history' | 'charts';
 
 export default function ExerciseHistoryScreen() {
   const params = useLocalSearchParams();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>('about');
+  const [metrics, setMetrics] = useState<Record<string, any> | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState<boolean>(true);
 
   const exercise = useMemo(() => {
     try {
@@ -28,6 +34,34 @@ export default function ExerciseHistoryScreen() {
       return {} as any;
     }
   }, [params.data]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMetrics = async () => {
+      if (!user?.uid || !exercise?.exerciseId) {
+        if (!isMounted) return;
+        setMetrics(null);
+        setMetricsLoading(false);
+        return;
+      }
+      setMetricsLoading(true);
+      try {
+        const ref = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exercise.exerciseId}/metrics/allTimeMetrics`);
+        const snap = await getDoc(ref);
+        if (!isMounted) return;
+        setMetrics(snap.exists() ? (snap.data() as Record<string, any>) : null);
+      } catch {
+        if (!isMounted) return;
+        setMetrics(null);
+      } finally {
+        if (isMounted) setMetricsLoading(false);
+      }
+    };
+    fetchMetrics();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.uid, exercise?.exerciseId]);
 
   return (
       <SafeAreaView className={`flex-1 bg-${theme}-background`}>
@@ -75,7 +109,7 @@ export default function ExerciseHistoryScreen() {
 
         {/* Content */}
         <View className="flex-1">
-          {activeTab === 'about' && <AboutTab exercise={exercise} />}
+          {activeTab === 'about' && <AboutTab exercise={exercise} metrics={metrics} loading={metricsLoading} />}
           {activeTab === 'history' && <HistoryTab exercise={exercise} />}
           {activeTab === 'charts' && <ChartsTab exercise={exercise} />}
         </View>
