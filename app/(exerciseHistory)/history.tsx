@@ -1,13 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, FlatList, Pressable } from 'react-native';
+import { View, FlatList } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/app/context/ThemeContext';
 import { useAuth } from '@/app/context/AuthProvider';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import {
   collection,
-  doc,
-  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -59,7 +57,24 @@ type SessionExerciseDoc = {
   }>;
 };
 
-export default function ExerciseHistoryTab({ exercise }: { exercise?: ExerciseProp }) {
+type Prefetched = {
+  instances?: InstanceDoc[];
+  lastDate?: Timestamp | null;
+};
+
+export default function ExerciseHistoryTab({
+  exercise,
+  prefetched,
+  providedSets,
+  providedSetsLoading,
+  onInstancesLoaded,
+}: {
+  exercise?: ExerciseProp;
+  prefetched?: Prefetched;
+  providedSets?: Record<string, SessionExerciseDoc['sets']>;
+  providedSetsLoading?: Record<string, boolean>;
+  onInstancesLoaded?: (instances: InstanceDoc[]) => void;
+}) {
   const { theme } = useTheme();
   const { user } = useAuth();
 
@@ -69,10 +84,10 @@ export default function ExerciseHistoryTab({ exercise }: { exercise?: ExercisePr
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const lastDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastDateValue, setLastDateValue] = useState<Timestamp | null>(null);
 
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [setsByInstanceId, setSetsByInstanceId] = useState<Record<string, SessionExerciseDoc['sets']>>({});
-  const [setsLoading, setSetsLoading] = useState<Record<string, boolean>>({});
+  const setsByInstanceId = providedSets ?? {};
+  const setsLoading = providedSetsLoading ?? {};
 
   const uid = user?.uid ?? '';
   const exerciseId = exercise?.exerciseId ?? '';
@@ -85,7 +100,10 @@ export default function ExerciseHistoryTab({ exercise }: { exercise?: ExercisePr
   const formatDate = (ts?: Timestamp) => {
     if (!ts) return '';
     const d = ts.toDate();
-    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const day = d.toLocaleDateString(undefined, { weekday: 'long' });
+    const date = d.toLocaleDateString();
+    return `${time}, ${day}, ${date}`;
   };
 
   const loadFirstPage = useCallback(async () => {
@@ -104,6 +122,7 @@ export default function ExerciseHistoryTab({ exercise }: { exercise?: ExercisePr
       const docs = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as InstanceDoc[];
       setInstances(docs);
       lastDocRef.current = snap.docs.length ? snap.docs[snap.docs.length - 1] : null;
+      setLastDateValue(docs.length ? docs[docs.length - 1]!.date : null);
       setHasMore(snap.docs.length === pageSize);
     } catch (e) {
       setInstances([]);
@@ -114,56 +133,45 @@ export default function ExerciseHistoryTab({ exercise }: { exercise?: ExercisePr
   }, [instancesColPath]);
 
   const loadNextPage = useCallback(async () => {
-    if (!instancesColPath || !hasMore || loadingMore || !lastDocRef.current) return;
+    if (!instancesColPath || !hasMore || loadingMore) return;
     setLoadingMore(true);
     try {
       const colRef = collection(FIREBASE_DB, instancesColPath);
-      const q = query(colRef, orderBy('date', 'desc'), startAfter(lastDocRef.current), limit(pageSize));
+      const order = orderBy('date', 'desc');
+      const cursor =
+        lastDocRef.current != null
+          ? startAfter(lastDocRef.current)
+          : lastDateValue != null
+          ? startAfter(lastDateValue)
+          : undefined;
+      const base = [colRef, order] as const;
+      // @ts-expect-error - spread conditional cursor for query
+      const q = query(...(cursor ? [...base, cursor, limit(pageSize)] : [...base, limit(pageSize)]));
       const snap = await getDocs(q);
       const docs = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as InstanceDoc[];
       setInstances(prev => [...prev, ...docs]);
       lastDocRef.current = snap.docs.length ? snap.docs[snap.docs.length - 1] : lastDocRef.current;
+      if (docs.length) setLastDateValue(docs[docs.length - 1]!.date);
       setHasMore(snap.docs.length === pageSize);
     } catch {
       // ignore
     } finally {
       setLoadingMore(false);
     }
-  }, [instancesColPath, hasMore, loadingMore]);
+  }, [instancesColPath, hasMore, loadingMore, lastDateValue]);
 
   useEffect(() => {
-    loadFirstPage();
-  }, [loadFirstPage]);
-
-  const toggleExpand = useCallback(async (instance: InstanceDoc) => {
-    const id = instance.id;
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-
-    // Lazy fetch sets on first expand
-    if (!setsByInstanceId[id] && !setsLoading[id]) {
-      setSetsLoading(prev => ({ ...prev, [id]: true }));
-      try {
-        const exerciseRef = doc(
-          FIREBASE_DB,
-          `users/${uid}/sessions/${instance.sessionId}/exercises/${instance.exerciseInSessionId}`
-        );
-        const exerciseSnap = await getDoc(exerciseRef);
-        if (exerciseSnap.exists()) {
-          const data = exerciseSnap.data() as SessionExerciseDoc;
-          const sets = Array.isArray(data.sets) ? data.sets : [];
-          // ensure sorted by order asc
-          sets.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-          setSetsByInstanceId(prev => ({ ...prev, [id]: sets }));
-        } else {
-          setSetsByInstanceId(prev => ({ ...prev, [id]: [] }));
-        }
-      } catch {
-        setSetsByInstanceId(prev => ({ ...prev, [id]: [] }));
-      } finally {
-        setSetsLoading(prev => ({ ...prev, [id]: false }));
-      }
+    // If prefetched provided, hydrate state and skip initial fetch
+    if (prefetched?.instances && prefetched.instances.length > 0) {
+      setInstances(prefetched.instances);
+      setHasMore(true);
+      setLoading(false);
+      setLastDateValue(prefetched.lastDate ?? null);
+      if (onInstancesLoaded) onInstancesLoaded(prefetched.instances as InstanceDoc[]);
+      return;
     }
-  }, [uid, setsByInstanceId, setsLoading]);
+    loadFirstPage();
+  }, [loadFirstPage, prefetched?.instances, prefetched?.lastDate, onInstancesLoaded]);
 
   const renderSetRow = (set: SessionExerciseDoc['sets'][number]) => {
     const w = set.trackingData?.weight;
@@ -171,47 +179,40 @@ export default function ExerciseHistoryTab({ exercise }: { exercise?: ExercisePr
     const t = set.trackingData?.time;
 
     let summary = '';
-    if (w != null && r != null) summary = `${w} lbs x ${r} reps`;
-    else if (w != null && t != null) summary = `${w} for ${t}s`;
+    if (w != null && r != null) summary = `${w}lbs x ${r}`;
+    else if (w != null && t != null) summary = `${w}lbs for ${t}s`;
     else if (r != null) summary = `${r} reps`;
     else if (t != null) summary = `${t} seconds`;
 
     return (
-      <HStack key={set.id} className="w-full py-1 items-center justify-between">
-        <Text className="text-typography-900">{`Set ${set.order}`}</Text>
-        <Text className="text-typography-700">{summary || '-'}</Text>
+      <HStack key={set.id} className="w-full py-1 items-center">
+        <Text size="lg" bold className="text-typography-900 w-6 text-right">{`${set.order}:`}</Text>
+        <Text size="lg" className="text-typography-900 ml-3">{summary || '-'}</Text>
       </HStack>
     );
   };
 
   const renderItem = ({ item }: { item: InstanceDoc }) => {
-    const isOpen = !!expanded[item.id];
     const sets = setsByInstanceId[item.id];
     const isLoadingSets = !!setsLoading[item.id];
 
     return (
-      <Pressable onPress={() => toggleExpand(item)}>
-        <Box className={`w-full rounded-md mb-3 px-3 py-2 bg-${theme}-card`}>
-          <VStack className="w-full gap-1">
-            <HStack className="w-full items-center justify-between">
-              <Text className="text-typography-900 font-semibold">{formatDate(item.date)}</Text>
-              <Text className="text-typography-700">
-                {typeof item.completedSetCount === 'number' ? `${item.completedSetCount} sets` : ''}
-              </Text>
-            </HStack>
+      <Box className={`w-full rounded-md mb-3 px-3 py-2 bg-${theme}-button`}>
+        <VStack className="w-full gap-1">
+          <Text className="text-typography-900 font-semibold">{formatDate(item.date)}</Text>
 
-            {isOpen ? (
-              isLoadingSets ? (
-                <HStack className="w-full py-2 items-center justify-center">
-                  <Spinner />
-                </HStack>
-              ) : (
-                <VStack className="w-full pt-2">{(sets ?? []).map(renderSetRow)}</VStack>
-              )
-            ) : null}
-          </VStack>
-        </Box>
-      </Pressable>
+          {isLoadingSets ? (
+            <HStack className="w-full py-2 items-center justify-center">
+              <Spinner />
+            </HStack>
+          ) : (
+            <VStack className="w-full pt-2">
+              <Text size="lg" bold className="text-typography-700 mb-1">Sets</Text>
+              <VStack className="w-full">{(sets ?? []).map(renderSetRow)}</VStack>
+            </VStack>
+          )}
+        </VStack>
+      </Box>
     );
   };
 
@@ -237,6 +238,10 @@ export default function ExerciseHistoryTab({ exercise }: { exercise?: ExercisePr
           onEndReachedThreshold={0.4}
           onEndReached={() => {
             if (hasMore && !loadingMore) loadNextPage();
+          }}
+          onMomentumScrollEnd={() => {
+            // notify parent to ensure sets for current batch
+            if (onInstancesLoaded) onInstancesLoaded(instances);
           }}
           ListFooterComponent={
             loadingMore ? (

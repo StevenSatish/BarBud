@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthProvider';
 import { WorkoutProvider } from './context/WorkoutContext';
 import { ExerciseDBProvider } from './context/ExerciseDBContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -51,7 +52,9 @@ function AppLayout() {
         name="(exerciseHistory)" 
         options={{
           animation: workoutAndHistoryAnimation,
-          presentation: "modal",
+          presentation: "fullScreenModal",
+          gestureEnabled: false,
+          fullScreenGestureEnabled: false,
           headerShown: false,
         }}
       />
@@ -61,19 +64,21 @@ function AppLayout() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView>
-      <GluestackUIProvider mode="dark">
-        <ThemeProvider>
-          <AuthProvider>
-            <WorkoutProvider>
-              <ExerciseDBProvider>
-                <AppLayout />
-              </ExerciseDBProvider>
-            </WorkoutProvider>
-          </AuthProvider>
-        </ThemeProvider>
-        <StatusBar style="auto" />
-      </GluestackUIProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider style={{ flex: 1 }}>
+        <GluestackUIProvider mode="dark">
+          <ThemeProvider>
+            <AuthProvider>
+              <WorkoutProvider>
+                <ExerciseDBProvider>
+                  <AppLayout />
+                </ExerciseDBProvider>
+              </WorkoutProvider>
+            </AuthProvider>
+          </ThemeProvider>
+          <StatusBar style="auto" />
+        </GluestackUIProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

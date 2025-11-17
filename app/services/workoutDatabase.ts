@@ -48,12 +48,26 @@ export type ExerciseEntity = {
 };
 
 // Helper functions (exact same as in WorkoutContext)
-export const estimate1RM = (weight?: number | null, reps?: number | null): number | undefined => {
+export const estimate1RM = (
+  weight?: number | null,
+  reps?: number | null
+): number | undefined => {
   if (weight == null || reps == null) return undefined;
   if (!Number.isFinite(weight) || !Number.isFinite(reps)) return undefined;
   if (reps <= 0 || reps > 5) return undefined;
-  return Math.round(weight / (1.0278 - (0.0278 * reps))); // Brzycki formula
+
+  const w = weight;
+  const r = reps;
+
+  if (r === 1) {
+    return Math.round(w);
+  }
+  // Epley formula 
+  const estimated1RM = w * (1 + r / 30);
+
+  return Math.round(estimated1RM);
 };
+
 
 const formatDayKey = (d: Date): string => {
   const y = d.getFullYear();
@@ -214,14 +228,14 @@ export const writeExerciseInstances = async (uid: string, instances: ExerciseIns
     };
 
     // Add optional fields only if they exist
-    if (inst.volume !== undefined) instanceDoc.volume = inst.volume;
-    if (inst.topWeight !== undefined) instanceDoc.topWeight = inst.topWeight;
-    if (inst.bestEst1RM !== undefined) instanceDoc.bestEst1RM = inst.bestEst1RM;
-    if (inst.completedRepCount !== undefined) instanceDoc.completedRepCount = inst.completedRepCount;
-    if (inst.topReps !== undefined) instanceDoc.topReps = inst.topReps;
-    if (inst.totalReps !== undefined) instanceDoc.totalReps = inst.totalReps;
-    if (inst.topTime !== undefined) instanceDoc.topTime = inst.topTime;
-    if (inst.totalTime !== undefined) instanceDoc.totalTime = inst.totalTime;
+    if (inst.volume !== undefined && inst.volume > 0) instanceDoc.volume = inst.volume;
+    if (inst.topWeight !== undefined && inst.topWeight > 0) instanceDoc.topWeight = inst.topWeight;
+    if (inst.bestEst1RM !== undefined && inst.bestEst1RM > 0) instanceDoc.bestEst1RM = inst.bestEst1RM;
+    if (inst.completedRepCount !== undefined && inst.completedRepCount > 0) instanceDoc.completedRepCount = inst.completedRepCount;
+    if (inst.topReps !== undefined && inst.topReps > 0) instanceDoc.topReps = inst.topReps;
+    if (inst.totalReps !== undefined && inst.totalReps > 0) instanceDoc.totalReps = inst.totalReps;
+    if (inst.topTime !== undefined && inst.topTime > 0) instanceDoc.topTime = inst.topTime;
+    if (inst.totalTime !== undefined && inst.totalTime > 0) instanceDoc.totalTime = inst.totalTime;
 
     batch.set(ref, instanceDoc);
   });
