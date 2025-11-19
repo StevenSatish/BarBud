@@ -8,6 +8,7 @@ import {
   LineChart,
   Grid,
   XAxis,
+  YAxis,
 } from 'react-native-svg-charts';
 import * as d3Scale from 'd3-scale';
 import * as shape from 'd3-shape';
@@ -19,6 +20,7 @@ import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+
 
 type InstanceDoc = {
   sessionId: string;
@@ -93,9 +95,6 @@ const ActivePoint = (props: any) => {
     return null;
   }
 
-  // Line x: follow the dot (snapped), not the raw finger x
-  const lineX = cx;
-
   return (
     <>
       {isPressing && (
@@ -121,6 +120,41 @@ const ActivePoint = (props: any) => {
   );
 };
 
+const AxisLines = (props: any) => {
+  const { colors } = useTheme();
+  const { width, height, contentInset } = props;
+  const { left = 0, right = 0, top = 0, bottom = 0 } = contentInset || {};
+
+  const xMinPx = left;
+  const xMaxPx = width - right;
+  const yMaxPx = top;
+  const yMinPx = height - bottom;
+
+  return (
+    <>
+      {/* Y-axis line (left) */}
+      <Line
+        x1={xMinPx}
+        x2={xMinPx}
+        y1={yMaxPx}
+        y2={yMinPx}
+        stroke={colors.lightGray}
+        strokeWidth={1}
+      />
+      {/* X-axis line (bottom) */}
+      <Line
+        x1={xMinPx}
+        x2={xMaxPx}
+        y1={yMinPx}
+        y2={yMinPx}
+        stroke={colors.lightGray}
+        strokeWidth={1}
+      />
+    </>
+  );
+};
+
+
 export default function ExerciseChartsTab({
   exercise,
   instances,
@@ -130,6 +164,7 @@ export default function ExerciseChartsTab({
   instances: InstanceDoc[];
   loading: boolean;
 }) {
+
   const { theme, colors } = useTheme();
 
   const toPoints = (field: keyof InstanceDoc): GraphPoint[] => {
@@ -272,7 +307,7 @@ export default function ExerciseChartsTab({
     [chartOptions, selectedKey],
   );
 
-  const [timeRange, setTimeRange] = useState<TimeRangeKey>('ALL');
+  const [timeRange, setTimeRange] = useState<TimeRangeKey>('3M');
 
   const addMonths = (d: Date, m: number) =>
     new Date(d.getFullYear(), d.getMonth() + m, d.getDate());
@@ -296,6 +331,18 @@ export default function ExerciseChartsTab({
     () => visiblePoints,
     [visiblePoints],
   );
+
+  const yBounds = useMemo(() => {
+    if (!chartData.length) {
+      return { yMin: 0, yMax: 0 };
+    }
+    const values = chartData.map((p) => p.value);
+    const yMin = Math.min(...values);
+    const yMax = Math.max(...values);
+    return { yMin, yMax };
+  }, [chartData]);
+
+  const { yMin, yMax } = yBounds;
 
   // Interaction state
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -413,85 +460,113 @@ export default function ExerciseChartsTab({
             <>
               <Heading
                 size="lg"
-                className="text-typography-900 mb-1 text-center"
+                className="text-typography-900 text-center"
               >
                 {selected.title}
               </Heading>
 
               {hoveredPoint ? (
-                <Text className="text-typography-700 text-center mb-1">
-                  {hoveredPoint.date.toLocaleDateString()} —{' '}
-                  {hoveredPoint.value.toFixed(1)} {selected.unit}
+                <HStack className="items-baseline">
+                <Text size="3xl" bold className="text-typography-800">
+                  {hoveredPoint.value.toFixed(1)} 
                 </Text>
+                <Text size="lg" className="text-typography-800">
+                  {selected.unit}:{' '}
+                  {hoveredPoint.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </Text>
+                </HStack>
               ) : (
-                <Text className="text-typography-500 text-center mb-1">
-                  Drag on the chart to inspect past sessions
+                <Text className="text-typography-500 text-center">
+                  Drag on the chart to see past sessions
                 </Text>
               )}
 
               <View style={{ height: 260 }} onLayout={onChartLayout}>
                 {chartData.length > 0 ? (
-                  <>
-                    <LineChart
-                      style={{ flex: 1 }}
+                  <View style={{ flex: 1, flexDirection: 'row' }}>
+                    {/* Y-axis labels */}
+                    <YAxis
                       data={chartData}
-                      xAccessor={({ item }) => item.date.getTime()}
                       yAccessor={({ item }) => item.value}
-                      xScale={d3Scale.scaleTime}
-                      svg={{
-                        stroke: selected.color,
-                        strokeWidth: 3,
-                      }}
                       contentInset={contentInset}
-                      curve={shape.curveLinear}
-                    >
-                      <Grid />
-                      <ActivePoint
-                        isPressing={isPressing}
-                        hoveredIndex={hoveredIndex}
-                        hoverX={hoverX}
-                        color={selected.color}
-                        contentInset={contentInset}
-                      />
-                    </LineChart>
-                    {/* Overlay for scrubbing */}
-                    <View
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 40,
+                      numberOfTicks={4}
+                      min={yMin}
+                      max={yMax}
+                      svg={{
+                        fill: 'white',
+                        fontSize: 14,
                       }}
-                      pointerEvents="box-only"
-                      {...panResponder.panHandlers}
                     />
 
-                    <XAxis
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                      }}
-                      data={chartData}
-                      xAccessor={({ item }) => item.date.getTime()}
-                      scale={d3Scale.scaleTime}
-                      numberOfTicks={4}
-                      contentInset={{
-                        left: contentInset.left,
-                        right: contentInset.right,
-                      }}
-                      svg={{
-                        fontSize: 12,
-                        fill: 'gray',
-                      }}
-                      formatLabel={(value) => {
-                        const d = new Date(value);
-                        return `${d.getMonth() + 1}/${d.getDate()}`;
-                      }}
-                    />
-                  </>
+                    {/* Chart + X-axis */}
+                    <View style={{ flex: 1 }}>
+                      <LineChart
+                        style={{ flex: 1 }}
+                        data={chartData}
+                        xAccessor={({ item }) => item.date.getTime()}
+                        yAccessor={({ item }) => item.value}
+                        xScale={d3Scale.scaleTime}
+                        yMin={yMin}
+                        yMax={yMax}
+                        svg={{
+                          stroke: selected.color,
+                          strokeWidth: 3,
+                        }}
+                        contentInset={contentInset}
+                        curve={shape.curveLinear}
+                      >
+                        <Grid />
+                        {/* Gray axis lines */}
+                        <AxisLines contentInset={contentInset} />
+                        <ActivePoint
+                          isPressing={isPressing}
+                          hoveredIndex={hoveredIndex}
+                          hoverX={hoverX}
+                          color={selected.color}
+                          contentInset={contentInset}
+                        />
+                      </LineChart>
+
+                      {/* Overlay for scrubbing */}
+                      <View
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 40,
+                        }}
+                        pointerEvents="box-only"
+                        {...panResponder.panHandlers}
+                      />
+
+                      {/* X-axis with month abbreviations */}
+                      <XAxis
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                        }}
+                        data={chartData}
+                        xAccessor={({ item }) => item.date.getTime()}
+                        scale={d3Scale.scaleTime}
+                        numberOfTicks={4}
+                        contentInset={{
+                          left: contentInset.left,
+                          right: contentInset.right,
+                        }}
+                        svg={{
+                          fontSize: 13,
+                          fill: 'white',
+                        }}
+                        formatLabel={(value) => {
+                          const d = new Date(value);
+                          return d.toLocaleString('default', { month: 'short' }); 
+                        }}
+                      />
+                    </View>
+                  </View>
                 ) : (
                   <View className="items-center justify-center py-10">
                     <Text className="text-typography-700">
@@ -500,6 +575,7 @@ export default function ExerciseChartsTab({
                   </View>
                 )}
               </View>
+
             </>
           )}
 
