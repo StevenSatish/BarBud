@@ -21,7 +21,6 @@ import { HStack } from '@/components/ui/hstack';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
-
 type InstanceDoc = {
   sessionId: string;
   exerciseInSessionId: string;
@@ -51,8 +50,20 @@ type ChartOption = {
   unit: string;
 };
 
+type XDomain = { xMin: number; xMax: number };
+
 const ActivePoint = (props: any) => {
-  const { y, data, hoveredIndex, color, width, height, contentInset, isPressing } = props;
+  const {
+    y,
+    data,
+    hoveredIndex,
+    color,
+    width,
+    height,
+    contentInset,
+    isPressing,
+    xDomain, // NEW
+  } = props;
 
   if (!data || !Array.isArray(data) || data.length === 0) {
     return null;
@@ -69,12 +80,12 @@ const ActivePoint = (props: any) => {
 
   const point = data[hoveredIndex] as { value: number; date: Date };
 
-  // Compute time domain from data
+  // Compute time domain (prefer explicit xDomain when provided)
   const stamps = data.map(
     (p: { value: number; date: Date }) => p.date.getTime(),
   );
-  const minTs = Math.min(...stamps);
-  const maxTs = Math.max(...stamps);
+  const minTs = xDomain?.xMin ?? Math.min(...stamps);
+  const maxTs = xDomain?.xMax ?? Math.max(...stamps);
   const tRange = maxTs - minTs || 1;
 
   const left = contentInset.left ?? 0;
@@ -83,7 +94,7 @@ const ActivePoint = (props: any) => {
   const xMaxPx = width - right;
   const xRange = xMaxPx - xMinPx || 1;
 
-  // Dot x: snapped to the data point’s timestamp
+  // Dot x: snapped to the data point’s timestamp, mapped across full domain
   const t = point.date.getTime();
   const tRatio = (t - minTs) / tRange;
   const cx = xMinPx + tRatio * xRange;
@@ -154,7 +165,6 @@ const AxisLines = (props: any) => {
   );
 };
 
-
 export default function ExerciseChartsTab({
   exercise,
   instances,
@@ -164,7 +174,6 @@ export default function ExerciseChartsTab({
   instances: InstanceDoc[];
   loading: boolean;
 }) {
-
   const { theme, colors } = useTheme();
 
   const toPoints = (field: keyof InstanceDoc): GraphPoint[] => {
@@ -312,26 +321,50 @@ export default function ExerciseChartsTab({
   const addMonths = (d: Date, m: number) =>
     new Date(d.getFullYear(), d.getMonth() + m, d.getDate());
 
-  const visiblePoints = useMemo(() => {
-    if (!selected) return [] as GraphPoint[];
-    const points = [...selected.points].sort(
+  // --- X domain for current selection/time range (in timestamps) --- // NEW
+  const xDomain: XDomain | null = useMemo(() => {
+    if (!selected) return null;
+    const all = [...selected.points].sort(
       (a, b) => a.date.getTime() - b.date.getTime(),
     );
-    if (!points.length) return [];
-    const endDate = points[points.length - 1]?.date ?? new Date();
-    if (timeRange === 'ALL') return points;
-    const months = timeRange === '3M' ? -3 : timeRange === '6M' ? -6 : -12;
-    const startDate = addMonths(endDate, months);
-    return points.filter(
-      (p) => p.date >= startDate && p.date <= endDate,
-    );
+    if (!all.length) return null;
+
+    if (timeRange === 'ALL') {
+      return {
+        xMin: all[0].date.getTime(),
+        xMax: all[all.length - 1].date.getTime(),
+      };
+    }
+
+    const now = new Date();
+    const monthsBack =
+      timeRange === '3M' ? -3 : timeRange === '6M' ? -6 : -12;
+    const start = addMonths(now, monthsBack);
+
+    return {
+      xMin: start.getTime(),
+      xMax: now.getTime(),
+    };
   }, [selected, timeRange]);
+
+  // Points actually visible for plotting (clipped to domain) --- // UPDATED
+  const visiblePoints = useMemo(() => {
+    if (!selected || !xDomain) return [] as GraphPoint[];
+    const { xMin, xMax } = xDomain;
+    return selected.points
+      .filter((p) => {
+        const t = p.date.getTime();
+        return t >= xMin && t <= xMax;
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [selected, xDomain]);
 
   const chartData: GraphPoint[] = useMemo(
     () => visiblePoints,
     [visiblePoints],
   );
 
+  // Y bounds unchanged
   const yBounds = useMemo(() => {
     if (!chartData.length) {
       return { yMin: 0, yMax: 0 };
@@ -343,6 +376,22 @@ export default function ExerciseChartsTab({
   }, [chartData]);
 
   const { yMin, yMax } = yBounds;
+
+  // XAxis data: pad with domain edges so axis always spans full window --- // NEW
+  const xAxisData: GraphPoint[] = useMemo(() => {
+    if (!xDomain) return chartData;
+    const start = new Date(xDomain.xMin);
+    const end = new Date(xDomain.xMax);
+    // We don't care about `value` for XAxis; any number works
+    const firstVal = chartData[0]?.value ?? 0;
+    const lastVal = chartData[chartData.length - 1]?.value ?? 0;
+    const padded: GraphPoint[] = [
+      { value: firstVal, date: start },
+      ...chartData,
+      { value: lastVal, date: end },
+    ];
+    return padded;
+  }, [chartData, xDomain]);
 
   // Interaction state
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -366,14 +415,14 @@ export default function ExerciseChartsTab({
 
   const contentInset = { top: 20, bottom: 20, left: 10, right: 10 };
 
+  // timeStats for scrubbing = full domain, not just data extent --- // UPDATED
   const timeStats = useMemo(() => {
-    if (!chartData.length) return null;
-    const stamps = chartData.map((p) => p.date.getTime());
+    if (!xDomain) return null;
     return {
-      min: Math.min(...stamps),
-      max: Math.max(...stamps),
+      min: xDomain.xMin,
+      max: xDomain.xMax,
     };
-  }, [chartData]);
+  }, [xDomain]);
 
   const onChartLayout = (e: LayoutChangeEvent) => {
     setChartWidth(e.nativeEvent.layout.width);
@@ -467,13 +516,17 @@ export default function ExerciseChartsTab({
 
               {hoveredPoint ? (
                 <HStack className="items-baseline">
-                <Text size="3xl" bold className="text-typography-800">
-                  {hoveredPoint.value.toFixed(1)} 
-                </Text>
-                <Text size="lg" className="text-typography-800">
-                  {selected.unit}:{' '}
-                  {hoveredPoint.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </Text>
+                  <Text size="3xl" bold className="text-typography-800">
+                    {hoveredPoint.value.toFixed(1)}
+                  </Text>
+                  <Text size="lg" className="text-typography-800">
+                    {selected.unit}:{' '}
+                    {hoveredPoint.date.toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </Text>
                 </HStack>
               ) : (
                 <Text className="text-typography-500 text-center">
@@ -482,7 +535,7 @@ export default function ExerciseChartsTab({
               )}
 
               <View style={{ height: 260 }} onLayout={onChartLayout}>
-                {chartData.length > 0 ? (
+                {chartData.length > 0 && xDomain ? (
                   <View style={{ flex: 1, flexDirection: 'row' }}>
                     {/* Y-axis labels */}
                     <YAxis
@@ -506,6 +559,8 @@ export default function ExerciseChartsTab({
                         xAccessor={({ item }) => item.date.getTime()}
                         yAccessor={({ item }) => item.value}
                         xScale={d3Scale.scaleTime}
+                        xMin={xDomain.xMin}   // NEW: enforce full time window
+                        xMax={xDomain.xMax}
                         yMin={yMin}
                         yMax={yMax}
                         svg={{
@@ -516,7 +571,6 @@ export default function ExerciseChartsTab({
                         curve={shape.curveLinear}
                       >
                         <Grid />
-                        {/* Gray axis lines */}
                         <AxisLines contentInset={contentInset} />
                         <ActivePoint
                           isPressing={isPressing}
@@ -524,6 +578,7 @@ export default function ExerciseChartsTab({
                           hoverX={hoverX}
                           color={selected.color}
                           contentInset={contentInset}
+                          xDomain={xDomain}
                         />
                       </LineChart>
 
@@ -540,7 +595,7 @@ export default function ExerciseChartsTab({
                         {...panResponder.panHandlers}
                       />
 
-                      {/* X-axis with month abbreviations */}
+                      {/* X-axis spans full domain via padded data */}
                       <XAxis
                         style={{
                           position: 'absolute',
@@ -548,7 +603,7 @@ export default function ExerciseChartsTab({
                           right: 0,
                           bottom: 0,
                         }}
-                        data={chartData}
+                        data={xAxisData}
                         xAccessor={({ item }) => item.date.getTime()}
                         scale={d3Scale.scaleTime}
                         numberOfTicks={4}
@@ -562,7 +617,9 @@ export default function ExerciseChartsTab({
                         }}
                         formatLabel={(value) => {
                           const d = new Date(value);
-                          return d.toLocaleString('default', { month: 'short' }); 
+                          return d.toLocaleString('default', {
+                            month: 'short',
+                          });
                         }}
                       />
                     </View>
@@ -575,7 +632,6 @@ export default function ExerciseChartsTab({
                   </View>
                 )}
               </View>
-
             </>
           )}
 
