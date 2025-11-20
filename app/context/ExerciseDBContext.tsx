@@ -82,7 +82,6 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       setLoading(true);
       const currentUser = FIREBASE_AUTH.currentUser;
       if (!currentUser) {
-        console.log('No user is signed in');
         setLoading(false);
         return;
       }

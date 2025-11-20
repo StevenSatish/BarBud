@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Confetti from 'react-native-confetti';
 import { useLocalSearchParams } from "expo-router";
 import { useTheme } from "@/app/context/ThemeContext";
 import { useWorkout } from "@/app/context/WorkoutContext";
@@ -9,7 +10,6 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Confetti, ConfettiMethods } from "react-native-fast-confetti";
 
 function formatOrdinal(n: number): string {
   const s = ["th", "st", "nd", "rd"] as const;
@@ -32,7 +32,7 @@ type ProgressionsResult = {
 };
 
 export default function ProgressionsScreen() {
-  const confettiRef = useRef<ConfettiMethods>(null);
+  const confettiRef = useRef<any>(null);
   const { theme, colors } = useTheme();
   const { cancelWorkout } = useWorkout();
   const params = useLocalSearchParams();
@@ -103,15 +103,22 @@ export default function ProgressionsScreen() {
     [data.items]
   );
 
+  useEffect(() => {
+    const ref = confettiRef.current;
+    try { ref?.startConfetti?.(); } catch {}
+    return () => { try { ref?.stopConfetti?.(); } catch {} };
+  }, []);
+
   return (
     <SafeAreaView className={`bg-${theme}-background flex-1`}>
-      <Confetti
-        ref={confettiRef}
-        isInfinite={false}
-        fallDuration={6000}
-        colors={[colors["accent"], colors["light"], colors["lightGray"]]}
-        fadeOutOnEnd={true}
-      />
+        <Confetti
+          ref={(r: any) => (confettiRef.current = r)}
+          untilStopped={false}
+          duration={2000}
+          colors={[colors.accent, colors.light, colors.lightGray]}
+          size={1}
+          bsize={1}
+        />
 
       <VStack className="flex-1 px-4 py-6" space="lg">
         <Heading size="xl" className="text-typography-900 font-semibold mb-2">

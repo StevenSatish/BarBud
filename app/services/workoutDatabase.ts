@@ -93,7 +93,6 @@ export const writeSessionAndCollectInstances = async (
 
   // If no completed sets, return empty result without writing anything
   if (!hasAnyCompletedSets) {
-    console.log('No completed sets found, skipping session write');
     return { sessionId: '', date: new Date(), instances: [] };
   }
 

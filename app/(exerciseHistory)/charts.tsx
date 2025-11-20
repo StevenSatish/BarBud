@@ -251,7 +251,7 @@ export default function ExerciseChartsTab({
           key: 'volume',
           title: 'Volume',
           points: series.volume,
-          color: colors.steelGray,
+          color: colors.accent,
           unit: 'lbs',
         });
     } else if (hasWeight && hasTime) {

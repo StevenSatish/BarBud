@@ -44,7 +44,6 @@ export default function Login() {
         setLoading(true)
         try{
             const response = await signInWithEmailAndPassword(auth, email, password);
-            console.log(response);
             try {
                 const snap = await getDoc(doc(FIREBASE_DB, 'users', response.user.uid));
                 const name = (snap.data() as any)?.username;
@@ -55,7 +54,6 @@ export default function Login() {
                 }
             } catch {}
         } catch (error: any){
-            console.log(error);
             alert("Email/Password is incorrect")
         } finally {
             setLoading(false);

@@ -76,7 +76,6 @@ export default function Signup() {
         setLoading(true);
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
-            console.log(response);
             
             await setDoc(doc(FIREBASE_DB, 'users', response.user.uid), {
                 email: email,
@@ -110,11 +109,8 @@ export default function Signup() {
             // Commit the batch, then refresh exercise cache
             await batch.commit();
             await fetchExercises();
-            
-            console.log("User profile and exercises created successfully");
-            
+                        
         } catch (error: any) {
-            console.log(error);
             if (error.code === "auth/email-already-in-use") {
                 alert("Email is already in use, try logging in!");
             } else {
