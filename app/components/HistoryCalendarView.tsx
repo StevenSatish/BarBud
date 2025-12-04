@@ -188,11 +188,17 @@ export default function HistoryCalendarView() {
 		return !!loadedMonths[mk];
 	}, [selectedDayKey, loadedMonths]);
 
+	const calendarKey = useMemo(() => {
+		// Changing key forces Calendar to remount and pick up new theme
+		return `${theme}-${colors.background}-${colors.accent}-${colors.light}`;
+	}, [theme, colors.background, colors.accent, colors.light]);
+
 	return (
 		<ScrollView className={`bg-${theme}-background`}>
 			<View className="pt-2 pb-2 px-3">
-				<View className="bg-background-900 rounded-2xl">
+				<View className={`rounded-2xl bg-${theme}-button`}>
 				<Calendar
+					key={calendarKey}
 					style={{
 						borderRadius: 12,
 						width: '100%',
