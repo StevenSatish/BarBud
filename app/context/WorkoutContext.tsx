@@ -8,7 +8,6 @@ import {
   writeSessionAndCollectInstances, 
   writeExerciseInstances, 
   writeExerciseMetricsForSession,
-  estimate1RM,
 } from '../services/workoutDatabase';
 import calculateProgressionsForWorkout, { ProgressionsResult } from '../services/progressionService';
 
@@ -76,6 +75,7 @@ type Action =
   | { type: 'MAXIMIZE' }
   | { type: 'HYDRATE'; payload: WorkoutState }
   | { type: 'ADD_EXERCISES'; payload: Omit<ExerciseEntity, 'setIds' | 'instanceId'>[] }
+  | { type: 'REPLACE_EXERCISE_WITH'; targetInstanceId: string; payload: Omit<ExerciseEntity, 'setIds' | 'instanceId'>[] }
   | { type: 'DELETE_EXERCISE'; exerciseInstanceId: string }
   | { type: 'ADD_SET'; exerciseInstanceId: string }
   | { type: 'DELETE_SET'; exerciseInstanceId: string; setId: string }
@@ -144,6 +144,38 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
           ...state.workout,
           exercises: state.workout.exercises.filter(e => e.instanceId !== action.exerciseInstanceId),
           setsById,
+        },
+      };
+    }
+
+    case 'REPLACE_EXERCISE_WITH': {
+      if (!state.workout) return state;
+      const exIdx = state.workout.exercises.findIndex(e => e.instanceId === action.targetInstanceId);
+      if (exIdx < 0) return state;
+
+      const oldExercise = state.workout.exercises[exIdx];
+      const cleanedSetsById = { ...state.workout.setsById };
+      // Remove all sets that belonged to the old exercise
+      oldExercise.setIds.forEach(id => {
+        delete cleanedSetsById[id];
+      });
+
+      const replacementExercises: ExerciseEntity[] = action.payload.map(e => ({
+        instanceId: Crypto.randomUUID(),
+        ...e,
+        setIds: [],
+      }));
+
+      const before = state.workout.exercises.slice(0, exIdx);
+      const after = state.workout.exercises.slice(exIdx + 1);
+      const newExercises = [...before, ...replacementExercises, ...after];
+
+      return {
+        ...state,
+        workout: {
+          ...state.workout,
+          exercises: newExercises,
+          setsById: cleanedSetsById,
         },
       };
     }
@@ -249,6 +281,7 @@ type Ctx = {
   updateSet: (exerciseInstanceId: string, setId: string, newData: Partial<SetEntity['trackingData']>) => void;
   updateSetCompleted: (exerciseInstanceId: string, setId: string, completed: boolean) => void;
   addExercises: (exercises: Omit<ExerciseEntity, 'setIds' | 'instanceId' | 'previousSets'>[]) => Promise<void>;
+  replaceExerciseWith: (targetInstanceId: string, exercises: Omit<ExerciseEntity, 'setIds' | 'instanceId' | 'previousSets'>[]) => Promise<void>;
   deleteSet: (exerciseInstanceId: string, setId: string) => void;
   deleteExercise: (exerciseInstanceId: string) => void;
   addSet: (exerciseInstanceId: string) => void;
@@ -379,6 +412,19 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     dispatch({ type: 'ADD_EXERCISES', payload: exercisesWithPreviousData });
   };
 
+  const replaceExerciseWith: Ctx['replaceExerciseWith'] = async (targetInstanceId, exercises) => {
+    const exercisesWithPreviousData = await Promise.all(
+      exercises.map(async (exercise) => {
+        const previousSets = await fetchPreviousSessionData(exercise.exerciseId);
+        return {
+          ...exercise,
+          previousSets
+        };
+      })
+    );
+    dispatch({ type: 'REPLACE_EXERCISE_WITH', targetInstanceId, payload: exercisesWithPreviousData });
+  };
+
   const deleteExercise: Ctx['deleteExercise'] = exerciseInstanceId => {
     dispatch({ type: 'DELETE_EXERCISE', exerciseInstanceId });
   };
@@ -483,6 +529,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     updateSetCompleted,
     deleteSet,
     addExercises,
+    replaceExerciseWith,
     deleteExercise,
     addSet,
   };

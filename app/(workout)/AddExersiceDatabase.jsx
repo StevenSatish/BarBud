@@ -9,7 +9,7 @@ import Entypo from '@expo/vector-icons/Entypo';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useWorkout } from '../context/WorkoutContext';
 import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -89,12 +89,13 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
 export default function AddExerciseDatabase() {
   const { theme } = useTheme();
   const { exerciseSections, loading} = useExerciseDB();
-  const { addExercises } = useWorkout();
+  const { addExercises, replaceExerciseWith } = useWorkout();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedExercises, setSelectedExercises] = useState({});
   const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
+  const { targetInstanceId } = useLocalSearchParams();
 
   const handleExerciseToggle = useCallback((exercise) => {
     setSelectedExercises(prev => {
@@ -184,7 +185,14 @@ export default function AddExerciseDatabase() {
   ), [theme]);
   
   const handleAddExercises = () => {
-    addExercises(Object.values(selectedExercises));
+    const chosen = Object.values(selectedExercises);
+    if (chosen.length === 0) return;
+    if (targetInstanceId) {
+      replaceExerciseWith(String(targetInstanceId), chosen);
+      router.back();
+      return;
+    }
+    addExercises(chosen);
     router.back();
   };
 
@@ -233,7 +241,7 @@ export default function AddExerciseDatabase() {
                 action="default"
               >
                 <ButtonText className={isAddEnabled ? `text-${theme}-light` : `text-${theme}-lightGray`}>
-                  {`Add (${selectedCount})`}
+                  {targetInstanceId ? 'Replace' : 'Add'} ({selectedCount})
                 </ButtonText>
               </Button>
             );

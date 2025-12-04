@@ -24,6 +24,7 @@ import { Divider } from '@/components/ui/divider';
 import ExerciseSet from './exerciseSet';
 import { PreviousSetData, useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
+import { router } from 'expo-router';
 
 type Props = {
   exercise: {
@@ -158,6 +159,19 @@ function Exercise({ exercise }: Props) {
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
+          <ActionsheetItem
+            onPress={() => {
+              setShowActionsheet(false);
+              router.push({
+                pathname: '/AddExersiceDatabase',
+                params: { targetInstanceId: exercise.instanceId },
+              });
+            }}
+          >
+            <ActionsheetItemText className="text-lg justify-center text-typography-500">
+              Replace Exercise
+            </ActionsheetItemText>
+          </ActionsheetItem>
           <ActionsheetItem onPress={handleDeletion}>
             <ActionsheetItemText className="text-lg justify-center text-error-500">Remove Exercise</ActionsheetItemText>
           </ActionsheetItem>
