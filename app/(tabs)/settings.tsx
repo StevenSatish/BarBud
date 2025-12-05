@@ -16,7 +16,6 @@ import {
   Select,
   SelectTrigger,
   SelectInput,
-  SelectIcon,
   SelectPortal,
   SelectBackdrop,
   SelectContent,
@@ -24,7 +23,6 @@ import {
   SelectDragIndicator,
   SelectItem,
 } from "@/components/ui/select";
-import { ChevronDownIcon } from "@/components/ui/icon";
 
 const themeOptions: ThemeType[] = ['blue', 'cyan', 'pink', 'green', 'orange', ];
 
@@ -44,8 +42,6 @@ export default function Settings() {
     }
   };
 
-  const upperCaseTheme = theme.slice(0, 1).toUpperCase() + theme.slice(1);
-
   return (
     <View className={`flex-1 justify-center items-center bg-${theme}-background`}>
       <Text className="text-white text-2xl font-bold mb-2">Settings Page</Text>
@@ -58,9 +54,6 @@ export default function Settings() {
         >
           <SelectTrigger>
             <SelectInput placeholder="Select theme" />
-            <SelectIcon>
-              <ChevronDownIcon color="white" />
-            </SelectIcon>
           </SelectTrigger>
           <SelectPortal>
             <SelectBackdrop />

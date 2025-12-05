@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from './context/AuthProvider';
 import { WorkoutProvider } from './context/WorkoutContext';
 import { ExerciseDBProvider } from './context/ExerciseDBContext';
+import { TemplateFoldersProvider } from './context/TemplateFoldersContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -71,7 +72,9 @@ export default function RootLayout() {
             <AuthProvider>
               <WorkoutProvider>
                 <ExerciseDBProvider>
-                  <AppLayout />
+                  <TemplateFoldersProvider>
+                    <AppLayout />
+                  </TemplateFoldersProvider>
                 </ExerciseDBProvider>
               </WorkoutProvider>
             </AuthProvider>
