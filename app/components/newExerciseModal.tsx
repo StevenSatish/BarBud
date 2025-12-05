@@ -8,7 +8,6 @@ import {
     ModalFooter,
 } from "@/components/ui/modal"
 import { Button, ButtonText } from '@/components/ui/button'
-import { Input, InputField } from '@/components/ui/input'
 import { HStack } from '@/components/ui/hstack'
 import { VStack } from '@/components/ui/vstack'
 import { RadioGroup, Radio, RadioIndicator, RadioIcon, RadioLabel } from '@/components/ui/radio'
@@ -25,9 +24,11 @@ import {
   SelectItem,
 } from "@/components/ui/select"
 import { ChevronDownIcon, CircleIcon } from "@/components/ui/icon"
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Text } from '@/components/ui/text'
 import { Pressable } from '@/components/ui/pressable'
+import { TextInput } from 'react-native'
+import { Box } from '@/components/ui/box'
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -49,19 +50,31 @@ import { Alert } from '@/components/ui/alert'
 import { useTheme } from '@/app/context/ThemeContext';
 
 // Separate component for the exercise name input to prevent re-renders
-const ExerciseNameInput = ({ value, onChangeText, hasError }: { value: string, onChangeText: (text: string) => void, hasError: boolean }) => (
-  <FormControl isRequired isInvalid={hasError}>
-    <FormControlLabel>
-      <FormControlLabelText>Exercise Name</FormControlLabelText>
-    </FormControlLabel>
-    <Input>
-      <InputField 
-        placeholder="Exercise Name"
-        value={value}
+const ExerciseNameInput = ({
+  onChangeText,
+  hasError,
+  inputKey,
+}: {
+  onChangeText: (text: string) => void;
+  hasError: boolean;
+  inputKey: number;
+}) => (
+  <Box className="gap-2">
+    <Text className="text-typography-900 font-semibold">Exercise Name</Text>
+    <Box
+      className={`w-full rounded border px-3 py-2 ${
+        hasError ? 'border-error-700' : 'border-secondary-900'
+      }`}
+    >
+      <TextInput
+        key={inputKey}
         onChangeText={onChangeText}
+        placeholder="Exercise Name"
+        placeholderTextColor="rgba(255,255,255,0.6)"
+        className="text-typography-900"
       />
-    </Input>
-  </FormControl>
+    </Box>
+  </Box>
 );
 
 export default function NewExerciseModal({ isOpen, onClose }: any) {
@@ -74,8 +87,9 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   const [muscleGroup, setMuscleGroup] = useState<string>('');
   const [muscleGroupError, setMuscleGroupError] = useState(false);
 
-  const [exerciseName, setExerciseName] = useState('');
   const [exerciseNameError, setExerciseNameError] = useState(false);
+  const exerciseNameDraftRef = useRef('');
+  const [exerciseNameInputKey, setExerciseNameInputKey] = useState(0);
 
   const [secondaryMuscleGroups, setSecondaryMuscleGroups] = useState<string[]>([]);
   const [showSecondaryMuscles, setShowSecondaryMuscles] = useState(false);
@@ -117,20 +131,37 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
     } else {
       setTrackingMethodError(false);
     }
-    if (!exerciseName) {
+    const trimmedName = exerciseNameDraftRef.current.trim();
+    if (!trimmedName) {
       setExerciseNameError(true);
       hasErrors = true;
     } else {
       setExerciseNameError(false);
     }
     if (!hasErrors) {
-      const result = await createExercise(exerciseName, category, muscleGroup, secondaryMuscleGroups, [trackingMethod]);
+      const result = await createExercise(trimmedName, category, muscleGroup, secondaryMuscleGroups, [trackingMethod]);
       if (result.success) {
+        exerciseNameDraftRef.current = '';
+        setExerciseNameInputKey((k) => k + 1);
         onClose();
       } else {
         setError(result.error || "Failed to create exercise");
       }
     }
+  };
+
+  const handleCancel = () => {
+    setMuscleGroup('');
+    setMuscleGroupError(false);
+    setExerciseNameError(false);
+    setExerciseNameInputKey((k) => k + 1);
+    exerciseNameDraftRef.current = '';
+    setSecondaryMuscleGroups([]);
+    setTrackingMethod('');
+    setTrackingMethodError(false);
+    setCategory('');
+    setCategoryError(false);
+    onClose();
   };
 
 
@@ -159,10 +190,12 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
                 <Text className="text-white">{error}</Text>
               </Alert>
             )}
-            <ExerciseNameInput 
-              value={exerciseName}
-              onChangeText={setExerciseName}
+            <ExerciseNameInput
+              onChangeText={(t) => {
+                exerciseNameDraftRef.current = t;
+              }}
               hasError={exerciseNameError}
+              inputKey={exerciseNameInputKey}
             />
 
             <HStack className="justify-between">
@@ -283,7 +316,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
           <Button 
             variant="outline" 
             action="secondary"
-            onPress={onClose}
+            onPress={handleCancel}
             className="mr-3"
           >
             <ButtonText>Cancel</ButtonText>
