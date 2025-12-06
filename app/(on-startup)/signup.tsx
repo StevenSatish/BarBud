@@ -83,6 +83,12 @@ export default function Signup() {
                 username: username.trim()
             });
 
+            // Create default "None" folder in template folders catalog
+            await setDoc(
+              doc(FIREBASE_DB, 'users', response.user.uid, 'folders', 'none'),
+              { name: 'None' }
+            );
+
       try {
         await AsyncStorage.setItem('username', username.trim());
       } catch {}

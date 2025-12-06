@@ -26,7 +26,7 @@ function AppLayout() {
   if (loading) return null;
 
   const platform = Platform.OS;
-  const workoutAndHistoryAnimation = platform === "ios" ? "ios_from_right" : "slide_from_right";
+  const sidePageAnimation = platform === "ios" ? "ios_from_right" : "slide_from_right";
   const tabsAnimation = platform === "ios" ? "ios_from_left" : "slide_from_left";
 
   return (
@@ -44,7 +44,15 @@ function AppLayout() {
       <Stack.Screen 
         name="(workout)" 
         options={{
-          animation: workoutAndHistoryAnimation,
+          animation: sidePageAnimation,
+          presentation: "modal",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
+        name="(template)" 
+        options={{
+          animation: sidePageAnimation,
           presentation: "modal",
           headerShown: false,
         }}
@@ -52,7 +60,7 @@ function AppLayout() {
       <Stack.Screen 
         name="(exerciseHistory)" 
         options={{
-          animation: workoutAndHistoryAnimation,
+          animation: sidePageAnimation,
           presentation: "fullScreenModal",
           gestureEnabled: false,
           fullScreenGestureEnabled: false,

@@ -20,8 +20,9 @@ import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
 import { doc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { TextInput } from 'react-native';
+import { router } from 'expo-router';
 
 
 export default function StartWorkoutTab() {
@@ -34,6 +35,11 @@ export default function StartWorkoutTab() {
   const [isFolderInvalid, setIsFolderInvalid] = useState(false);
   const [folderInputKey, setFolderInputKey] = useState(0);
   const folderDraftRef = useRef('');
+  const orderedFolders = useMemo(() => {
+    const nonNone = folders.filter((f) => f.id !== 'none');
+    const none = folders.filter((f) => f.id === 'none');
+    return [...nonNone, ...none];
+  }, [folders]);
 
   const openTemplateSheet = async () => {
     setIsSheetOpen(true);
@@ -80,31 +86,32 @@ export default function StartWorkoutTab() {
     <SafeAreaView className={`flex-1 bg-${theme}-background`}>
       <Box className={`flex-1 justify-center items-center bg-${theme}-background`}>
         <Box className='absolute top-0 left-0 right-0 flex-row justify-between items-center p-4'>
-          <Button variant='outline' action='secondary' size='sm' onPress={openTemplateSheet}>
+          <Button className={`bg-${theme}-button`} action='secondary' size='xl' onPress={openTemplateSheet}>
             <Entypo name="plus" size={18} color={colors.light} />
             <ButtonText>Template</ButtonText>
+            <Entypo name="list" size={18} color={colors.light} />
           </Button>
-          <Button variant='outline' action='secondary' size='sm' onPress={openFolderModal}>
+          <Button className={`bg-${theme}-button w-1/2`} action='secondary' size='xl' onPress={openFolderModal}>
             <Entypo name="plus" size={18} color={colors.light} />
-            <Entypo name="folder" size={18} color={colors.light} />
             <ButtonText>Folder</ButtonText>
+            <Entypo name="folder" size={18} color={colors.light} />
           </Button>
         </Box>
 
         <Button onPress={startWorkout} className={`bg-${theme}-accent`}>
           <ButtonText className='text-typography-800'>
-            Start Workout
+            Start Empty Workout
           </ButtonText>
         </Button>
       </Box>
 
       <Actionsheet isOpen={isSheetOpen} onClose={() => setIsSheetOpen(false)}>
         <ActionsheetBackdrop onPress={() => setIsSheetOpen(false)} />
-        <ActionsheetContent>
+        <ActionsheetContent className={`bg-${theme}-background`}>
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
-          <ActionsheetSectionHeaderText>
+          <ActionsheetSectionHeaderText size='lg' className='text-typography-900'>
             Select a Folder
           </ActionsheetSectionHeaderText>
 
@@ -113,9 +120,19 @@ export default function StartWorkoutTab() {
               <ActionsheetItemText>Loading...</ActionsheetItemText>
             </ActionsheetItem>
           ) : (
-            folders.map((f) => (
-              <ActionsheetItem key={f.id} onPress={() => {}}>
-                <ActionsheetItemText>{f.name}</ActionsheetItemText>
+            orderedFolders.map((f) => (
+              <ActionsheetItem
+                key={f.id}
+                onPress={() => {
+                  setIsSheetOpen(false);
+                  router.replace({
+                    pathname: '/(template)',
+                    params: { folderId: f.id, folderName: f.name },
+                  });
+                }}
+              >
+                {f.id !== `none` ? <Entypo name="folder" size={18} color={colors.light} /> : null}
+                <ActionsheetItemText size='lg' className='text-typography-900'>{f.name}</ActionsheetItemText>
               </ActionsheetItem>
             ))
           )}
@@ -136,7 +153,7 @@ export default function StartWorkoutTab() {
                 className={`w-full rounded border px-3 py-2 ${
                   isFolderInvalid
                     ? 'border-error-700'
-                    : 'border-primary-500'
+                    : 'border-secondary-900'
                 }`}
               >
                 <TextInput

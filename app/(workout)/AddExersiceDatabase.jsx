@@ -10,6 +10,7 @@ import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
 import { router, useLocalSearchParams } from 'expo-router';
+import { setTemplateSelection } from '../(template)/selectionStore';
 import { useWorkout } from '../context/WorkoutContext';
 import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -95,7 +96,7 @@ export default function AddExerciseDatabase() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedExercises, setSelectedExercises] = useState({});
   const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
-  const { targetInstanceId } = useLocalSearchParams();
+  const { targetInstanceId, mode, folderName = '', folderId = '' } = useLocalSearchParams();
 
   const handleExerciseToggle = useCallback((exercise) => {
     setSelectedExercises(prev => {
@@ -187,6 +188,21 @@ export default function AddExerciseDatabase() {
   const handleAddExercises = () => {
     const chosen = Object.values(selectedExercises);
     if (chosen.length === 0) return;
+
+    // Template mode: return selection to template editor
+    if (mode === 'template') {
+      setTemplateSelection(
+        chosen.map((ex) => ({
+          id: ex.id,
+          name: ex.name,
+          category: ex.category,
+        }))
+      );
+      router.back();
+      return;
+    }
+
+    // Workout mode (existing behavior)
     if (targetInstanceId) {
       replaceExerciseWith(String(targetInstanceId), chosen);
       router.back();
