@@ -9,6 +9,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
 import { Pressable, TextInput } from 'react-native';
 import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui/modal';
+import { Actionsheet, ActionsheetBackdrop, ActionsheetContent, ActionsheetDragIndicator, ActionsheetDragIndicatorWrapper, ActionsheetItem, ActionsheetItemText, ActionsheetSectionHeaderText } from '@/components/ui/actionsheet';
 import { useState, useRef } from 'react';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { deleteDoc, doc, setDoc } from 'firebase/firestore';
@@ -21,10 +22,14 @@ type TemplateCardProps = {
 
 export default function TemplateCard({ template, folderId }: TemplateCardProps) {
   const { theme } = useTheme();
-  const { fetchTemplates } = useTemplateFolders();
+  const { fetchTemplates, folders, fetchFolders, foldersLoading } = useTemplateFolders();
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameInvalid, setRenameInvalid] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [moveSheetOpen, setMoveSheetOpen] = useState(false);
+  const [moving, setMoving] = useState(false);
   const renameDraftRef = useRef(template.templateName ?? '');
   const [renameInputKey, setRenameInputKey] = useState(0);
   const lastPerformedLabel = useMemo(
@@ -104,6 +109,74 @@ export default function TemplateCard({ template, folderId }: TemplateCardProps) 
     }
   };
 
+  const openDeleteModal = () => {
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    if (deleting) return;
+    setDeleteModalOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleting) return;
+    setDeleteModalOpen(false);
+    setDeleting(true);
+    try {
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user?.uid) {
+        console.error('Cannot delete template: no authenticated user');
+        return;
+      }
+      await deleteDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', folderId, 'templates', template.id));
+      await fetchTemplates();
+    } catch (e) {
+      console.error('Failed to delete template', e);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleOpenMoveSheet = async () => {
+    setMoveSheetOpen(true);
+    if (!folders.length) {
+      await fetchFolders();
+    }
+  };
+
+  const handleMoveTemplate = async (targetFolderId: string) => {
+    if (moving) return;
+    if (!targetFolderId || targetFolderId === folderId) {
+      setMoveSheetOpen(false);
+      return;
+    }
+    setMoveSheetOpen(false);
+    setMoving(true);
+    try {
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user?.uid) {
+        console.error('Cannot move template: no authenticated user');
+        return;
+      }
+      const payload: any = {
+        templateName: template.templateName,
+        exercises: template.exercises ?? [],
+      };
+      if (template.lastPerformedAt) payload.lastPerformedAt = template.lastPerformedAt;
+
+      await setDoc(
+        doc(FIREBASE_DB, 'users', user.uid, 'folders', targetFolderId, 'templates', template.id),
+        payload
+      );
+      await deleteDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', folderId, 'templates', template.id));
+      await fetchTemplates();
+    } catch (e) {
+      console.error('Failed to move template', e);
+    } finally {
+      setMoving(false);
+    }
+  };
+
   return (
     <Box className={`rounded border border-outline-200 bg-${theme}-background px-3 py-3`}>
       <HStack className='items-center justify-between'>
@@ -124,10 +197,10 @@ export default function TemplateCard({ template, folderId }: TemplateCardProps) 
           <MenuItem textValue="Edit">
             <MenuItemLabel size="lg">Edit</MenuItemLabel>
           </MenuItem>
-          <MenuItem textValue="Move">
-            <MenuItemLabel size="lg">Move to Folder</MenuItemLabel>
+          <MenuItem textValue="Move" onPress={handleOpenMoveSheet}>
+            <MenuItemLabel size="lg">{folderId === 'none' ? 'Move to Folder' : 'Move to New Folder'}</MenuItemLabel>
           </MenuItem>
-          <MenuItem textValue="Delete">
+          <MenuItem textValue="Delete" onPress={openDeleteModal}>
             <MenuItemLabel size="lg" className='text-error-700'>Delete</MenuItemLabel>
           </MenuItem>
         </Menu>
@@ -186,6 +259,72 @@ export default function TemplateCard({ template, folderId }: TemplateCardProps) 
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <Modal isOpen={deleteModalOpen} onClose={closeDeleteModal}>
+        <ModalBackdrop onPress={closeDeleteModal} />
+        <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
+          <ModalHeader>
+            <HStack className='flex-1' space='md'>
+              <Text size='2xl' className='text-typography-900'>Delete Template</Text>
+            </HStack>
+          </ModalHeader>
+          <ModalBody>
+          </ModalBody>
+          <ModalFooter className='flex-row justify-between items-center px-4'>
+            <Button
+              variant='link'
+              onPress={closeDeleteModal}
+              isDisabled={deleting}
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              variant='link'
+              action='negative'
+              onPress={handleConfirmDelete}
+              isDisabled={deleting}
+            >
+              <ButtonText>{deleting ? 'Deleting...' : 'Yes, delete'}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Actionsheet isOpen={moveSheetOpen} onClose={() => setMoveSheetOpen(false)}>
+        <ActionsheetBackdrop onPress={() => setMoveSheetOpen(false)} />
+        <ActionsheetContent className={`bg-${theme}-background`}>
+          <ActionsheetDragIndicatorWrapper>
+            <ActionsheetDragIndicator />
+          </ActionsheetDragIndicatorWrapper>
+          <ActionsheetSectionHeaderText size='lg' className='text-typography-900'>
+            Move to Folder
+          </ActionsheetSectionHeaderText>
+
+          {foldersLoading && !folders.length ? (
+            <ActionsheetItem disabled>
+              <ActionsheetItemText>Loading...</ActionsheetItemText>
+            </ActionsheetItem>
+          ) : (
+            (() => {
+              const otherFolders = folders.filter((f) => f.id !== folderId && f.id !== 'none');
+              const noneFolder = folders.find((f) => f.id === 'none');
+              const ordered = noneFolder ? [...otherFolders, noneFolder] : otherFolders;
+              return ordered.map((f) => (
+                <ActionsheetItem
+                  key={f.id}
+                  disabled={moving}
+                  onPress={() => handleMoveTemplate(f.id)}
+                >
+                  {f.id !== 'none' ? <Entypo name="folder" size={18} color="white" /> : null}
+                  <ActionsheetItemText size='lg' className='text-typography-900'>
+                    {f.name}
+                  </ActionsheetItemText>
+                </ActionsheetItem>
+              ));
+            })()
+          )}
+        </ActionsheetContent>
+      </Actionsheet>
     </Box>
   );
 }
