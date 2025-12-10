@@ -253,7 +253,7 @@ export default function StartWorkoutTab() {
               if (isNone) {
                 return (
                   <Box key={f.id} className='gap-2 mb-2'>
-                    {templates.map((t) => <TemplateCard key={t.id} template={t} />)}
+                    {templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} />)}
                   </Box>
                 );
               }
@@ -302,7 +302,7 @@ export default function StartWorkoutTab() {
                   {isOpen ? (
                     <Box className='pl-8 pr-2 py-2 gap-2'>
                       {templates.length ? (
-                        templates.map((t) => <TemplateCard key={t.id} template={t} />)
+                        templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} />)
                       ) : (
                         <Text className='text-typography-700'>No templates in this folder.</Text>
                       )}
