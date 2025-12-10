@@ -18,18 +18,19 @@ import useTemplateFolders from '@/app/context/TemplateFoldersContext';
 import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui/modal';
 import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
-import { doc, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import TemplateCard from '@/app/components/templateCard';
+import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
 
 
 export default function StartWorkoutTab() {
   const { startWorkout } = useWorkout();
   const { theme, colors } = useTheme();
-  const { folders, foldersLoading, fetchFolders, templatesByFolder, templatesLoading } = useTemplateFolders();
+  const { folders, foldersLoading, fetchFolders, templatesByFolder, templatesLoading, fetchTemplates } = useTemplateFolders();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
@@ -37,6 +38,14 @@ export default function StartWorkoutTab() {
   const [folderInputKey, setFolderInputKey] = useState(0);
   const folderDraftRef = useRef('');
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deletingFolder, setDeletingFolder] = useState(false);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [folderToRename, setFolderToRename] = useState<{ id: string; name: string } | null>(null);
+  const renameDraftRef = useRef('');
+  const [renameInputKey, setRenameInputKey] = useState(0);
+  const [renameInvalid, setRenameInvalid] = useState(false);
   const orderedFolders = useMemo(() => {
     const nonNone = folders.filter((f) => f.id !== 'none');
     const none = folders.filter((f) => f.id === 'none');
@@ -82,6 +91,123 @@ export default function StartWorkoutTab() {
 
   const closeFolderModal = () => {
     setIsFolderModalOpen(false);
+  };
+
+  const handleOpenDeleteModal = (folder: { id: string; name: string }) => {
+    setFolderToDelete(folder);
+    setDeleteModalOpen(true);
+  };
+
+  const handleOpenRenameModal = (folder: { id: string; name: string }) => {
+    setFolderToRename(folder);
+    renameDraftRef.current = folder.name ?? '';
+    setRenameInputKey((k) => k + 1);
+    setRenameInvalid(false);
+    setRenameModalOpen(true);
+  };
+
+  const handleRenameFolder = async () => {
+    if (!folderToRename) return;
+    if (folderToRename.id === 'none') {
+      setRenameModalOpen(false);
+      return;
+    }
+    const trimmed = renameDraftRef.current.trim();
+    if (!trimmed) {
+      setRenameInvalid(true);
+      return;
+    }
+    setRenameModalOpen(false);
+    setFolderToRename(null);
+    setRenameInvalid(false);
+    const newId = trimmed.toLowerCase().replace(/\s+/g, '-');
+    const oldId = folderToRename.id;
+    renameDraftRef.current = '';
+    setRenameInputKey((k) => k + 1);
+    try {
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user?.uid) {
+        console.error('Cannot rename folder: no authenticated user');
+        return;
+      }
+
+      if (newId === oldId) {
+        await setDoc(
+          doc(FIREBASE_DB, 'users', user.uid, 'folders', oldId),
+          { name: trimmed },
+          { merge: true }
+        );
+      } else {
+        // create/update new folder doc
+        await setDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', newId), { name: trimmed }, { merge: true });
+
+        // copy templates to new folder
+        const oldTemplatesRef = collection(FIREBASE_DB, 'users', user.uid, 'folders', oldId, 'templates');
+        const oldTemplatesSnap = await getDocs(oldTemplatesRef);
+        const copyPromises = oldTemplatesSnap.docs.map((d) =>
+          setDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', newId, 'templates', d.id), d.data())
+        );
+        await Promise.all(copyPromises);
+
+        // delete old templates and folder
+        const deletePromises = oldTemplatesSnap.docs.map((d) => deleteDoc(d.ref));
+        await Promise.all(deletePromises);
+        await deleteDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', oldId));
+
+        // keep open state for renamed folder
+        setOpenFolders((prev) => {
+          const wasOpen = !!prev[oldId];
+          const next = { ...prev };
+          delete next[oldId];
+          if (wasOpen) next[newId] = true;
+          return next;
+        });
+      }
+
+      const latestFolders = await fetchFolders();
+      await fetchTemplates(latestFolders);
+    } catch (e) {
+      console.error('Failed to rename folder', e);
+    }
+  };
+
+  const handleDeleteFolder = async () => {
+    if (!folderToDelete) return;
+    const { id } = folderToDelete;
+    if (id === 'none') {
+      setDeleteModalOpen(false);
+      setFolderToDelete(null);
+      return;
+    }
+    try {
+      setDeletingFolder(true);
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user?.uid) {
+        console.error('Cannot delete folder: no authenticated user');
+        return;
+      }
+
+      const templatesRef = collection(FIREBASE_DB, 'users', user.uid, 'folders', id, 'templates');
+      const templatesSnap = await getDocs(templatesRef);
+      const deletions = templatesSnap.docs.map((d) => deleteDoc(d.ref));
+      await Promise.all(deletions);
+
+      await deleteDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', id));
+
+      const latestFolders = await fetchFolders();
+      await fetchTemplates(latestFolders);
+      setOpenFolders((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+    } catch (e) {
+      console.error('Failed to delete folder', e);
+    } finally {
+      setDeletingFolder(false);
+      setDeleteModalOpen(false);
+      setFolderToDelete(null);
+    }
   };
 
   return (
@@ -154,7 +280,23 @@ export default function StartWorkoutTab() {
                         <Entypo name="folder" size={18} color={colors.light} />
                         <Text className='text-typography-900 text-lg'>{f.name}</Text>
                       </HStack>
-                      <Entypo name="dots-three-horizontal" size={18} color="white"/>
+                      <Menu
+                        className={`bg-${theme}-background`}
+                        placement="bottom left"
+                        offset={4}
+                        trigger={({ ...triggerProps }) => (
+                          <Pressable hitSlop={10} {...triggerProps}>
+                            <Entypo name="dots-three-horizontal" size={18} color="white" />
+                          </Pressable>
+                        )}
+                      >
+                        <MenuItem textValue="Rename" onPress={() => handleOpenRenameModal(f)}>
+                          <MenuItemLabel size="lg">Rename</MenuItemLabel>
+                        </MenuItem>
+                        <MenuItem textValue="Delete" onPress={() => handleOpenDeleteModal(f)}>
+                          <MenuItemLabel size="lg" className={`text-error-700`}>Delete</MenuItemLabel>
+                        </MenuItem>
+                      </Menu>
                     </HStack>
                   </Pressable>
                   {isOpen ? (
@@ -250,6 +392,92 @@ export default function StartWorkoutTab() {
             </Button>
             <Button onPress={handleCreateFolder}>
               <ButtonText>OK</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={renameModalOpen} onClose={() => { if (!deletingFolder) setRenameModalOpen(false); }}>
+        <ModalBackdrop onPress={() => { if (!deletingFolder) setRenameModalOpen(false); }} />
+        <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
+          <ModalHeader>
+            <HStack className='flex-1' space='md'>
+              <Text size='2xl' className='text-typography-900'>Rename Folder</Text>
+            </HStack>
+          </ModalHeader>
+          <ModalBody>
+            <Box className='gap-3'>
+              <Box
+                className={`w-full rounded border px-3 py-2 ${
+                  renameInvalid ? 'border-error-700' : 'border-secondary-900'
+                }`}
+              >
+                  <TextInput
+                    key={renameInputKey}
+                    className='text-typography-900'
+                    placeholder="Folder name"
+                    placeholderTextColor="rgba(255,255,255,0.6)"
+                    defaultValue={renameDraftRef.current}
+                    onChangeText={(t) => {
+                      renameDraftRef.current = t;
+                      if (renameInvalid && t.trim()) setRenameInvalid(false);
+                    }}
+                  />
+              </Box>
+            </Box>
+          </ModalBody>
+          <ModalFooter className='flex-row justify-between items-center px-4'>
+            <Button
+              variant='link'
+              onPress={() => {
+                if (deletingFolder) return;
+                setRenameModalOpen(false);
+                setFolderToRename(null);
+                renameDraftRef.current = '';
+                setRenameInputKey((k) => k + 1);
+                setRenameInvalid(false);
+              }}
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button onPress={handleRenameFolder} isDisabled={deletingFolder}>
+              <ButtonText>OK</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={deleteModalOpen} onClose={() => { if (!deletingFolder) setDeleteModalOpen(false); }}>
+        <ModalBackdrop onPress={() => { if (!deletingFolder) setDeleteModalOpen(false); }} />
+        <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
+          <ModalHeader>
+            <HStack className='flex-1' space='md'>
+              <Text size='2xl' className='text-typography-900'>Delete Folder</Text>
+            </HStack>
+          </ModalHeader>
+          <ModalBody>
+            <Text className='text-typography-800'>
+              Are you sure? This will delete all templates inside of the folder.
+            </Text>
+          </ModalBody>
+          <ModalFooter className='flex-row justify-between items-center px-4'>
+            <Button
+              variant='link'
+              onPress={() => {
+                if (deletingFolder) return;
+                setDeleteModalOpen(false);
+                setFolderToDelete(null);
+              }}
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              variant='link'
+              action='negative'
+              isDisabled={deletingFolder}
+              onPress={handleDeleteFolder}
+            >
+              <ButtonText>{deletingFolder ? 'Deleting...' : 'Yes, delete'}</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>
