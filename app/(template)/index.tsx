@@ -97,42 +97,41 @@ export default function TemplateEditor() {
   };
 
   const renderItem = useCallback(
-    ({ item, drag, isActive }: RenderItemParams<TemplateExercise>) => (
-      <Pressable onLongPress={drag} onPressIn={drag} delayLongPress={120}>
-        <HStack
-          className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}
-          style={{ opacity: isActive ? 0.8 : 1 }}
-        >
-          <HStack className="items-center gap-3 flex-1">
+    ({ item, drag}: RenderItemParams<TemplateExercise>) => (
+      <HStack
+        className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}
+      >
+        <HStack className="items-center gap-3 flex-1">
+          <Pressable onLongPress={drag} onPressIn={drag} delayLongPress={120} hitSlop={10}>
             <Entypo name="menu" size={20} color="white" />
-            <Text className="text-typography-900 text-base flex-1 mr-3">
-              {item.name} {`(${item.category})`}
-            </Text>
-          </HStack>
-          <HStack className="items-center gap-2">
-            <Text className="text-typography-700">sets:</Text>
-            <TextInput
-              className="text-typography-900 border border-outline-200 rounded px-2 py-1 w-16 text-center"
-              keyboardType="numeric"
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              value={item.sets}
-              onChangeText={(num) => {
-                if (!/^\d*$/.test(num)) return;
-                setExercises((prev) =>
-                  prev.map((ex) => (ex.id === item.id ? { ...ex, sets: num } : ex))
-                );
-              }}
-            />
-            <Pressable
-              onPress={() => setExercises((prev) => prev.filter((ex) => ex.id !== item.id))}
-              hitSlop={10}
-              className="ml-2"
-            >
-              <Entypo name="trash" size={18} color="rgba(220, 38, 38, 0.8)" />
-            </Pressable>
-          </HStack>
+          </Pressable>
+          <Text className="text-typography-900 text-base flex-1 mr-3">
+            {item.name} {`(${item.category})`}
+          </Text>
         </HStack>
-      </Pressable>
+        <HStack className="items-center gap-2">
+          <Text className="text-typography-700">sets:</Text>
+          <TextInput
+            className="text-typography-900 border border-outline-200 rounded px-2 py-1 w-16 text-center"
+            keyboardType="numeric"
+            placeholderTextColor="rgba(255,255,255,0.6)"
+            value={item.sets}
+            onChangeText={(num) => {
+              if (!/^\d*$/.test(num)) return;
+              setExercises((prev) =>
+                prev.map((ex) => (ex.id === item.id ? { ...ex, sets: num } : ex))
+              );
+            }}
+          />
+          <Pressable
+            onPress={() => setExercises((prev) => prev.filter((ex) => ex.id !== item.id))}
+            hitSlop={10}
+            className="ml-2"
+          >
+            <Entypo name="trash" size={18} color="rgba(220, 38, 38, 0.8)" />
+          </Pressable>
+        </HStack>
+      </HStack>
     ),
     [theme]
   );
