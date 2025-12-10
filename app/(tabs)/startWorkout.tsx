@@ -21,20 +21,22 @@ import { HStack } from '@/components/ui/hstack';
 import { doc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import React, { useMemo, useRef, useState } from 'react';
-import { TextInput } from 'react-native';
+import { Pressable, ScrollView, TextInput } from 'react-native';
 import { router } from 'expo-router';
+import TemplateCard from '@/app/components/templateCard';
 
 
 export default function StartWorkoutTab() {
   const { startWorkout } = useWorkout();
   const { theme, colors } = useTheme();
-  const { folders, foldersLoading, fetchFolders } = useTemplateFolders();
+  const { folders, foldersLoading, fetchFolders, templatesByFolder, templatesLoading } = useTemplateFolders();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isFolderInvalid, setIsFolderInvalid] = useState(false);
   const [folderInputKey, setFolderInputKey] = useState(0);
   const folderDraftRef = useRef('');
+  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const orderedFolders = useMemo(() => {
     const nonNone = folders.filter((f) => f.id !== 'none');
     const none = folders.filter((f) => f.id === 'none');
@@ -84,25 +86,91 @@ export default function StartWorkoutTab() {
 
   return (
     <SafeAreaView className={`flex-1 bg-${theme}-background`}>
-      <Box className={`flex-1 justify-center items-center bg-${theme}-background`}>
-        <Box className='absolute top-0 left-0 right-0 flex-row justify-between items-center p-4'>
-          <Button className={`bg-${theme}-button`} action='secondary' size='xl' onPress={openTemplateSheet}>
-            <Entypo name="plus" size={18} color={colors.light} />
-            <ButtonText>Template</ButtonText>
-            <Entypo name="list" size={18} color={colors.light} />
-          </Button>
-          <Button className={`bg-${theme}-button w-1/2`} action='secondary' size='xl' onPress={openFolderModal}>
-            <Entypo name="plus" size={18} color={colors.light} />
-            <ButtonText>Folder</ButtonText>
-            <Entypo name="folder" size={18} color={colors.light} />
-          </Button>
+      <Box className={`flex-1 bg-${theme}-background`}>
+        <Box className='px-4 py-4 gap-3'>
+          <Box className='w-full flex-row justify-between items-center'>
+            <Button className={`bg-${theme}-button`} action='secondary' size='xl' onPress={openTemplateSheet}>
+              <Entypo name="plus" size={18} color={colors.light} />
+              <ButtonText>Template</ButtonText>
+              <Entypo name="list" size={18} color={colors.light} />
+            </Button>
+            <Button className={`bg-${theme}-button w-1/2`} action='secondary' size='xl' onPress={openFolderModal}>
+              <Entypo name="plus" size={18} color={colors.light} />
+              <ButtonText>Folder</ButtonText>
+              <Entypo name="folder" size={18} color={colors.light} />
+            </Button>
+          </Box>
+          <Box className='items-center mt-1 mb-1'>
+            <Button onPress={startWorkout} className={`bg-${theme}-accent`}>
+              <ButtonText className='text-typography-800'>
+                Start Empty Workout
+              </ButtonText>
+            </Button>
+          </Box>
         </Box>
 
-        <Button onPress={startWorkout} className={`bg-${theme}-accent`}>
-          <ButtonText className='text-typography-800'>
-            Start Empty Workout
-          </ButtonText>
-        </Button>
+        <ScrollView
+          className='flex-1'
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 16,
+            paddingBottom: 16,
+            gap: 12,
+          }}
+        >
+          <Box className='flex-1'>
+            {orderedFolders.map((f) => {
+              const isOpen = openFolders[f.id];
+              const templates = templatesByFolder[f.id] ?? [];
+              const isNone = f.id === 'none' || f.name === 'None';
+
+              if (isNone) {
+                return (
+                  <Box key={f.id} className='gap-2 mb-2'>
+                    {templates.map((t) => <TemplateCard key={t.id} template={t} />)}
+                  </Box>
+                );
+              }
+
+              return (
+                <Box key={f.id} className='mb-2'>
+                  <Pressable
+                    onPress={() =>
+                      setOpenFolders((prev) => ({
+                        ...prev,
+                        [f.id]: !prev[f.id],
+                      }))
+                    }
+                  >
+                    <HStack
+                      className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}
+                    >
+                      <HStack className='items-center gap-2'>
+                        <Entypo
+                          name={isOpen ? 'chevron-down' : 'chevron-right'}
+                          size={18}
+                          color={colors.light}
+                        />
+                        <Entypo name="folder" size={18} color={colors.light} />
+                        <Text className='text-typography-900 text-lg'>{f.name}</Text>
+                      </HStack>
+                      <Entypo name="dots-three-horizontal" size={18} color="white"/>
+                    </HStack>
+                  </Pressable>
+                  {isOpen ? (
+                    <Box className='pl-8 pr-2 py-2 gap-2'>
+                      {templates.length ? (
+                        templates.map((t) => <TemplateCard key={t.id} template={t} />)
+                      ) : (
+                        <Text className='text-typography-700'>No templates in this folder.</Text>
+                      )}
+                    </Box>
+                  ) : null}
+                </Box>
+              );
+            })}
+          </Box>
+        </ScrollView>
       </Box>
 
       <Actionsheet isOpen={isSheetOpen} onClose={() => setIsSheetOpen(false)}>
@@ -150,11 +218,10 @@ export default function StartWorkoutTab() {
           <ModalBody>
             <Box className='gap-3'>
               <Box
-                className={`w-full rounded border px-3 py-2 ${
-                  isFolderInvalid
-                    ? 'border-error-700'
-                    : 'border-secondary-900'
-                }`}
+                className={`w-full rounded border px-3 py-2 ${isFolderInvalid
+                  ? 'border-error-700'
+                  : 'border-secondary-900'
+                  }`}
               >
                 <TextInput
                   key={folderInputKey}

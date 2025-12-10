@@ -10,10 +10,11 @@ import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useTheme } from '@/app/context/ThemeContext';
-import { Entypo } from '@expo/vector-icons';
+import { Entypo, FontAwesome5 } from '@expo/vector-icons';
 import { consumeTemplateSelection } from './selectionStore';
 import { doc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
+import useTemplateFolders from '@/app/context/TemplateFoldersContext';
 
 type TemplateExercise = {
   id: string;
@@ -25,6 +26,7 @@ type TemplateExercise = {
 export default function TemplateEditor() {
   const { theme } = useTheme();
   const { folderName, folderId } = useLocalSearchParams<{ folderName?: string; folderId?: string }>();
+  const { fetchFolders, fetchTemplates } = useTemplateFolders();
   const [exercises, setExercises] = useState<TemplateExercise[]>([]);
   const [templateName, setTemplateName] = useState('');
   const [nameError, setNameError] = useState(false);
@@ -74,7 +76,7 @@ export default function TemplateEditor() {
           `exercise-${idx}`;
         return {
           exerciseId,
-          nameSnap: ex.name,
+          nameSnap: `${ex.name} (${ex.category})`,
           numSets,
         };
       });
@@ -84,6 +86,8 @@ export default function TemplateEditor() {
         exercises: mappedExercises,
       });
 
+      const latestFolders = await fetchFolders();
+      await fetchTemplates(latestFolders);
       router.replace('/(tabs)/startWorkout');
     } catch (e) {
       console.error('Failed to save template', e);
@@ -141,11 +145,17 @@ export default function TemplateEditor() {
         className="flex-1"
       >
         <VStack space="md" className="flex-1 px-4 py-4">
-          <Box className="items-center">
-            <Text size="3xl" className="text-typography-900">
-              {folderName && folderName !== 'None' ? `Folder: ${folderName}` : 'Template Editor'}
-            </Text>
-          </Box>
+          <HStack className="items-center justify-between">
+            <Pressable onPress={() => router.replace('/(tabs)/startWorkout'  )} className="w-12 items-start">
+              <FontAwesome5 name="chevron-left" size={22} color="white" />
+            </Pressable>
+            <Box className="flex-1 items-center">
+              <Text size="3xl" className="text-typography-900 text-center">
+                {folderName && folderName !== 'None' ? `Folder: ${folderName}` : 'Template Editor'}
+              </Text>
+            </Box>
+            <Box className="w-12" />
+          </HStack>
           <Box className="w-full">
             <TextInput
               className={`text-typography-900 text-3xl border rounded py-2 border-${nameError ? 'error-700' : `${theme}-background`
