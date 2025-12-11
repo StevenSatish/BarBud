@@ -75,6 +75,15 @@ type Action =
   | { type: 'MAXIMIZE' }
   | { type: 'HYDRATE'; payload: WorkoutState }
   | { type: 'ADD_EXERCISES'; payload: Omit<ExerciseEntity, 'setIds' | 'instanceId'>[] }
+  | {
+      type: 'ADD_TEMPLATE_EXERCISES';
+      payload: Array<
+        Omit<ExerciseEntity, 'setIds' | 'instanceId'> & {
+          numSets: number;
+          previousSets?: PreviousSetData[];
+        }
+      >;
+    }
   | { type: 'REPLACE_EXERCISE_WITH'; targetInstanceId: string; payload: Omit<ExerciseEntity, 'setIds' | 'instanceId'>[] }
   | { type: 'DELETE_EXERCISE'; exerciseInstanceId: string }
   | { type: 'ADD_SET'; exerciseInstanceId: string }
@@ -125,6 +134,48 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       return {
         ...state,
         workout: { ...state.workout, exercises: [...state.workout.exercises, ...payload] },
+      };
+    }
+
+    case 'ADD_TEMPLATE_EXERCISES': {
+      if (!state.workout) return state;
+      const setsById = { ...state.workout.setsById };
+      const newExercises: ExerciseEntity[] = action.payload.map((e) => {
+        const instanceId = Crypto.randomUUID();
+        const setIds: string[] = [];
+        const trackingMethods = e.trackingMethods ?? [];
+        const setCount = Math.max(1, Number(e.numSets ?? 1));
+        for (let i = 0; i < setCount; i += 1) {
+          const setId = Crypto.randomUUID();
+          setIds.push(setId);
+          setsById[setId] = {
+            id: setId,
+            order: i + 1,
+            completed: false,
+            trackingData: trackingMethods.reduce((acc, m) => ({ ...acc, [m]: null }), {} as Partial<Record<TrackingMethod, number | null>>),
+            timestamp: new Date().toISOString(),
+          };
+        }
+        return {
+          instanceId,
+          exerciseId: e.exerciseId,
+          name: e.name,
+          category: e.category,
+          muscleGroup: e.muscleGroup,
+          secondaryMuscles: e.secondaryMuscles,
+          trackingMethods,
+          setIds,
+          previousSets: e.previousSets ?? [],
+        };
+      });
+
+      return {
+        ...state,
+        workout: {
+          ...state.workout,
+          exercises: [...state.workout.exercises, ...newExercises],
+          setsById,
+        },
       };
     }
 
@@ -273,6 +324,15 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
 type Ctx = {
   workoutState: WorkoutState;
   startWorkout: () => void;
+  startWorkoutFromTemplate: (templateExercises: Array<{
+    exerciseId: string;
+    name: string;
+    category: string;
+    muscleGroup?: string;
+    secondaryMuscles?: string[];
+    trackingMethods?: TrackingMethod[];
+    numSets?: number;
+  }>) => Promise<void>;
   endWorkout: () => Promise<ProgressionsResult>;
   endWorkoutWarnings: () => WarningItem[];
   cancelWorkout: () => void;
@@ -425,6 +485,28 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     dispatch({ type: 'REPLACE_EXERCISE_WITH', targetInstanceId, payload: exercisesWithPreviousData });
   };
 
+  const startWorkoutFromTemplate: Ctx['startWorkoutFromTemplate'] = async (templateExercises) => {
+    const enriched = await Promise.all(
+      templateExercises.map(async (ex, idx) => {
+        const previousSets = await fetchPreviousSessionData(ex.exerciseId);
+        return {
+          exerciseId: ex.exerciseId,
+          name: ex.name,
+          category: ex.category,
+          muscleGroup: ex.muscleGroup ?? '',
+          secondaryMuscles: ex.secondaryMuscles ?? [],
+          trackingMethods: ex.trackingMethods ?? [],
+          numSets: Math.max(1, Number(ex.numSets ?? 1)),
+          previousSets,
+        };
+      })
+    );
+
+    dispatch({ type: 'START' });
+    dispatch({ type: 'ADD_TEMPLATE_EXERCISES', payload: enriched });
+    router.replace('/(workout)');
+  };
+
   const deleteExercise: Ctx['deleteExercise'] = exerciseInstanceId => {
     dispatch({ type: 'DELETE_EXERCISE', exerciseInstanceId });
   };
@@ -520,6 +602,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const value: Ctx = {
     workoutState: state,
     startWorkout,
+    startWorkoutFromTemplate,
     endWorkout,
     endWorkoutWarnings,
     cancelWorkout,

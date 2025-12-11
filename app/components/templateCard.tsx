@@ -14,6 +14,8 @@ import { useState, useRef } from 'react';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { deleteDoc, doc, setDoc } from 'firebase/firestore';
 import useTemplateFolders from '@/app/context/TemplateFoldersContext';
+import { useWorkout } from '@/app/context/WorkoutContext';
+import useExerciseDB from '@/app/context/ExerciseDBContext';
 import { router } from 'expo-router';
 
 type TemplateCardProps = {
@@ -25,6 +27,8 @@ type TemplateCardProps = {
 export default function TemplateCard({ template, folderId, folderName }: TemplateCardProps) {
   const { theme } = useTheme();
   const { fetchTemplates, folders, fetchFolders, foldersLoading } = useTemplateFolders();
+  const { exerciseSections } = useExerciseDB();
+  const { startWorkoutFromTemplate } = useWorkout();
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameInvalid, setRenameInvalid] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -32,6 +36,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
   const [deleting, setDeleting] = useState(false);
   const [moveSheetOpen, setMoveSheetOpen] = useState(false);
   const [moving, setMoving] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const renameDraftRef = useRef(template.templateName ?? '');
   const [renameInputKey, setRenameInputKey] = useState(0);
   const lastPerformedLabel = useMemo(
@@ -179,8 +184,46 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
     }
   };
 
+  const handleStartWorkout = async () => {
+    try {
+      setViewModalOpen(false);
+      const templateExercises = template.exercises ?? [];
+      const exerciseMap = exerciseSections.reduce<Record<string, any>>((acc, section) => {
+        section.data.forEach((ex: any) => {
+          if (ex.id) acc[ex.id] = ex;
+        });
+        return acc;
+      }, {}); 
+
+      const payload = templateExercises.map((ex, idx) => {
+        const exerciseId =
+          ex.exerciseId ||
+          ex.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '') ||
+          `exercise-${idx}`;
+        const meta = exerciseMap[exerciseId];
+        return {
+          exerciseId,
+          name: meta?.name ?? ex.name,
+          category: meta?.category ?? ex.category ?? '',
+          muscleGroup: meta?.muscleGroup ?? '',
+          secondaryMuscles: meta?.secondaryMuscles ?? [],
+          trackingMethods: Array.isArray(meta?.trackingMethods) ? meta.trackingMethods : [],
+          numSets: ex.numSets,
+        };
+      });
+
+      await startWorkoutFromTemplate(payload);
+    } catch (e) {
+      console.error('Failed to start workout from template', e);
+    }
+  };
+
   return (
-    <Box className={`rounded border border-outline-200 bg-${theme}-background px-3 py-3`}>
+    <Pressable
+      onPress={() => setViewModalOpen(true)}
+      hitSlop={6}
+      className={`rounded border border-outline-200 bg-${theme}-background px-3 py-3`}
+    >
       <HStack className='items-center justify-between'>
         <Text className='text-typography-900 text-lg font-semibold'>{template.templateName}</Text>
         <Menu
@@ -241,9 +284,8 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           <ModalBody>
             <Box className='gap-3'>
               <Box
-                className={`w-full rounded border px-3 py-2 ${
-                  renameInvalid ? 'border-error-700' : 'border-secondary-900'
-                }`}
+                className={`w-full rounded border px-3 py-2 ${renameInvalid ? 'border-error-700' : 'border-secondary-900'
+                  }`}
               >
                 <TextInput
                   key={renameInputKey}
@@ -339,7 +381,41 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           )}
         </ActionsheetContent>
       </Actionsheet>
-    </Box>
+
+      <Modal isOpen={viewModalOpen} onClose={() => setViewModalOpen(false)}>
+        <ModalBackdrop onPress={() => setViewModalOpen(false)} />
+        <ModalContent size="md" className={`bg-${theme}-background border-${theme}-steelGray`}>
+          <ModalHeader>
+            <HStack className='flex-1' space='md'>
+              <Text bold size='3xl' className='text-typography-900'>{template.templateName}</Text>
+            </HStack>
+          </ModalHeader>
+          <ModalBody>
+            <Box className='gap-3'>
+              {
+                lastPerformedLabel && (<Text className='text-typography-700'>
+                  Last Performed: {lastPerformedLabel}
+                </Text>)
+              }
+              <Box className='gap-1'>
+                {template.exercises?.length
+                  ? template.exercises.map((ex, idx) => (
+                    <Text key={`${template.id}-${ex.exerciseId ?? 'ex'}-${idx}`}>
+                      {ex.numSets} x {ex.name} ({ex.category})
+                    </Text>
+                  ))
+                  : <Text className='text-typography-700'>No exercises</Text>}
+              </Box>
+            </Box>
+          </ModalBody>
+          <ModalFooter className='flex-row justify-center items-center px-4'>
+            <Button className={`bg-${theme}-accent rounded-full`} onPress={handleStartWorkout}>
+              <ButtonText className='text-typography-900'>Start Workout</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Pressable>
   );
 }
 

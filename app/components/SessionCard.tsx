@@ -41,8 +41,8 @@ export default function SessionCard({ session }: SessionCardProps) {
 				<>
 					<Heading size="sm" className="text-typography-600">Exercises:</Heading>
 					<View>
-						{session.exerciseCounts.map((ex) => (
-							<Text key={ex.exerciseId} className="text-typography-700">
+						{session.exerciseCounts.map((ex, idx) => (
+							<Text key={`${ex.exerciseId}-${idx}`} className="text-typography-700">
 								{ex.completedSetCount} x {ex.nameSnap}
 							</Text>
 						))}
