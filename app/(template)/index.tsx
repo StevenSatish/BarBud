@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView, TextInput } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
@@ -17,7 +17,8 @@ import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import useTemplateFolders from '@/app/context/TemplateFoldersContext';
 
 type TemplateExercise = {
-  id: string;
+  uiId: string; // unique per row for UI
+  exerciseId?: string; // stable exercise identifier (can repeat)
   name: string;
   sets: string;
   category: string;
@@ -25,12 +26,20 @@ type TemplateExercise = {
 
 export default function TemplateEditor() {
   const { theme } = useTheme();
-  const { folderName, folderId } = useLocalSearchParams<{ folderName?: string; folderId?: string }>();
+  const { folderName, folderId, templateId: templateIdParam, templateName: templateNameParam, exercises: exercisesParam } =
+    useLocalSearchParams<{
+      folderName?: string;
+      folderId?: string;
+      templateId?: string;
+      templateName?: string;
+      exercises?: string;
+    }>();
   const { fetchFolders, fetchTemplates } = useTemplateFolders();
   const [exercises, setExercises] = useState<TemplateExercise[]>([]);
   const [templateName, setTemplateName] = useState('');
   const [nameError, setNameError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const prefilledRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -38,7 +47,8 @@ export default function TemplateEditor() {
       if (!selected) return;
       setExercises((prev) => {
         const mapped = selected.map((ex, idx) => ({
-          id: ex.id ?? `ex-${prev.length + idx}`,
+          uiId: `${ex.id ?? ex.name ?? 'ex'}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+          exerciseId: ex.id,
           name: ex.name ?? 'Exercise',
           sets: "",
           category: ex.category ?? "",
@@ -47,6 +57,30 @@ export default function TemplateEditor() {
       });
     }, [])
   );
+
+  useEffect(() => {
+    if (prefilledRef.current) return;
+    if (!templateIdParam) return;
+    const parsedExercises = (() => {
+      if (typeof exercisesParam !== 'string') return [];
+      try {
+        const arr = JSON.parse(exercisesParam);
+        if (!Array.isArray(arr)) return [];
+        return arr.map((ex: any, idx: number) => ({
+          uiId: `${ex?.exerciseId ?? 'ex'}-${idx}-${Math.random().toString(16).slice(2, 6)}`,
+          exerciseId: ex?.exerciseId ?? '',
+          name: ex?.name ?? 'Exercise',
+          sets: String(ex?.numSets ?? ''),
+          category: ex?.category ?? '',
+        })) as TemplateExercise[];
+      } catch {
+        return [];
+      }
+    })();
+    setTemplateName(templateNameParam ?? '');
+    setExercises(parsedExercises);
+    prefilledRef.current = true;
+  }, [templateIdParam, templateNameParam, exercisesParam]);
 
   const handleSaveTemplate = async () => {
     const trimmedName = templateName.trim();
@@ -65,18 +99,21 @@ export default function TemplateEditor() {
 
       const safeFolderId = typeof folderId === 'string' && folderId.length ? folderId : 'none';
       const templateId =
-        trimmedName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '') || 'template';
+        (typeof templateIdParam === 'string' && templateIdParam.length
+          ? templateIdParam
+          : trimmedName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')) || 'template';
 
       const mappedExercises = exercises.map((ex, idx) => {
         const num = parseInt(ex.sets, 10);
         const numSets = Number.isFinite(num) && num > 0 ? num : 1;
         const exerciseId =
-          ex.id ||
+          ex.exerciseId ||
           ex.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '') ||
           `exercise-${idx}`;
         return {
           exerciseId,
-          nameSnap: `${ex.name} (${ex.category})`,
+          category: ex.category,
+          name: ex.name,
           numSets,
         };
       });
@@ -119,12 +156,12 @@ export default function TemplateEditor() {
             onChangeText={(num) => {
               if (!/^\d*$/.test(num)) return;
               setExercises((prev) =>
-                prev.map((ex) => (ex.id === item.id ? { ...ex, sets: num } : ex))
+                prev.map((ex) => (ex.uiId === item.uiId ? { ...ex, sets: num } : ex))
               );
             }}
           />
           <Pressable
-            onPress={() => setExercises((prev) => prev.filter((ex) => ex.id !== item.id))}
+            onPress={() => setExercises((prev) => prev.filter((ex) => ex.uiId !== item.uiId))}
             hitSlop={10}
             className="ml-2"
           >
@@ -172,7 +209,7 @@ export default function TemplateEditor() {
           {exercises.length > 0 && <DraggableFlatList
             scrollEnabled={exercises.length > 8}
             data={exercises}
-            keyExtractor={(item: TemplateExercise) => item.id}
+            keyExtractor={(item: TemplateExercise) => item.uiId}
             renderItem={renderItem}
             onDragEnd={({ data }: { data: TemplateExercise[] }) => setExercises(data)}
             activationDistance={0}

@@ -253,7 +253,7 @@ export default function StartWorkoutTab() {
               if (isNone) {
                 return (
                   <Box key={f.id} className='gap-2 mb-2'>
-                    {templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} />)}
+                    {templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} folderName={f.name} />)}
                   </Box>
                 );
               }
@@ -302,7 +302,7 @@ export default function StartWorkoutTab() {
                   {isOpen ? (
                     <Box className='pl-8 pr-2 py-2 gap-2'>
                       {templates.length ? (
-                        templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} />)
+                        templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} folderName={f.name} />)
                       ) : (
                         <Text className='text-typography-700'>No templates in this folder.</Text>
                       )}
@@ -357,7 +357,7 @@ export default function StartWorkoutTab() {
               <Text size='2xl' className='text-typography-900'>Create New Folder</Text>
             </HStack>
           </ModalHeader>
-          <ModalBody>
+          <ModalBody scrollEnabled={false}>
             <Box className='gap-3'>
               <Box
                 className={`w-full rounded border px-3 py-2 ${isFolderInvalid
@@ -367,9 +367,11 @@ export default function StartWorkoutTab() {
               >
                 <TextInput
                   key={folderInputKey}
-                  className='text-typography-900'
+                  className='text-typography-900 w-full'
                   placeholder="Folder name"
                   placeholderTextColor="rgba(255,255,255,0.6)"
+                  multiline={false}
+                  autoCorrect={false}
                   onChangeText={(t) => {
                     folderDraftRef.current = t;
                   }}
@@ -414,9 +416,13 @@ export default function StartWorkoutTab() {
               >
                   <TextInput
                     key={renameInputKey}
-                    className='text-typography-900'
+                    className='text-typography-900 w-full'
                     placeholder="Folder name"
                     placeholderTextColor="rgba(255,255,255,0.6)"
+                    multiline={false}
+                    scrollEnabled={false}
+                    autoCapitalize="none"
+                    autoCorrect={false}
                     defaultValue={renameDraftRef.current}
                     onChangeText={(t) => {
                       renameDraftRef.current = t;

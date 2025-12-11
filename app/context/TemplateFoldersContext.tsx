@@ -7,7 +7,8 @@ type Folder = { id: string; name: string };
 
 export type TemplateExerciseSnapshot = {
   exerciseId: string;
-  nameSnap: string;
+  name: string;
+  category: string;
   numSets: number;
 };
 
@@ -101,7 +102,8 @@ export const TemplateFoldersProvider: React.FC<{ children: React.ReactNode }> = 
               const exercisesArray: TemplateExerciseSnapshot[] = Array.isArray(data?.exercises)
                 ? data.exercises.map((ex: any) => ({
                     exerciseId: String(ex?.exerciseId ?? ''),
-                    nameSnap: String(ex?.nameSnap ?? ''),
+                    name: String(ex?.name ?? ''),
+                    category: String(ex?.category ?? ''),
                     numSets: Number.isFinite(Number(ex?.numSets)) ? Number(ex.numSets) : 0,
                   }))
                 : [];

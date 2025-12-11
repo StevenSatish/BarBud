@@ -14,13 +14,15 @@ import { useState, useRef } from 'react';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { deleteDoc, doc, setDoc } from 'firebase/firestore';
 import useTemplateFolders from '@/app/context/TemplateFoldersContext';
+import { router } from 'expo-router';
 
 type TemplateCardProps = {
   template: Template;
   folderId: string;
+  folderName?: string;
 };
 
-export default function TemplateCard({ template, folderId }: TemplateCardProps) {
+export default function TemplateCard({ template, folderId, folderName }: TemplateCardProps) {
   const { theme } = useTheme();
   const { fetchTemplates, folders, fetchFolders, foldersLoading } = useTemplateFolders();
   const [renameModalOpen, setRenameModalOpen] = useState(false);
@@ -37,7 +39,7 @@ export default function TemplateCard({ template, folderId }: TemplateCardProps) 
     [template.lastPerformedAt]
   );
   const exercisesLine = useMemo(() => {
-    const names = template.exercises?.map((ex) => ex.nameSnap).filter(Boolean) ?? [];
+    const names = template.exercises?.map((ex) => `${ex.name} (${ex.category})`).filter(Boolean) ?? [];
     return names.join(', ');
   }, [template.exercises]);
 
@@ -194,7 +196,19 @@ export default function TemplateCard({ template, folderId }: TemplateCardProps) 
           <MenuItem textValue="Rename" onPress={openRenameModal}>
             <MenuItemLabel size="lg">Rename</MenuItemLabel>
           </MenuItem>
-          <MenuItem textValue="Edit">
+          <MenuItem
+            textValue="Edit"
+            onPress={() => {
+              const params: Record<string, string> = {
+                templateId: template.id,
+                templateName: template.templateName ?? '',
+                folderId,
+                folderName: folderName ?? '',
+                exercises: JSON.stringify(template.exercises ?? []),
+              };
+              router.replace({ pathname: '/(template)', params });
+            }}
+          >
             <MenuItemLabel size="lg">Edit</MenuItemLabel>
           </MenuItem>
           <MenuItem textValue="Move" onPress={handleOpenMoveSheet}>
