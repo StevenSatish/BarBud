@@ -98,10 +98,10 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
   return (
     <HStack className={`items-center py-3 ${set.completed ? `bg-${theme}-button` : `bg-${theme}-background`}`}>
       <Box className="flex-[0.75] items-center justify-center">
-        <Text size="md" bold className={`text-typography-900 text-center text-${theme}-lightText`}>{index + 1}</Text>
+        <Text size="md" bold className={`text-typography-800 text-center text-${theme}-lightText`}>{index + 1}</Text>
       </Box>
       <Button variant="link" className="flex-[1] items-center justify-center" onPress={applyPreviousToSet}>
-         <ButtonText size="md" className={`text-typography-900 text-center text-${theme}-lightText font-bold`}>
+         <ButtonText size="md" className={`text-typography-800 text-center text-${theme}-lightText font-bold`}>
            {(() => {
              // Get previous session data for this set position (not order)
              if (!previousSets) return '-';
@@ -136,7 +136,7 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
           <FormControl className="w-full max-w-[90px]" isInvalid={setInvalid[method]}>
             <Input className="mx-2" variant="outline" size="md">
               <InputField
-                className="text-typography-900 text-center text-lg"
+                className="text-typography-800 text-center text-lg"
                 placeholder={getPlaceholder(method)}
                 value={set.trackingData[method]?.toString() || ''}
                 keyboardType="numeric"

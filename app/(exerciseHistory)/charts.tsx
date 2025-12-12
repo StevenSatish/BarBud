@@ -486,7 +486,7 @@ export default function ExerciseChartsTab({
   if (!exercise) {
     return (
       <View className={`flex-1 bg-${theme}-background p-4`}>
-        <Text className="text-typography-900">No exercise selected.</Text>
+        <Text className="text-typography-800">No exercise selected.</Text>
       </View>
     );
   }
@@ -509,7 +509,7 @@ export default function ExerciseChartsTab({
             <>
               <Heading
                 size="lg"
-                className="text-typography-900 text-center"
+                className="text-typography-800 text-center"
               >
                 {selected.title}
               </Heading>
@@ -654,7 +654,7 @@ export default function ExerciseChartsTab({
                       className={
                         active
                           ? `text-${theme}-background`
-                          : `text-typography-900`
+                          : `text-typography-800`
                       }
                     >
                       {opt.title}
@@ -683,7 +683,7 @@ export default function ExerciseChartsTab({
                     className={
                       active
                         ? `text-${theme}-background`
-                        : `text-typography-900`
+                        : `text-typography-800`
                     }
                   >
                     {range}

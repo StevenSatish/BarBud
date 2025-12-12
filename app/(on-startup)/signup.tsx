@@ -143,7 +143,7 @@ export default function Signup() {
                     </FormControlLabel>
                     <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
                         <InputField
-                            className="text-typography-900"
+                            className="text-typography-800"
                             placeholder="username"
                             placeholderTextColor="text-typography-700"
                             value={username}
@@ -164,7 +164,7 @@ export default function Signup() {
                     </FormControlLabel>
                     <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
                         <InputField
-                            className="text-typography-900"
+                            className="text-typography-800"
                             placeholder="email"
                             placeholderTextColor="text-typography-700"
                             value={email}
@@ -185,7 +185,7 @@ export default function Signup() {
                     </FormControlLabel>
                     <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
                         <InputField
-                            className="text-typography-900"
+                            className="text-typography-800"
                             placeholder="password"
                             placeholderTextColor="text-typography-700"
                             type={showPass ? "text" : "password"}
@@ -215,7 +215,7 @@ export default function Signup() {
                     </FormControlLabel>
                     <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
                         <InputField
-                            className="text-typography-900"
+                            className="text-typography-800"
                             placeholder="confirm password"
                             placeholderTextColor="text-typography-700"
                             type={showConfirmPass ? "text" : "password"}

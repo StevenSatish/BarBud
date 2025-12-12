@@ -124,7 +124,7 @@ export default function HistoryDatabase() {
     return (
       <Pressable onPress={() => onPress(item)}>
         <VStack space="xs" className="py-4 px-6 w-full">
-          <Text className="text-xl font-bold text-typography-900">
+          <Text className="text-xl font-bold text-typography-800">
             {item.name} ({item.category})
           </Text>
           <HStack space="md" className="justify-between w-full">

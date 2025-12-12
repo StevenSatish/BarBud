@@ -121,7 +121,7 @@ export default function ProgressionsScreen() {
         />
 
       <VStack className="flex-1 px-4 py-6" space="lg">
-        <Heading size="xl" className="text-typography-900 font-semibold mb-2">
+        <Heading size="xl" className="text-typography-800 font-semibold mb-2">
           {`Congratulations${usernameFromDb ? ` ${usernameFromDb}!` : "!"}`}
         </Heading>
         {typeof data.workoutsCompletedBefore === "number" && (
@@ -132,7 +132,7 @@ export default function ProgressionsScreen() {
           </Text>
         )}
 
-        <Heading size="xl" className="text-typography-900 font-semibold mb-2">
+        <Heading size="xl" className="text-typography-800 font-semibold mb-2">
           Workout Progressions
         </Heading>
 

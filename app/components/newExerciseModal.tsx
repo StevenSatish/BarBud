@@ -60,7 +60,7 @@ const ExerciseNameInput = ({
   inputKey: number;
 }) => (
   <Box className="gap-2">
-    <Text className="text-typography-900 font-semibold">Exercise Name</Text>
+    <Text className="text-typography-800 font-semibold">Exercise Name</Text>
     <Box
       className={`w-full rounded border px-3 py-2 ${
         hasError ? 'border-error-700' : 'border-secondary-900'
@@ -71,7 +71,7 @@ const ExerciseNameInput = ({
         onChangeText={onChangeText}
         placeholder="Exercise Name"
         placeholderTextColor="rgba(255,255,255,0.6)"
-        className="text-typography-900"
+        className="text-typography-800"
       />
     </Box>
   </Box>
@@ -178,7 +178,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
       <ModalBackdrop />
       <ModalContent className={`bg-${theme}-background border-${theme}-lightGray`}>
         <ModalHeader>
-          <Text className="text-xl font-bold text-typography-900">Create New Exercise</Text>
+          <Text className="text-xl font-bold text-typography-800">Create New Exercise</Text>
           <ModalCloseButton onPress={onClose}>
             <Text className="text-typography-500">✕</Text>
           </ModalCloseButton>

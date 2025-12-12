@@ -142,14 +142,14 @@ export default function TemplateEditor() {
           <Pressable onLongPress={drag} onPressIn={drag} delayLongPress={120} hitSlop={10}>
             <Entypo name="menu" size={20} color="white" />
           </Pressable>
-          <Text className="text-typography-900 text-base flex-1 mr-3">
+          <Text className="text-typography-800 text-base flex-1 mr-3">
             {item.name} {`(${item.category})`}
           </Text>
         </HStack>
         <HStack className="items-center gap-2">
           <Text className="text-typography-700">sets:</Text>
           <TextInput
-            className="text-typography-900 border border-outline-200 rounded px-2 py-1 w-16 text-center"
+            className="text-typography-800 border border-outline-200 rounded px-2 py-1 w-16 text-center"
             keyboardType="numeric"
             placeholderTextColor="rgba(255,255,255,0.6)"
             value={item.sets}
@@ -186,7 +186,7 @@ export default function TemplateEditor() {
               <FontAwesome5 name="chevron-left" size={22} color="white" />
             </Pressable>
             <Box className="flex-1 items-center">
-              <Text size="3xl" className="text-typography-900 text-center">
+              <Text size="3xl" className="text-typography-800 text-center">
                 {folderName && folderName !== 'None' ? `Folder: ${folderName}` : 'Template Editor'}
               </Text>
             </Box>
@@ -194,7 +194,7 @@ export default function TemplateEditor() {
           </HStack>
           <Box className="w-full">
             <TextInput
-              className={`text-typography-900 text-3xl border rounded py-2 border-${nameError ? 'error-700' : `${theme}-background`
+              className={`text-typography-800 text-3xl border rounded py-2 border-${nameError ? 'error-700' : `${theme}-background`
                 }`}
               placeholder="Template Name..."
               placeholderTextColor="rgba(255,255,255,0.6)"

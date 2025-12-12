@@ -224,7 +224,7 @@ export default function ExerciseHistoryScreen() {
           </Pressable>
 
           <Box className="flex-1 flex items-center justify-center">
-            <Heading size="lg" className="text-typography-900 font-semibold text-center">
+            <Heading size="lg" className="text-typography-800 font-semibold text-center">
               {`${exercise?.name} ${exercise?.category !== 'Other' ? `(${exercise?.category})` : ''}`}
             </Heading>
           </Box>
@@ -242,7 +242,7 @@ export default function ExerciseHistoryScreen() {
               className={activeTab === key ? `bg-${theme}-light` : `border-outline-200`}
               onPress={() => setActiveTab(key)}
             >
-              <ButtonText className={activeTab === key ? `text-${theme}-background` : `text-typography-900`}>
+              <ButtonText className={activeTab === key ? `text-${theme}-background` : `text-typography-800`}>
                 {key === 'about' ? 'About' : key === 'history' ? 'History' : 'Charts'}
               </ButtonText>
             </Button>

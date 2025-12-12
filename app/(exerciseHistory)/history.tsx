@@ -186,8 +186,8 @@ export default function ExerciseHistoryTab({
 
     return (
       <HStack key={set.id} className="w-full py-1 items-center">
-        <Text size="lg" bold className="text-typography-900 w-6 text-right">{`${set.order}:`}</Text>
-        <Text size="lg" className="text-typography-900 ml-3">{summary || '-'}</Text>
+        <Text size="lg" bold className="text-typography-800 w-6 text-right">{`${set.order}:`}</Text>
+        <Text size="lg" className="text-typography-800 ml-3">{summary || '-'}</Text>
       </HStack>
     );
   };
@@ -199,7 +199,7 @@ export default function ExerciseHistoryTab({
     return (
       <Box className={`w-full rounded-md mb-3 px-3 py-2 bg-${theme}-button`}>
         <VStack className="w-full gap-1">
-          <Text className="text-typography-900 font-semibold">{formatDate(item.date)}</Text>
+          <Text className="text-typography-800 font-semibold">{formatDate(item.date)}</Text>
 
           {isLoadingSets ? (
             <HStack className="w-full py-2 items-center justify-center">
@@ -219,7 +219,7 @@ export default function ExerciseHistoryTab({
   if (!uid || !exerciseId) {
     return (
       <View className={`flex-1 bg-${theme}-background p-4`}>
-        <Text className="text-typography-900">No exercise selected.</Text>
+        <Text className="text-typography-800">No exercise selected.</Text>
       </View>
     );
   }

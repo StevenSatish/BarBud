@@ -66,7 +66,7 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
         space="xs"
         className={`${isSelected ? `bg-${theme}-button` : ""} py-4 px-6 w-full`}
       >
-        <Text className="text-xl font-bold text-typography-900">
+        <Text className="text-xl font-bold text-typography-800">
           {item.name} ({item.category})
         </Text>
         <HStack space="md" className="justify-between w-full">

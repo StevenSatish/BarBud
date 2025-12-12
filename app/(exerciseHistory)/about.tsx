@@ -96,7 +96,7 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
   return (
     <View className={`flex-1 bg-${theme}-background px-4 py-3`}>
       <HStack className="items-center justify-between mb-3">
-        <Heading size="xl" className="text-typography-900">
+        <Heading size="xl" className="text-typography-800">
           Personal Records
         </Heading>
         <FontAwesome5 name="trophy" size={18} color={colors.light} />
@@ -105,19 +105,19 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
         {prRows.map((row) => (
           <HStack key={row.label} className="items-center justify-between border-b border-outline-200 pb-2">
             <Text size="lg" className="text-typography-700">{row.label}</Text>
-            <Text size="lg" className={`text-typography-900 font-semibold`}>{row.value ?? '-'}</Text>
+            <Text size="lg" className={`text-typography-800 font-semibold`}>{row.value ?? '-'}</Text>
           </HStack>
         ))}
       </VStack>
 
-      <Heading size="xl" className="mb-3 text-typography-900">
+      <Heading size="xl" className="mb-3 text-typography-800">
         Lifetime Stats
       </Heading>
       <VStack className="gap-3">
         {lifetimeRows.map((row) => (
           <HStack key={row.label} className="items-center justify-between border-b border-outline-200 pb-2">
             <Text size="lg" className="text-typography-700">{row.label}</Text>
-            <Text size="lg" className="text-typography-900 font-semibold">{row.value ?? '-'}</Text>
+            <Text size="lg" className="text-typography-800 font-semibold">{row.value ?? '-'}</Text>
           </HStack>
         ))}
       </VStack>

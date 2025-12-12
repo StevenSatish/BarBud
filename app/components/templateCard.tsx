@@ -226,7 +226,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
       className={`rounded border border-outline-200 bg-${theme}-background px-3 py-3`}
     >
       <HStack className='items-center justify-between'>
-        <Text className='text-typography-900 text-lg font-semibold'>{template.templateName}</Text>
+        <Text className='text-typography-800 text-lg font-semibold'>{template.templateName}</Text>
         <Menu
           className={`bg-${theme}-button`}
           placement="bottom left"
@@ -283,7 +283,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
         <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
           <ModalHeader>
             <HStack className='flex-1' space='md'>
-              <Text size='2xl' className='text-typography-900'>Rename Template</Text>
+              <Text size='2xl' className='text-typography-800'>Rename Template</Text>
             </HStack>
           </ModalHeader>
           <ModalBody>
@@ -294,7 +294,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
               >
                 <TextInput
                   key={renameInputKey}
-                  className='text-typography-900'
+                  className='text-typography-800'
                   placeholder="Template name"
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   defaultValue={renameDraftRef.current}
@@ -326,7 +326,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
         <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
           <ModalHeader>
             <HStack className='flex-1' space='md'>
-              <Text size='2xl' className='text-typography-900'>Delete Template</Text>
+              <Text size='2xl' className='text-typography-800'>Delete Template</Text>
             </HStack>
           </ModalHeader>
           <ModalBody>
@@ -357,7 +357,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
-          <ActionsheetSectionHeaderText size='lg' className='text-typography-900'>
+          <ActionsheetSectionHeaderText size='lg' className='text-typography-800'>
             Move to Folder
           </ActionsheetSectionHeaderText>
 
@@ -377,7 +377,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
                   onPress={() => handleMoveTemplate(f.id)}
                 >
                   {f.id !== 'none' ? <Entypo name="folder" size={18} color="white" /> : null}
-                  <ActionsheetItemText size='lg' className='text-typography-900'>
+                  <ActionsheetItemText size='lg' className='text-typography-800'>
                     {f.name}
                   </ActionsheetItemText>
                 </ActionsheetItem>
@@ -392,7 +392,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
         <ModalContent size="md" className={`bg-${theme}-background border-${theme}-steelGray`}>
           <ModalHeader>
             <HStack className='flex-1' space='md'>
-              <Text bold size='3xl' className='text-typography-900'>{template.templateName}</Text>
+              <Text bold size='3xl' className='text-typography-800'>{template.templateName}</Text>
             </HStack>
           </ModalHeader>
           <ModalBody>
@@ -415,7 +415,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           </ModalBody>
           <ModalFooter className='flex-row justify-center items-center px-4'>
             <Button className={`bg-${theme}-accent rounded-full`} onPress={handleStartWorkout}>
-              <ButtonText className='text-typography-900'>Start Workout</ButtonText>
+              <ButtonText className='text-typography-800'>Start Workout</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>

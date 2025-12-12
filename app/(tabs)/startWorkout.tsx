@@ -277,7 +277,7 @@ export default function StartWorkoutTab() {
                           color={colors.light}
                         />
                         <Entypo name="folder" size={18} color={colors.light} />
-                        <Text className='text-typography-900 text-lg'>{f.name}</Text>
+                        <Text className='text-typography-800 text-lg'>{f.name}</Text>
                       </HStack>
                       <Menu
                         className={`bg-${theme}-background`}
@@ -320,7 +320,7 @@ export default function StartWorkoutTab() {
           <ActionsheetDragIndicatorWrapper>
             <ActionsheetDragIndicator />
           </ActionsheetDragIndicatorWrapper>
-          <ActionsheetSectionHeaderText size='lg' className='text-typography-900'>
+          <ActionsheetSectionHeaderText size='lg' className='text-typography-800'>
             Select a Folder
           </ActionsheetSectionHeaderText>
 
@@ -341,7 +341,7 @@ export default function StartWorkoutTab() {
                 }}
               >
                 {f.id !== `none` ? <Entypo name="folder" size={18} color={colors.light} /> : null}
-                <ActionsheetItemText size='lg' className='text-typography-900'>{f.name}</ActionsheetItemText>
+                <ActionsheetItemText size='lg' className='text-typography-800'>{f.name}</ActionsheetItemText>
               </ActionsheetItem>
             ))
           )}
@@ -353,7 +353,7 @@ export default function StartWorkoutTab() {
         <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
           <ModalHeader>
             <HStack className='flex-1' space='md'>
-              <Text size='2xl' className='text-typography-900'>Create New Folder</Text>
+              <Text size='2xl' className='text-typography-800'>Create New Folder</Text>
             </HStack>
           </ModalHeader>
           <ModalBody scrollEnabled={false}>
@@ -366,7 +366,7 @@ export default function StartWorkoutTab() {
               >
                 <TextInput
                   key={folderInputKey}
-                  className='text-typography-900 w-full'
+                  className='text-typography-800 w-full'
                   placeholder="Folder name"
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   multiline={false}
@@ -403,7 +403,7 @@ export default function StartWorkoutTab() {
         <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
           <ModalHeader>
             <HStack className='flex-1' space='md'>
-              <Text size='2xl' className='text-typography-900'>Rename Folder</Text>
+              <Text size='2xl' className='text-typography-800'>Rename Folder</Text>
             </HStack>
           </ModalHeader>
           <ModalBody>
@@ -415,7 +415,7 @@ export default function StartWorkoutTab() {
               >
                   <TextInput
                     key={renameInputKey}
-                    className='text-typography-900 w-full'
+                    className='text-typography-800 w-full'
                     placeholder="Folder name"
                     placeholderTextColor="rgba(255,255,255,0.6)"
                     multiline={false}
@@ -457,7 +457,7 @@ export default function StartWorkoutTab() {
         <ModalContent size="sm" className={`bg-${theme}-background border-${theme}-steelGray`}>
           <ModalHeader>
             <HStack className='flex-1' space='md'>
-              <Text size='2xl' className='text-typography-900'>Delete Folder</Text>
+              <Text size='2xl' className='text-typography-800'>Delete Folder</Text>
             </HStack>
           </ModalHeader>
           <ModalBody>

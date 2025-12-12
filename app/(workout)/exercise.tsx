@@ -101,7 +101,7 @@ function Exercise({ exercise }: Props) {
     <Box className={`w-full mb-2 bg-${theme}-background`}>
       <VStack space="md">
         <HStack className={`justify-between items-center px-2`}>
-          <Text size="lg" className="text-typography-900 font-bold ">
+          <Text size="lg" className="text-typography-800 font-bold ">
             {`${exercise.name} ${exercise.category !== 'Other' ? `(${exercise.category})` : ''}`}
           </Text>
           <Entypo name="dots-three-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)} />
@@ -110,14 +110,14 @@ function Exercise({ exercise }: Props) {
 
         <HStack className="items-center">
           <Box className="flex-[0.75] items-center justify-center">
-            <Text className="text-typography-900 text-center">Set</Text>
+            <Text className="text-typography-800 text-center">Set</Text>
           </Box>
           <Box className="flex-[1] items-center justify-center">
-            <Text className="text-typography-900 text-center">Previous</Text>
+            <Text className="text-typography-800 text-center">Previous</Text>
           </Box>
           {exercise.trackingMethods.map((method) => (
             <Box key={method} style={{ flex: 2 / exercise.trackingMethods.length }} className="items-center justify-center">
-              <Text className="text-typography-900 text-center">{capitalize(method)}</Text>
+              <Text className="text-typography-800 text-center">{capitalize(method)}</Text>
             </Box>
           ))}
           <Box className="flex-[0.75] items-center justify-center">
@@ -168,7 +168,7 @@ function Exercise({ exercise }: Props) {
               });
             }}
           >
-            <ActionsheetItemText className="text-lg justify-center text-typography-900">
+            <ActionsheetItemText className="text-lg justify-center text-typography-800">
               Replace Exercise
             </ActionsheetItemText>
           </ActionsheetItem>

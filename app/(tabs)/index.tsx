@@ -18,7 +18,7 @@ export default function History() {
 		<SafeAreaView className={`flex-1 bg-${theme}-background`}>
 			{/* Header */}
 			<View className="w-full flex-row items-center justify-between px-4 py-3">
-				<Text className="text-typography-900 text-2xl font-bold">Workout History</Text>
+				<Text className="text-typography-800 text-2xl font-bold">Workout History</Text>
 				<View className="flex-row items-center border border-outline-200 rounded-md overflow-hidden">
 					<Pressable
 						onPress={() => setMode('calendar')}

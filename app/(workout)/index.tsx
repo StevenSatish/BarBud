@@ -81,7 +81,7 @@ export default function WorkoutScreen() {
     return (
       <SafeAreaView className={`bg-${theme}-background flex-1`}>
         <VStack className="flex-1 items-center justify-center px-6">
-          <Heading size="xl" className="text-typography-900 mb-3">
+          <Heading size="xl" className="text-typography-800 mb-3">
             No active workout
           </Heading>
         </VStack>
@@ -104,7 +104,7 @@ export default function WorkoutScreen() {
           <AlertDialogBackdrop />
           <AlertDialogContent className="bg-background-0 border-outline-100">
             <AlertDialogHeader>
-              <Heading size="lg" className="text-typography-900 font-semibold">
+              <Heading size="lg" className="text-typography-800 font-semibold">
                 Finish Workout?
               </Heading>
             </AlertDialogHeader>
