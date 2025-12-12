@@ -174,7 +174,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} className={"z-1000"}>
       <ModalBackdrop />
       <ModalContent className={`bg-${theme}-background border-${theme}-lightGray`}>
         <ModalHeader>

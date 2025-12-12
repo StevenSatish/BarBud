@@ -223,7 +223,7 @@ export default function TemplateEditor() {
               action="secondary"
               onPress={() =>
                 router.push({
-                  pathname: '/(workout)/AddExersiceDatabase',
+                  pathname: '/(template)/AddExersiceDatabaseProxy',
                   params: { mode: 'template', folderName: folderName ?? '', folderId: '' },
                 })
               }

@@ -265,6 +265,7 @@ export default function AddExerciseDatabase() {
         </HStack>
         <HStack className="w-full items-center justify-center gap-2 pb-1">
           <Menu
+            zIndex={1000}
             placement="bottom"
             offset={0}
             trigger={({ ...triggerProps }) => {
@@ -287,6 +288,7 @@ export default function AddExerciseDatabase() {
             ))}
           </Menu>
           <Menu
+            zIndex={1000}
             placement="bottom"
             offset={0}
             trigger={({ ...triggerProps }) => {
