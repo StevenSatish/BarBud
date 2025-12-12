@@ -335,7 +335,7 @@ type Ctx = {
   }>) => Promise<void>;
   endWorkout: () => Promise<ProgressionsResult>;
   endWorkoutWarnings: () => WarningItem[];
-  cancelWorkout: () => void;
+  cancelWorkout: () => Promise<void>;
   minimizeWorkout: () => void;
   maximizeWorkout: () => void;
   updateSet: (exerciseInstanceId: string, setId: string, newData: Partial<SetEntity['trackingData']>) => void;
@@ -397,15 +397,15 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     router.replace('/(workout)');
   };
 
-  const cancelWorkout = () => {
+  const cancelWorkout = async () => {
+    await navigateToLastTab('down');
     dispatch({ type: 'CANCEL' });
     AsyncStorage.removeItem(STORAGE_KEY);
-    router.replace('/(tabs)');
   };
 
   const minimizeWorkout = () => {
     dispatch({ type: 'MINIMIZE' });
-    router.replace({ pathname: '/(tabs)', params: { direction: 'down' } });
+    navigateToLastTab('down');
   };
 
   const maximizeWorkout = () => {
@@ -505,6 +505,24 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     dispatch({ type: 'START' });
     dispatch({ type: 'ADD_TEMPLATE_EXERCISES', payload: enriched });
     router.replace('/(workout)');
+  };
+
+  // Navigate back to last visited tab (stored in AsyncStorage), defaulting to /(tabs)
+  const navigateToLastTab = (direction: string = 'down'): Promise<void> => {
+    const resolvePath = (p?: string | null) => {
+      const allowed = new Set(['startWorkout', 'settings', 'historyDatabase', 'index']);
+      if (!p || p === 'index') return '/(tabs)';
+      return allowed.has(p) ? (`/(tabs)/${p}` as const) : '/(tabs)';
+    };
+
+    return AsyncStorage.getItem('lastPage')
+      .then((p) => {
+        const path = resolvePath(p);
+        router.replace({ pathname: path as any, params: { direction } });
+      })
+      .catch(() => {
+        router.replace({ pathname: '/(tabs)', params: { direction } });
+      });
   };
 
   const deleteExercise: Ctx['deleteExercise'] = exerciseInstanceId => {

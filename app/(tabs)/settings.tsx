@@ -10,7 +10,7 @@ import {
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme, ThemeType } from '@/app/context/ThemeContext';
 import {
   Select,
@@ -23,6 +23,7 @@ import {
   SelectDragIndicator,
   SelectItem,
 } from "@/components/ui/select";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const themeOptions: ThemeType[] = ['blue', 'cyan', 'pink', 'green', 'orange', ];
 
@@ -41,6 +42,10 @@ export default function Settings() {
       alert('Sign Out Failed: ' + error.message);
     }
   };
+
+  useEffect(() => {
+    AsyncStorage.setItem('lastPage', 'settings');
+  }, []);
 
   return (
     <View className={`flex-1 justify-center items-center bg-${theme}-background`}>

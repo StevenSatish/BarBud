@@ -14,6 +14,8 @@ import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
 import { router } from 'expo-router';
 import { Divider } from '@/components/ui/divider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 // Static data arrays
 const MUSCLE_GROUPS = [
@@ -39,6 +41,10 @@ export default function HistoryDatabase() {
     }
     
     const query = searchQuery.toLowerCase().trim();
+
+    useEffect(() => {
+      AsyncStorage.setItem('lastPage', 'historyDatabase');
+    }, []);
     
     // Filter each section
     return exerciseSections

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -6,10 +6,15 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import HistoryCalendarView from '@/app/components/HistoryCalendarView';
 import HistoryListView from '@/app/components/HistoryListView';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function History() {
 	const { theme } = useTheme();
 	const [mode, setMode] = useState<'calendar' | 'list'>('calendar');
+
+	useEffect(() => {
+		AsyncStorage.removeItem('lastPage');
+	}, []);
 
 	const isCalendar = mode === 'calendar';
 
