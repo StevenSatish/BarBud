@@ -120,7 +120,7 @@ export default function HistoryDatabase() {
 
   const keyExtractor = useCallback((item) => item.id, []);
 
-  const ExerciseRow = React.memo(function ExerciseRow({ item, onPress, theme, lastPerformedLabel }) {
+  const ExerciseRow = React.memo(function ExerciseRow({ item, onPress, lastPerformedLabel }) {
     return (
       <Pressable onPress={() => onPress(item)}>
         <VStack space="xs" className="py-4 px-6 w-full">
@@ -149,7 +149,6 @@ export default function HistoryDatabase() {
       <ExerciseRow
         item={item}
         onPress={handleOpenExercise}
-        theme={theme}
         lastPerformedLabel={lastPerformedLabel}
       />
     );

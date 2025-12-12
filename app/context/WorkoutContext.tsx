@@ -39,10 +39,16 @@ export type PreviousSetData = {
   trackingData: Partial<Record<TrackingMethod, number | null>>;
 };
 
+export type TemplateSource = {
+  folderId: string;
+  templateId: string;
+};
+
 export type WorkoutData = {
   startTimeISO: string;  // ISO start time
   exercises: ExerciseEntity[];
   setsById: Record<string, SetEntity>;
+  templateSource?: TemplateSource;
 };
 
 export type WorkoutState = {
@@ -84,6 +90,7 @@ type Action =
         }
       >;
     }
+  | { type: 'SET_TEMPLATE_SOURCE'; payload: TemplateSource | undefined }
   | { type: 'REPLACE_EXERCISE_WITH'; targetInstanceId: string; payload: Omit<ExerciseEntity, 'setIds' | 'instanceId'>[] }
   | { type: 'DELETE_EXERCISE'; exerciseInstanceId: string }
   | { type: 'ADD_SET'; exerciseInstanceId: string }
@@ -100,6 +107,7 @@ const initialState: WorkoutState = {
     startTimeISO: new Date().toISOString(),
     exercises: [],
     setsById: {},
+    templateSource: undefined,
   },
 };
 
@@ -113,6 +121,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
           startTimeISO: new Date().toISOString(),
           exercises: [],
           setsById: {},
+          templateSource: undefined,
         },
       };
     }
@@ -175,6 +184,17 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
           ...state.workout,
           exercises: [...state.workout.exercises, ...newExercises],
           setsById,
+        },
+      };
+    }
+
+    case 'SET_TEMPLATE_SOURCE': {
+      if (!state.workout) return state;
+      return {
+        ...state,
+        workout: {
+          ...state.workout,
+          templateSource: action.payload,
         },
       };
     }
@@ -332,8 +352,9 @@ type Ctx = {
     secondaryMuscles?: string[];
     trackingMethods?: TrackingMethod[];
     numSets?: number;
+    templateMeta?: TemplateSource;
   }>) => Promise<void>;
-  endWorkout: () => Promise<ProgressionsResult>;
+  endWorkout: () => Promise<{ result: ProgressionsResult; persistPromise: Promise<void> }>;
   endWorkoutWarnings: () => WarningItem[];
   cancelWorkout: () => Promise<void>;
   minimizeWorkout: () => void;
@@ -503,6 +524,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
 
     dispatch({ type: 'START' });
+    const templateMeta = (templateExercises as any[]).find((t) => t.templateMeta)
+      ?.templateMeta as TemplateSource | undefined;
+    dispatch({ type: 'SET_TEMPLATE_SOURCE', payload: templateMeta });
     dispatch({ type: 'ADD_TEMPLATE_EXERCISES', payload: enriched });
     router.replace('/(workout)');
   };
@@ -555,10 +579,10 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       : [];
   };
 
-  const endWorkout = async (): Promise<ProgressionsResult> => {
+  const endWorkout = async (): Promise<{ result: ProgressionsResult; persistPromise: Promise<void> }> => {
     const ws = state.workout;
     if (!state.isActive || !ws) {
-      return { title: 'Workout Progressions', items: [] };
+      return { result: { title: 'Workout Progressions', items: [] }, persistPromise: Promise.resolve() };
     }
 
     const user = FIREBASE_AUTH.currentUser;
@@ -581,40 +605,47 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     } catch {}
 
-    // 2) Kick off writes in the background on next tick so UI can render modal first
-    setTimeout(() => {
-      (async () => {
+    // 2) Fire writes in background so navigation is snappy; surface promise to callers
+    const persistPromise = (async () => {
+      try {
+        if (!user) return; // skip writes if not authenticated
+
+        const start = new Date(ws.startTimeISO).getTime();
+        const end = Date.now();
+
+        const { sessionId, instances } = await writeSessionAndCollectInstances(uid, ws, start, end);
+
+        await writeExerciseInstances(uid, instances);
+        await writeExerciseMetricsForSession(uid, ws, sessionId);
+
+        // Update template lastPerformedAt if this workout started from a template
         try {
-          if (!user) return; // skip writes if not authenticated
-
-          const start = new Date(ws.startTimeISO).getTime();
-          const end = Date.now();
-
-          const { sessionId, instances } = await writeSessionAndCollectInstances(
-            uid,
-            ws,
-            start,
-            end
-          );
-
-          await writeExerciseInstances(uid, instances);
-          await writeExerciseMetricsForSession(uid, ws, sessionId);
-
-          // Increment workoutsCompleted counter on user doc
-          try {
-            const userRef = doc(FIREBASE_DB, 'users', uid);
-            await setDoc(userRef, { workoutsCompleted: increment(1) }, { merge: true });
-          } catch (e) {
-            console.error('Failed to increment workoutsCompleted (background):', e);
+          const templateSource = ws.templateSource;
+          if (templateSource) {
+            const templateRef = doc(
+              FIREBASE_DB,
+              `users/${uid}/folders/${templateSource.folderId}/templates/${templateSource.templateId}`
+            );
+            await setDoc(templateRef, { lastPerformedAt: new Date() }, { merge: true });
           }
-        } catch (err) {
-          console.error('Failed to write session to Firestore (background):', err);
+        } catch (e) {
+          console.error('Failed to update template lastPerformedAt:', e);
         }
-      })();
-    }, 0);
 
-    // 3) Return progressions so UI can show popup immediately
-    return { ...progressions, workoutsCompletedBefore };
+        // Increment workoutsCompleted counter on user doc
+        try {
+          const userRef = doc(FIREBASE_DB, 'users', uid);
+          await setDoc(userRef, { workoutsCompleted: increment(1) }, { merge: true });
+        } catch (e) {
+          console.error('Failed to increment workoutsCompleted:', e);
+        }
+      } catch (err) {
+        console.error('Failed to write session to Firestore:', err);
+      }
+    })();
+
+    // 3) Return progressions immediately plus the persist promise for optional chaining
+    return { result: { ...progressions, workoutsCompletedBefore }, persistPromise };
   };
 
   const value: Ctx = {

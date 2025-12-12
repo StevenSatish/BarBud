@@ -168,7 +168,7 @@ function Exercise({ exercise }: Props) {
               });
             }}
           >
-            <ActionsheetItemText className="text-lg justify-center text-typography-500">
+            <ActionsheetItemText className="text-lg justify-center text-typography-900">
               Replace Exercise
             </ActionsheetItemText>
           </ActionsheetItem>

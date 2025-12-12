@@ -7,6 +7,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
+import useTemplateFolders from '../context/TemplateFoldersContext';
 
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
@@ -35,6 +36,7 @@ export default function WorkoutScreen() {
     endWorkoutWarnings,
     cancelWorkout,
   } = useWorkout();
+  const { fetchFolders, fetchTemplates } = useTemplateFolders();
   const navigationState = useRootNavigationState();
 
   const [showEndWorkoutAlert, setShowEndWorkoutAlert] = useState(false);
@@ -65,9 +67,13 @@ export default function WorkoutScreen() {
 
   const handleConfirmFinish = async () => {
     setShowEndWorkoutAlert(false);
-    const res = await endWorkout();
-    // Navigate to full-screen progressions page with serialized data
-    router.replace({ pathname: '/(workout)/progressions', params: { data: JSON.stringify(res) } });
+    const { result, persistPromise } = await endWorkout();
+    // Navigate first for snappier UX
+    router.replace({ pathname: '/(workout)/progressions', params: { data: JSON.stringify(result) } });
+    // Refresh folders/templates in the background after writes finish
+    persistPromise
+      .then(() => Promise.all([fetchFolders(), fetchTemplates()]))
+      .catch((e) => console.error('Failed to refresh folders/templates after finish:', e));
   };
 
   // No active workout placeholder

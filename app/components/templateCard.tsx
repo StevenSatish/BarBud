@@ -209,6 +209,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           secondaryMuscles: meta?.secondaryMuscles ?? [],
           trackingMethods: Array.isArray(meta?.trackingMethods) ? meta.trackingMethods : [],
           numSets: ex.numSets,
+          templateMeta: { folderId, templateId: template.id },
         };
       });
 
@@ -270,8 +271,12 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           <Text className='text-typography-700'>No exercises listed.</Text>
         )}
       </Box>
-
-      {lastPerformedLabel ? <Text className='text-typography-700 mt-3'>{lastPerformedLabel}</Text> : null}
+      {lastPerformedLabel ? (
+        <HStack className="items-center space-x-1 mt-1">
+          <Entypo name="back-in-time" size={12} color="gray" />
+          <Text className='ml-1 text-gray-400 text-base'>{lastPerformedLabel}</Text>
+        </HStack>
+      ) : null}
 
       <Modal isOpen={renameModalOpen} onClose={() => { if (!renaming) setRenameModalOpen(false); }}>
         <ModalBackdrop onPress={() => { if (!renaming) setRenameModalOpen(false); }} />

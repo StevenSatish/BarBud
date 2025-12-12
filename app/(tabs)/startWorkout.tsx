@@ -20,17 +20,16 @@ import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
 import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import TemplateCard from '@/app/components/templateCard';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function StartWorkoutTab() {
   const { startWorkout } = useWorkout();
   const { theme, colors } = useTheme();
-  const { folders, foldersLoading, fetchFolders, templatesByFolder, templatesLoading, fetchTemplates } = useTemplateFolders();
+  const { folders, foldersLoading, fetchFolders, templatesByFolder, fetchTemplates } = useTemplateFolders();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
