@@ -40,6 +40,7 @@ export default function WorkoutScreen() {
   const navigationState = useRootNavigationState();
 
   const [showEndWorkoutAlert, setShowEndWorkoutAlert] = useState(false);
+  const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const currentWorkout = workoutState.workout;
@@ -74,6 +75,11 @@ export default function WorkoutScreen() {
     persistPromise
       .then(() => Promise.all([fetchFolders(), fetchTemplates()]))
       .catch((e) => console.error('Failed to refresh folders/templates after finish:', e));
+  };
+
+  const handleConfirmCancel = async () => {
+    await cancelWorkout();
+    setShowCancelAlert(false);
   };
 
   // No active workout placeholder
@@ -135,6 +141,39 @@ export default function WorkoutScreen() {
           </AlertDialogContent>
         </AlertDialog>
 
+        <AlertDialog
+          isOpen={showCancelAlert}
+          size="md"
+          onClose={() => setShowCancelAlert(false)}
+        >
+          <AlertDialogBackdrop />
+          <AlertDialogContent className={`bg-${theme}-background border-${theme}-steelGray`}>
+            <AlertDialogHeader>
+              <Heading size="lg" className="text-typography-800 font-semibold">
+                Cancel Workout?
+              </Heading>
+            </AlertDialogHeader>
+            <AlertDialogBody className="py-4">
+              <Text className="text-typography-700">
+                Are you sure? Your progress will not be saved.
+              </Text>
+            </AlertDialogBody>
+            <AlertDialogFooter className="gap-3">
+              <Button
+                variant="outline"
+                action="secondary"
+                size="sm"
+                onPress={() => setShowCancelAlert(false)}
+              >
+                <ButtonText>Go Back</ButtonText>
+              </Button>
+              <Button size="sm" className={`bg-${theme}-accent`} onPress={handleConfirmCancel}>
+                <ButtonText className={`text-typography-800`}>Confirm</ButtonText>
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <HStack className={`w-full py-4 px-2 bg-${theme}-background items-center justify-between`}>
           <Pressable 
             onPress={minimizeWorkout}
@@ -191,7 +230,7 @@ export default function WorkoutScreen() {
             </Button>
             <Button
               variant="link"
-              onPress={() => cancelWorkout()}
+              onPress={() => setShowCancelAlert(true)}
             >
               <ButtonText className="text-error-700">Cancel Workout</ButtonText>
             </Button>
