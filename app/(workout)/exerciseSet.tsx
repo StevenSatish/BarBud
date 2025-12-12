@@ -13,11 +13,32 @@ import { useWorkout } from '../context/WorkoutContext'
 import { FormControl } from "@/components/ui/form-control"
 import * as Haptics from 'expo-haptics'
 import { useTheme } from '@/app/context/ThemeContext';
+import { Button, ButtonText } from '@/components/ui/button'
 
 function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, previousSets, setIds }: any) {
   const { updateSet, updateSetCompleted } = useWorkout();
   const [setInvalid, setSetInvalid] = useState<{ [key: string]: boolean }>({});
   const { theme } = useTheme();
+
+  const applyPreviousToSet = () => {
+    if (!previousSets) return;
+    const currentSetIndex = setIds.findIndex((id: string) => id === setId);
+    if (currentSetIndex === -1) return;
+    const previousSet = previousSets[currentSetIndex];
+    if (!previousSet || !previousSet.trackingData) return;
+
+    const { trackingData } = previousSet;
+    const newTrackingData: any = {
+      ...set.trackingData,
+    };
+
+    if (trackingData.weight !== undefined) newTrackingData.weight = Number(trackingData.weight) || null;
+    if (trackingData.reps !== undefined) newTrackingData.reps = Number(trackingData.reps) || null;
+    if (trackingData.time !== undefined) newTrackingData.time = Number(trackingData.time) || null;
+
+    setSetInvalid({});
+    updateSet(instanceId, setId, newTrackingData);
+  };
 
   const handleInputChange = (method: string, value: string) => {
     const newTrackingData = {
@@ -77,10 +98,10 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
   return (
     <HStack className={`items-center py-3 ${set.completed ? `bg-${theme}-button` : `bg-${theme}-background`}`}>
       <Box className="flex-[0.75] items-center justify-center">
-        <Text size="lg" className="text-typography-900 text-center">{index + 1}</Text>
+        <Text size="md" bold className={`text-typography-900 text-center text-${theme}-lightText`}>{index + 1}</Text>
       </Box>
-      <Box className="flex-[1] items-center justify-center">
-         <Text size="md" className={`text-typography-900 text-center text-white`}>
+      <Button variant="link" className="flex-[1] items-center justify-center" onPress={applyPreviousToSet}>
+         <ButtonText size="md" className={`text-typography-900 text-center text-${theme}-lightText font-bold`}>
            {(() => {
              // Get previous session data for this set position (not order)
              if (!previousSets) return '-';
@@ -108,8 +129,8 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
              
              return parts.length > 0 ? parts.join(', ') : '-';
            })()}
-         </Text>
-      </Box>
+         </ButtonText>
+      </Button>
       {trackingMethods.map((method: any) => (
         <Box key={method} style={{ flex: 2 / trackingMethods.length }} className="items-center justify-center">
           <FormControl className="w-full max-w-[90px]" isInvalid={setInvalid[method]}>

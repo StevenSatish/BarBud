@@ -10,6 +10,7 @@ const themeColors: Record<ThemeType, any> = {
     button:     'rgb(22, 32, 56)',     // button, cards, overlays
     accent:     'rgb(58, 112, 172)',   // muted blue accent
     light:      'rgb(140, 175, 220)',  //  soft light blue highlight
+    lightText:  'rgb(174, 199, 239)',  // bright, cool blue-tinted text
     steelGray:  'rgb(85, 95, 110)',    // neutral gray-blue for text/icons
     lightGray:  'rgb(120, 135, 155)',  // muted gray-blue panels
   },
@@ -19,6 +20,7 @@ const themeColors: Record<ThemeType, any> = {
     button:     'rgb(18, 36, 44)',     // CTA, dark cyan
     accent:     'rgb(45, 150, 160)',   // muted teal accent
     light:      'rgb(130, 195, 200)',  // soft pale teal highlight
+    lightText:  'rgb(185, 222, 229)',  // bright aqua, slightly desaturated
     steelGray:  'rgb(85, 105, 110)',   // dark gray with cyan tint
     lightGray:  'rgb(130, 150, 155)',  // desaturated cyan-gray panel
   },
@@ -28,6 +30,7 @@ const themeColors: Record<ThemeType, any> = {
     button:     'rgb(45, 20, 35)',     // dark burgundy-pink button
     accent:     'rgb(185, 75, 130)',   // muted rose accent
     light:      'rgb(225, 155, 185)',  // soft pink highlight
+    lightText:  'rgb(235, 200, 220)',  // bright rosy text, softened
     steelGray:  'rgb(100, 85, 95)',    // pinkish neutral text
     lightGray:  'rgb(145, 130, 140)',  // rose-gray panels
   },
@@ -37,6 +40,7 @@ const themeColors: Record<ThemeType, any> = {
     button:     'rgb(20, 45, 28)',     // moss green CTA
     accent:     'rgb(70, 150, 95)',    // muted forest accent
     light:      'rgb(150, 195, 160)',  // pale green highlight
+    lightText:  'rgb(195, 230, 210)',  // bright mint, a bit muted
     steelGray:  'rgb(90, 105, 95)',    // gray-green text
     lightGray:  'rgb(140, 155, 145)',  // moss-gray panels
   },
@@ -46,6 +50,7 @@ const themeColors: Record<ThemeType, any> = {
     button:     'rgb(45, 25, 15)',     // bronze button
     accent:     'rgb(200, 120, 60)',   // muted amber accent
     light:      'rgb(225, 175, 130)',  // light orange highlight
+    lightText:  'rgb(230, 210, 190)',  // warm amber-tinted light text
     steelGray:  'rgb(100, 90, 80)',    // dark neutral gray-brown
     lightGray:  'rgb(150, 135, 120)',  // beige-gray panels
   },

@@ -166,6 +166,7 @@ export const config = {
    '--color-blue-light':      '140 175 220',  /* rgb(140, 175, 220) — soft light blue highlight */
    '--color-blue-steelGray':  '85 95 110',    /* rgb(85, 95, 110) — dark steel-blue neutral */
    '--color-blue-lightGray':  '120 135 155',  /* rgb(120, 135, 155) — muted gray-blue panels */
+   '--color-blue-lightText':  '174 199 239',  /* #aec7ef — bright, cool blue-tinted text */
 
 /* =========================
    🟦 Cyan Theme
@@ -176,6 +177,7 @@ export const config = {
    '--color-cyan-light':      '130 195 200',  /* rgb(130, 195, 200) — soft pale teal highlight */
    '--color-cyan-steelGray':  '85 105 110',   /* rgb(85, 105, 110) — dark cyan-gray neutral */
    '--color-cyan-lightGray':  '130 150 155',  /* rgb(130, 150, 155) — desaturated cyan-gray panel */
+   '--color-cyan-lightText':  '185 222 229',  /* #b9dee5 — bright aqua, slightly desaturated */
 
 /* =========================
    💗 Pink Theme
@@ -186,6 +188,7 @@ export const config = {
    '--color-pink-light':      '225 155 185',  /* rgb(225, 155, 185) — soft pink highlight */
    '--color-pink-steelGray':  '100 85 95',    /* rgb(100, 85, 95) — gray with pink undertone */
    '--color-pink-lightGray':  '145 130 140',  /* rgb(145, 130, 140) — desaturated rose-gray panel */
+   '--color-pink-lightText':  '235 200 220',  /* #ebc8dc — bright rosy text, softened */
 
 /* =========================
    🟢 Green Theme
@@ -196,7 +199,7 @@ export const config = {
    '--color-green-light':      '150 195 160', /* rgb(150, 195, 160) — pale forest highlight */
    '--color-green-steelGray':  '90 105 95',   /* rgb(90, 105, 95) — cool gray-green neutral */
    '--color-green-lightGray':  '140 155 145', /* rgb(140, 155, 145) — moss-gray panel */
-
+   '--color-green-lightText':  '195 230 210',  /* #c3e6d2 — bright mint, a bit muted */
 /* =========================
    🟠 Orange Theme
    ========================= */
@@ -206,7 +209,7 @@ export const config = {
    '--color-orange-light':      '225 175 130', /* rgb(225, 175, 130) — soft orange highlight */
    '--color-orange-steelGray':  '100 90 80',   /* rgb(100, 90, 80) — dark neutral brown-gray */
    '--color-orange-lightGray':  '150 135 120',
-
+   '--color-orange-lightText':  '230 210 190',  /* #e6d2be — warm amber-tinted light text */
 
 
     /* Primary */
