@@ -4,6 +4,7 @@ import { Box } from '@/components/ui/box';
 import WorkoutIndicator from '../components/workoutIndicator';
 import { View } from 'react-native';
 import { useTheme } from '@/app/context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
@@ -28,6 +29,10 @@ export default function TabsLayout() {
       >
         <Tabs.Screen
           name="index"
+          listeners={{
+            focus: () => AsyncStorage.setItem('lastPage', 'index'),
+            tabPress: () => AsyncStorage.setItem('lastPage', 'index'),
+          }}
           options={{
             title: 'History',
             tabBarIcon: ({ color }) => (
@@ -37,6 +42,10 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="startWorkout"
+          listeners={{
+            focus: () => AsyncStorage.setItem('lastPage', 'startWorkout'),
+            tabPress: () => AsyncStorage.setItem('lastPage', 'startWorkout'),
+          }}
           options={{
             title: 'Workout',
             tabBarIcon: ({ color }) => (
@@ -46,6 +55,10 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="historyDatabase"
+          listeners={{
+            focus: () => AsyncStorage.setItem('lastPage', 'historyDatabase'),
+            tabPress: () => AsyncStorage.setItem('lastPage', 'historyDatabase'),
+          }}
           options={{
             title: 'Exercises',
             tabBarIcon: ({ color }) => (
@@ -55,6 +68,10 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="settings"
+          listeners={{
+            focus: () => AsyncStorage.setItem('lastPage', 'settings'),
+            tabPress: () => AsyncStorage.setItem('lastPage', 'settings'),
+          }}
           options={{
             title: 'Settings',
             tabBarIcon: ({ color }) => (

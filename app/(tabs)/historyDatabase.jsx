@@ -1,7 +1,7 @@
 import { View, SectionList, ActivityIndicator, KeyboardAvoidingView, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useExerciseDB  from '../context/ExerciseDBContext';
 import { Input, InputField, InputSlot } from '@/components/ui/input';
@@ -34,17 +34,13 @@ export default function HistoryDatabase() {
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
-  
+
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim() && !selectedMuscleGroup && !selectedCategory) {
       return exerciseSections;
     }
     
     const query = searchQuery.toLowerCase().trim();
-
-    useEffect(() => {
-      AsyncStorage.setItem('lastPage', 'historyDatabase');
-    }, []);
     
     // Filter each section
     return exerciseSections

@@ -52,10 +52,6 @@ export default function StartWorkoutTab() {
     return [...nonNone, ...none];
   }, [folders]);
 
-  useEffect(() => {
-    AsyncStorage.setItem('lastPage', 'startWorkout');
-  }, []);
-
   const openTemplateSheet = async () => {
     setIsSheetOpen(true);
     if (folders.length === 0) {

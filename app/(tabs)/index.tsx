@@ -12,10 +12,6 @@ export default function History() {
 	const { theme } = useTheme();
 	const [mode, setMode] = useState<'calendar' | 'list'>('calendar');
 
-	useEffect(() => {
-		AsyncStorage.removeItem('lastPage');
-	}, []);
-
 	const isCalendar = mode === 'calendar';
 
 	return (

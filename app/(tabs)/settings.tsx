@@ -43,10 +43,6 @@ export default function Settings() {
     }
   };
 
-  useEffect(() => {
-    AsyncStorage.setItem('lastPage', 'settings');
-  }, []);
-
   return (
     <View className={`flex-1 justify-center items-center bg-${theme}-background`}>
       <Text className="text-white text-2xl font-bold mb-2">Settings Page</Text>
