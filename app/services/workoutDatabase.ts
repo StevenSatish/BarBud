@@ -141,8 +141,10 @@ export const writeSessionAndCollectInstances = async (
     });
 
     const completedSetCount = completed.length;
-    totalCompletedSets += completedSetCount;
-    exerciseCounts.push({ exerciseId: ex.exerciseId, nameSnap: `${ex.name} (${ex.category})`, completedSetCount });
+    if (completedSetCount > 0) {
+      totalCompletedSets += completedSetCount;
+      exerciseCounts.push({ exerciseId: ex.exerciseId, nameSnap: `${ex.name} (${ex.category})`, completedSetCount });
+    }
 
     const exerciseDoc: any = {
       exerciseId: ex.exerciseId,
