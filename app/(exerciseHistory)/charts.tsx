@@ -235,7 +235,7 @@ export default function ExerciseChartsTab({
           key: 'topWeight',
           title: 'Top Weight',
           points: series.topWeight,
-          color: colors.accent,
+          color: colors.light,
           unit: 'lbs',
         });
       if (series.bestEst1RM.length)
@@ -251,7 +251,7 @@ export default function ExerciseChartsTab({
           key: 'volume',
           title: 'Volume',
           points: series.volume,
-          color: colors.accent,
+          color: colors.light,
           unit: 'lbs',
         });
     } else if (hasWeight && hasTime) {
@@ -260,7 +260,7 @@ export default function ExerciseChartsTab({
           key: 'topWeight',
           title: 'Top Weight',
           points: series.topWeight,
-          color: colors.accent,
+          color: colors.light,
           unit: 'lbs',
         });
     } else if (hasReps && !hasWeight && !hasTime) {
@@ -269,7 +269,7 @@ export default function ExerciseChartsTab({
           key: 'topReps',
           title: 'Best Set Reps',
           points: series.topReps,
-          color: colors.accent,
+          color: colors.light,
           unit: 'reps',
         });
       if (series.totalReps.length)
@@ -286,7 +286,7 @@ export default function ExerciseChartsTab({
           key: 'topTime',
           title: 'Best Set Time',
           points: series.topTime,
-          color: colors.accent,
+          color: colors.light,
           unit: 'seconds',
         });
       if (series.totalTime.length)

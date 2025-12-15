@@ -54,6 +54,7 @@ export type WorkoutData = {
 export type WorkoutState = {
   isActive: boolean;
   isMinimized: boolean;
+  isReorderingExercises: boolean;
   workout: WorkoutData | null;
 };
 
@@ -98,13 +99,16 @@ type Action =
   | { type: 'DELETE_SET'; exerciseInstanceId: string; setId: string }
   | { type: 'UPDATE_SET_DATA'; exerciseInstanceId: string; setId: string; data: Partial<SetEntity['trackingData']> }
   | { type: 'UPDATE_SET_COMPLETED'; exerciseInstanceId: string; setId: string; completed: boolean }
-  | { type: 'UPDATE_EXERCISE_NOTES'; exerciseInstanceId: string; notes?: string };
+  | { type: 'UPDATE_EXERCISE_NOTES'; exerciseInstanceId: string; notes?: string }
+  | { type: 'SET_REORDER_MODE'; enabled: boolean }
+  | { type: 'SET_EXERCISE_ORDER'; order: string[] };
 
 const STORAGE_KEY = 'workoutState';
 
 const initialState: WorkoutState = {
   isActive: false,
   isMinimized: false,
+  isReorderingExercises: false,
   workout: {
     startTimeISO: new Date().toISOString(),
     exercises: [],
@@ -119,6 +123,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       return {
         isActive: true,
         isMinimized: false,
+        isReorderingExercises: false,
         workout: {
           startTimeISO: new Date().toISOString(),
           exercises: [],
@@ -131,13 +136,13 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       return initialState;
 
     case 'MINIMIZE':
-      return { ...state, isMinimized: true };
+      return { ...state, isMinimized: true, isReorderingExercises: false };
 
     case 'MAXIMIZE':
       return { ...state, isMinimized: false };
 
     case 'HYDRATE':
-      return action.payload;
+      return { ...action.payload, isReorderingExercises: action.payload?.isReorderingExercises ?? false };
 
     case 'ADD_EXERCISES': {
       if (!state.workout) return state;
@@ -219,6 +224,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
           exercises: state.workout.exercises.filter(e => e.instanceId !== action.exerciseInstanceId),
           setsById,
         },
+        isReorderingExercises: state.workout.exercises.length - 1 > 0 ? state.isReorderingExercises : false,
       };
     }
 
@@ -346,6 +352,30 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       return { ...state, workout: { ...state.workout, exercises } };
     }
 
+    case 'SET_REORDER_MODE': {
+      return { ...state, isReorderingExercises: action.enabled };
+    }
+
+    case 'SET_EXERCISE_ORDER': {
+      if (!state.workout) return state;
+      const exerciseMap = state.workout.exercises.reduce<Record<string, ExerciseEntity>>((acc, ex) => {
+        acc[ex.instanceId] = ex;
+        return acc;
+      }, {});
+
+      const reordered = action.order
+        .map((id) => exerciseMap[id])
+        .filter((ex): ex is ExerciseEntity => Boolean(ex));
+
+      // Append any exercises not present in the provided order to avoid accidental loss
+      const missing = state.workout.exercises.filter((ex) => !action.order.includes(ex.instanceId));
+
+      return {
+        ...state,
+        workout: { ...state.workout, exercises: [...reordered, ...missing] },
+      };
+    }
+
     default:
       return state;
   }
@@ -384,6 +414,9 @@ type Ctx = {
   deleteExercise: (exerciseInstanceId: string) => void;
   addSet: (exerciseInstanceId: string) => void;
   updateExerciseNotes: (exerciseInstanceId: string, notes?: string) => void;
+  startReorderExercises: () => void;
+  finishReorderExercises: () => void;
+  reorderExercises: (order: string[]) => void;
 };
 
 const WorkoutContext = createContext<Ctx | undefined>(undefined);
@@ -594,6 +627,18 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     dispatch({ type: 'UPDATE_EXERCISE_NOTES', exerciseInstanceId, notes });
   };
 
+  const startReorderExercises = () => {
+    dispatch({ type: 'SET_REORDER_MODE', enabled: true });
+  };
+
+  const finishReorderExercises = () => {
+    dispatch({ type: 'SET_REORDER_MODE', enabled: false });
+  };
+
+  const reorderExercises: Ctx['reorderExercises'] = (order) => {
+    dispatch({ type: 'SET_EXERCISE_ORDER', order });
+  };
+
   const endWorkoutWarnings = (): WarningItem[] => {
     const ws = state.workout;
     if (!state.isActive || !ws) return [];
@@ -690,6 +735,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     deleteExercise,
     addSet,
     updateExerciseNotes,
+    startReorderExercises,
+    finishReorderExercises,
+    reorderExercises,
   };
 
   return <WorkoutContext.Provider value={value}>{children}</WorkoutContext.Provider>;

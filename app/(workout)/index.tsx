@@ -3,7 +3,9 @@ import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Link, useRootNavigationState, router } from 'expo-router';
+import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import Entypo from '@expo/vector-icons/Entypo';
 
 import { useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -35,6 +37,8 @@ export default function WorkoutScreen() {
     endWorkout,
     endWorkoutWarnings,
     cancelWorkout,
+    finishReorderExercises,
+    reorderExercises,
   } = useWorkout();
   const { fetchFolders, fetchTemplates } = useTemplateFolders();
   const navigationState = useRootNavigationState();
@@ -90,6 +94,43 @@ export default function WorkoutScreen() {
           <Heading size="xl" className="text-typography-800 mb-3">
             No active workout
           </Heading>
+        </VStack>
+      </SafeAreaView>
+    );
+  }
+
+  if (workoutState.isReorderingExercises && currentWorkout) {
+    const renderItem = ({ item, drag }: RenderItemParams<typeof currentWorkout.exercises[number]>) => (
+      <Pressable onLongPress={drag} onPressIn={drag} hitSlop={10}>
+        <HStack className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}>
+          <HStack className="items-center gap-3 flex-1">
+            <Entypo name="menu" size={20} color="white" />
+            <Text className="text-typography-800 text-base flex-1 mr-3">
+              {item.name} {item.category ? `(${item.category})` : ''}
+            </Text>
+          </HStack>
+        </HStack>
+      </Pressable>
+    );
+
+    return (
+      <SafeAreaView className={`bg-${theme}-background flex-1`}>
+        <VStack space="lg" className="flex-1 px-4 py-4">
+          <Heading size="xl" className="text-typography-800 text-center">
+            Reorder Exercises
+          </Heading>
+          <DraggableFlatList
+            data={currentWorkout.exercises}
+            keyExtractor={(item) => item.instanceId}
+            renderItem={renderItem}
+            onDragEnd={({ data }) => reorderExercises(data.map((ex) => ex.instanceId))}
+            activationDistance={0}
+            keyboardShouldPersistTaps="always"
+            contentContainerStyle={{ gap: 10, paddingBottom: 8 }}
+          />
+          <Button className={`bg-${theme}-accent`} onPress={finishReorderExercises}>
+            <ButtonText className="text-typography-800">Done</ButtonText>
+          </Button>
         </VStack>
       </SafeAreaView>
     );

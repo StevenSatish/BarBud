@@ -49,7 +49,14 @@ type Props = {
 
 function Exercise({ exercise }: Props) {
   const { theme } = useTheme();
-  const { addSet, deleteSet, deleteExercise, workoutState, updateExerciseNotes } = useWorkout();
+  const {
+    addSet,
+    deleteSet,
+    deleteExercise,
+    workoutState,
+    updateExerciseNotes,
+    startReorderExercises,
+  } = useWorkout();
   const [showActionsheet, setShowActionsheet] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const noteDraftRef = useRef('');
@@ -242,6 +249,14 @@ function Exercise({ exercise }: Props) {
               <ActionsheetItemText className="text-lg justify-center text-error-500">Delete Exercise Note</ActionsheetItemText>
             </ActionsheetItem>
           ) : null}
+          <ActionsheetItem
+            onPress={() => {
+              setShowActionsheet(false);
+              startReorderExercises();
+            }}
+          >
+            <ActionsheetItemText className="text-lg justify-center text-typography-800">Reorder Exercises</ActionsheetItemText>
+          </ActionsheetItem>
           <ActionsheetItem onPress={handleDeletion}>
             <ActionsheetItemText className="text-lg justify-center text-error-500">Remove Exercise</ActionsheetItemText>
           </ActionsheetItem>
