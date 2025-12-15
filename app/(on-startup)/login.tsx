@@ -1,10 +1,9 @@
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
-import React from 'react'
-import { useState } from 'react';
+import React, { useRef, useState } from 'react'
 import { Redirect } from 'expo-router';
 import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard} from 'react-native';
 import { Heading } from "@/components/ui/heading"
-import {signInWithEmailAndPassword  } from "firebase/auth";
+import {signInWithEmailAndPassword, sendPasswordResetEmail  } from "firebase/auth";
 import {useAuth} from "../context/AuthProvider"
 import { doc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +13,16 @@ import { Input, InputField, InputSlot, InputIcon } from "@/components/ui/input"
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "@/components/ui/icon"
 import { Button, ButtonText } from '@/components/ui/button'
 import { Spinner } from "@/components/ui/spinner"
+import { Text } from "@/components/ui/text";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalCloseButton
+} from "@/components/ui/modal";
 
 export default function Login() {
     const [email, setEmail] = useState("")
@@ -23,6 +32,9 @@ export default function Login() {
     const [showPass, setShowPass] = useState(false);
 
     const [loadingLogin, setLoading] = useState(false);
+    const [showResetModal, setShowResetModal] = useState(false);
+    const resetEmailRef = useRef("");
+    const [sendingReset, setSendingReset] = useState(false);
 
     const auth = FIREBASE_AUTH;
     const {user, loading} = useAuth();
@@ -60,7 +72,33 @@ export default function Login() {
         }
     };
 
+    const openResetModal = () => {
+        resetEmailRef.current = email.trim();
+        setShowResetModal(true);
+    };
+
+    const handleSendReset = async () => {
+        const emailToSend = resetEmailRef.current.trim();
+        const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+        if (!emailToSend || !emailRegex.test(emailToSend)) {
+            alert("Please enter a valid email address.");
+            return;
+        }
+
+        setSendingReset(true);
+        try {
+            await sendPasswordResetEmail(auth, emailToSend);
+            alert("Password reset email sent.");
+            setShowResetModal(false);
+        } catch (error: any) {
+            alert("Failed to send reset email: " + error.message);
+        } finally {
+            setSendingReset(false);
+        }
+    };
+
   return (
+    <>
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -110,6 +148,15 @@ export default function Login() {
                 </Input>
             </FormControl>
 
+            <Button
+                variant="link"
+                action="secondary"
+                className="self-start -mb-1"
+                onPress={openResetModal}
+            >
+                <ButtonText className="text-primary-500 font-semibold">Forgot password?</ButtonText>
+            </Button>
+
             <Button 
                 size="lg" 
                 variant="solid" 
@@ -128,5 +175,55 @@ export default function Login() {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
+
+      <Modal isOpen={showResetModal} onClose={() => setShowResetModal(false)} size="md">
+        <ModalBackdrop />
+        <ModalContent className="bg-background-50 border-outline-100">
+          <ModalHeader className="flex-row items-center justify-between">
+            <Heading size="md" className="text-typography-800 font-semibold">Reset password</Heading>
+            <ModalCloseButton onPress={() => setShowResetModal(false)}>
+              <Text className="text-typography-700">Close</Text>
+            </ModalCloseButton>
+          </ModalHeader>
+          <ModalBody>
+            <Text className="text-typography-700 pb-3">Enter the email associated with your account and we'll send you a recovery link.</Text>
+            <Input className="my-3 border border-outline-300 bg-background-100" size={"md"}>
+              <InputField
+                className="text-typography-800"
+                placeholder="email"
+                placeholderTextColor="text-typography-700"
+                defaultValue={resetEmailRef.current}
+                onChangeText={(text) => {
+                  resetEmailRef.current = text;
+                }}
+              />
+            </Input>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="outline"
+              action="secondary"
+              onPress={() => setShowResetModal(false)}
+              disabled={sendingReset}
+              size="sm"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              size="sm"
+              action="primary"
+              onPress={handleSendReset}
+              disabled={sendingReset}
+            >
+              {sendingReset ? (
+                <Spinner color="black" size="small" />
+              ) : (
+                <ButtonText>Send email</ButtonText>
+              )}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
