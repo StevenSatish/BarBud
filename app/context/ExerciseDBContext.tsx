@@ -91,10 +91,13 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       
       const exercisesList = exercisesSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
+
+      // Exclude soft-deleted exercises
+      const activeExercises = exercisesList.filter((exercise: any) => !exercise.isDeleted);
       
-      const groupedExercises = exercisesList.reduce((acc: any, exercise: any) => {
+      const groupedExercises = activeExercises.reduce((acc: any, exercise: any) => {
         const firstLetter = exercise.name.charAt(0).toUpperCase();
         
         if (!acc[firstLetter]) {

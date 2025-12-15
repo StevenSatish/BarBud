@@ -14,7 +14,6 @@ import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
 import { router } from 'expo-router';
 import { Divider } from '@/components/ui/divider';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 // Static data arrays
@@ -179,6 +178,9 @@ export default function HistoryDatabase() {
         onClose={() => setShowNewExerciseModal(false)} 
       />
       <KeyboardAvoidingView behavior="padding" className="flex-1">
+        <View className="w-full items-center justify-center px-4 py-3">
+          <Text className="text-typography-800 text-2xl font-bold text-center">Exercise Database</Text>
+        </View>
         <HStack className="w-full items-center justify-between px-4 my-2">
           <Input className="h-12 rounded-full bg-background-100 w-3/4 pr-2">
             <InputField 

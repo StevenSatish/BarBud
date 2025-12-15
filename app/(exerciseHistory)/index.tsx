@@ -3,19 +3,22 @@ import { View, Pressable, BackHandler } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useTheme } from '@/app/context/ThemeContext';
+import useExerciseDB from '@/app/context/ExerciseDBContext';
 import { useAuth } from '@/app/context/AuthProvider';
 import { HStack } from '@/components/ui/hstack';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui/modal';
 import AboutTab from './about';
 import HistoryTab from './history';
 import ChartsTab from './charts';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { collection, getDocs, orderBy, query, limit, Timestamp } from 'firebase/firestore';
+import { Entypo, FontAwesome5 } from '@expo/vector-icons';
 
 type TabKey = 'about' | 'history' | 'charts';
 
@@ -23,6 +26,7 @@ export default function ExerciseHistoryScreen() {
   const params = useLocalSearchParams();
   const { theme } = useTheme();
   const { user } = useAuth();
+  const { fetchExercises } = useExerciseDB();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabKey>('about');
   const [metrics, setMetrics] = useState<Record<string, any> | null>(null);
@@ -49,6 +53,26 @@ export default function ExerciseHistoryScreen() {
   };
   const [chartsLoading, setChartsLoading] = useState<boolean>(true);
   const [chartsInstances, setChartsInstances] = useState<ChartsInstance[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!user?.uid || !exercise?.exerciseId) {
+      setShowDeleteConfirm(false);
+      return;
+    }
+    try {
+      const ref = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exercise.exerciseId}`);
+      await updateDoc(ref, { isDeleted: true });
+      if (fetchExercises) {
+        await fetchExercises();
+      }
+      router.back();
+    } catch (err) {
+      console.warn('Failed to mark exercise deleted', err);
+    } finally {
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const exercise = useMemo(() => {
     try {
@@ -206,9 +230,10 @@ export default function ExerciseHistoryScreen() {
   }, [historyInstances, prefetchSetsForInstances]);
 
   return (
+    <>
       <SafeAreaView edges={['bottom','left','right']} className={`flex-1 bg-${theme}-background`} style={{ paddingTop: insets.top }}>
-        {/* Header with back arrow and title */}
-        <HStack className={`w-full py-4 px-2 bg-${theme}-background items-center justify-between`}>
+        {/* Header with back arrow, centered title, and trash */}
+        <HStack className={`w-full py-4 px-2 bg-${theme}-background items-center`}>
           <Pressable
             onPress={() => {
               if (router.canGoBack()) {
@@ -223,13 +248,19 @@ export default function ExerciseHistoryScreen() {
             <FontAwesome5 name="chevron-down" size={28} color="white" />
           </Pressable>
 
-          <Box className="flex-1 flex items-center justify-center">
+          <Box className="flex-1 items-center justify-center">
             <Heading size="lg" className="text-typography-800 font-semibold text-center">
               {`${exercise?.name} ${exercise?.category !== 'Other' ? `(${exercise?.category})` : ''}`}
             </Heading>
           </Box>
 
-          <Box className="w-24" />
+          <Pressable
+            className="w-24 pr-3 flex items-end"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            onPress={() => setShowDeleteConfirm(true)}
+          >
+            <Entypo name="trash" size={24} color="rgba(220, 38, 38, 0.8)" />
+          </Pressable>
         </HStack>
 
         {/* Custom Tabs */}
@@ -263,6 +294,40 @@ export default function ExerciseHistoryScreen() {
           )}
           {activeTab === 'charts' && <ChartsTab exercise={exercise} instances={chartsInstances} loading={chartsLoading} />}
         </View>
+
       </SafeAreaView>
+
+      <Modal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        useRNModal
+        className="z-1000"
+      >
+        <ModalBackdrop onPress={() => setShowDeleteConfirm(false)} />
+        <ModalContent
+          size="sm"
+          className={`bg-${theme}-background border-${theme}-steelGray px-5 py-4`}
+        >
+          <ModalHeader>
+            <HStack className="flex-1" space="md">
+              <Heading size="md" className="text-typography-800 font-semibold">
+                Delete exercise?
+              </Heading>
+            </HStack>
+          </ModalHeader>
+          <ModalBody>
+            <Text className="text-typography-800">Deleting an exercise will remove it from the database, but it will still be visible in past workouts.</Text>
+          </ModalBody>
+          <ModalFooter className="flex-row justify-between items-center px-4">
+            <Button variant="link" onPress={() => setShowDeleteConfirm(false)}>
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button action="negative" onPress={handleConfirmDelete}>
+              <ButtonText>Confirm</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
