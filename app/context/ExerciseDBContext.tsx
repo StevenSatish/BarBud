@@ -64,7 +64,8 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
           default:
             return [method.toLowerCase()];
         }
-      }).flat()
+      }).flat(),
+      notes: '',
     };
 
     try {

@@ -189,6 +189,16 @@ export default function AddExerciseDatabase() {
     const chosen = Object.values(selectedExercises);
     if (chosen.length === 0) return;
 
+    const normalized = chosen.map((ex) => ({
+      exerciseId: ex.exerciseId ?? ex.id,
+      name: ex.name,
+      category: ex.category,
+      muscleGroup: ex.muscleGroup,
+      secondaryMuscles: ex.secondaryMuscles ?? [],
+      trackingMethods: ex.trackingMethods ?? [],
+      notes: ex.notes,
+    }));
+
     // Template mode: return selection to template editor
     if (mode === 'template') {
       setTemplateSelection(
@@ -204,11 +214,11 @@ export default function AddExerciseDatabase() {
 
     // Workout mode (existing behavior)
     if (targetInstanceId) {
-      replaceExerciseWith(String(targetInstanceId), chosen);
+      replaceExerciseWith(String(targetInstanceId), normalized);
       router.back();
       return;
     }
-    addExercises(chosen);
+    addExercises(normalized);
     router.back();
   };
 

@@ -27,7 +27,7 @@ type TemplateCardProps = {
 export default function TemplateCard({ template, folderId, folderName }: TemplateCardProps) {
   const { theme } = useTheme();
   const { fetchTemplates, folders, fetchFolders, foldersLoading } = useTemplateFolders();
-  const { exerciseSections } = useExerciseDB();
+  const { exerciseSections, fetchExercises } = useExerciseDB();
   const { startWorkoutFromTemplate } = useWorkout();
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renameInvalid, setRenameInvalid] = useState(false);
@@ -187,7 +187,8 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
   const handleStartWorkout = async () => {
     try {
       setViewModalOpen(false);
-      const templateExercises = template.exercises ?? [];
+      await fetchExercises?.(); // ensure latest notes from catalog
+      const templateExercises = (template.exercises ?? []) as Array<typeof template.exercises[number] & { notes?: string }>;
       const exerciseMap = exerciseSections.reduce<Record<string, any>>((acc, section) => {
         section.data.forEach((ex: any) => {
           if (ex.id) acc[ex.id] = ex;
@@ -209,6 +210,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           secondaryMuscles: meta?.secondaryMuscles ?? [],
           trackingMethods: Array.isArray(meta?.trackingMethods) ? meta.trackingMethods : [],
           numSets: ex.numSets,
+          notes: meta?.notes ?? ex.notes ?? '',
           templateMeta: { folderId, templateId: template.id },
         };
       });

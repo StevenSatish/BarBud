@@ -1,11 +1,10 @@
-import React, { useState, Fragment, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Pressable } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import Entypo from '@expo/vector-icons/Entypo';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
@@ -25,6 +24,13 @@ import ExerciseSet from './exerciseSet';
 import { PreviousSetData, useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
 import { router } from 'expo-router';
+import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui/modal';
+import { Input, InputField, InputIcon } from '@/components/ui/input';
+import { useAuth } from '@/app/context/AuthProvider';
+import useExerciseDB from '@/app/context/ExerciseDBContext';
+import { FIREBASE_DB } from '@/FirebaseConfig';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
+import { EditIcon } from '@/components/ui/icon';
 
 type Props = {
   exercise: {
@@ -37,13 +43,20 @@ type Props = {
     trackingMethods: string[];
     setIds: string[];
     previousSets?: PreviousSetData[];
+    notes?: string;
   };
 };
 
 function Exercise({ exercise }: Props) {
   const { theme } = useTheme();
-  const { addSet, deleteSet, deleteExercise, workoutState } = useWorkout();
+  const { addSet, deleteSet, deleteExercise, workoutState, updateExerciseNotes } = useWorkout();
   const [showActionsheet, setShowActionsheet] = useState(false);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const noteDraftRef = useRef('');
+  const [noteInputKey, setNoteInputKey] = useState(0);
+  const { user } = useAuth();
+  const { fetchExercises } = useExerciseDB();
+  const [noteError, setNoteError] = useState(false);
 
   const setsById = workoutState.workout?.setsById ?? {};
 
@@ -58,6 +71,41 @@ function Exercise({ exercise }: Props) {
   const handleDeletion = () => {
     deleteExercise(exercise.instanceId);
     setShowActionsheet(false);
+  };
+
+  const handleAddNote = async () => {
+    const trimmed = noteDraftRef.current.trim();
+    if (!trimmed || !user?.uid || !exercise.exerciseId) {
+      setNoteError(true);
+      return;
+    }
+    setNoteError(false);
+    try {
+      const ref = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exercise.exerciseId}`);
+      await updateDoc(ref, { notes: trimmed });
+      updateExerciseNotes(exercise.instanceId, trimmed);
+      if (fetchExercises) {
+        fetchExercises(); // refresh catalog cache so future workouts see updated note
+      }
+      noteDraftRef.current = '';
+      setNoteInputKey((k) => k + 1); // reset input
+      setShowNoteModal(false);
+    } catch (err) {
+      console.warn('Failed to save exercise note', err);
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    if (!user?.uid || !exercise?.exerciseId) return;
+    try {
+      const ref = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exercise.exerciseId}`);
+      await updateDoc(ref, { notes: deleteField() });
+      updateExerciseNotes(exercise.instanceId, undefined);
+      fetchExercises?.();
+      setShowActionsheet(false);
+    } catch (err) {
+      console.warn('Failed to delete exercise note', err);
+    }
   };
 
   const renderRightActions = useCallback((setId: string) => {
@@ -106,6 +154,11 @@ function Exercise({ exercise }: Props) {
           </Text>
           <Entypo name="dots-three-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)} />
         </HStack>
+        {exercise?.notes ? (
+          <Box className="px-2">
+            <Text className="text-typography-700">{exercise.notes}</Text>
+          </Box>
+        ) : null}
         <Divider className={`bg-${theme}-button`} orientation="horizontal" />
 
         <HStack className="items-center">
@@ -172,6 +225,23 @@ function Exercise({ exercise }: Props) {
               Replace Exercise
             </ActionsheetItemText>
           </ActionsheetItem>
+          <ActionsheetItem
+            onPress={() => {
+              setShowActionsheet(false);
+              setShowNoteModal(true);
+            }}
+          >
+            <ActionsheetItemText className="text-lg justify-center text-typography-800">
+              {exercise.notes ? 'Edit Exercise Note' : 'Add Exercise Note'}
+            </ActionsheetItemText>
+          </ActionsheetItem>
+          {exercise.notes ? (
+            <ActionsheetItem
+              onPress={handleDeleteNote}
+            >
+              <ActionsheetItemText className="text-lg justify-center text-error-500">Delete Exercise Note</ActionsheetItemText>
+            </ActionsheetItem>
+          ) : null}
           <ActionsheetItem onPress={handleDeletion}>
             <ActionsheetItemText className="text-lg justify-center text-error-500">Remove Exercise</ActionsheetItemText>
           </ActionsheetItem>
@@ -180,6 +250,38 @@ function Exercise({ exercise }: Props) {
           </ActionsheetItem>
         </ActionsheetContent>
       </Actionsheet>
+
+      <Modal isOpen={showNoteModal} onClose={() => setShowNoteModal(false)}>
+        <ModalBackdrop onPress={() => setShowNoteModal(false)} />
+        <ModalContent className={`bg-${theme}-background border-${theme}-steelGray px-5 py-4`}>
+          <ModalHeader>
+            <Text className="text-typography-800 text-xl font-bold">Add Note</Text>
+          </ModalHeader>
+          <ModalBody>
+            <Input isInvalid={noteError} >
+              <InputIcon as={EditIcon} className="ml-2 text-typography-800"/>
+              <InputField
+                key={noteInputKey}
+                placeholder={exercise.notes ?? 'Enter note'}
+                placeholderTextColor="rgba(255,255,255,0.6)"
+                onChangeText={(t) => {
+                  noteDraftRef.current = t;
+                }}
+                multiline
+                className="pt-3 pb-2"
+              />
+            </Input>
+          </ModalBody>
+          <ModalFooter className="flex-row justify-between items-center px-2">
+            <Button variant="solid" className="bg-outline-200" onPress={() => setShowNoteModal(false)}>
+              <ButtonText className="text-typography-800">Cancel</ButtonText>
+            </Button>
+            <Button onPress={handleAddNote}>
+              <ButtonText>Add Note</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

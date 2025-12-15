@@ -87,6 +87,7 @@ type Action =
         Omit<ExerciseEntity, 'setIds' | 'instanceId'> & {
           numSets: number;
           previousSets?: PreviousSetData[];
+          notes?: string;
         }
       >;
     }
@@ -96,7 +97,8 @@ type Action =
   | { type: 'ADD_SET'; exerciseInstanceId: string }
   | { type: 'DELETE_SET'; exerciseInstanceId: string; setId: string }
   | { type: 'UPDATE_SET_DATA'; exerciseInstanceId: string; setId: string; data: Partial<SetEntity['trackingData']> }
-  | { type: 'UPDATE_SET_COMPLETED'; exerciseInstanceId: string; setId: string; completed: boolean };
+  | { type: 'UPDATE_SET_COMPLETED'; exerciseInstanceId: string; setId: string; completed: boolean }
+  | { type: 'UPDATE_EXERCISE_NOTES'; exerciseInstanceId: string; notes?: string };
 
 const STORAGE_KEY = 'workoutState';
 
@@ -174,6 +176,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
           secondaryMuscles: e.secondaryMuscles,
           trackingMethods,
           setIds,
+          notes: e.notes ?? '',
           previousSets: e.previousSets ?? [],
         };
       });
@@ -335,6 +338,14 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       };
     }
 
+    case 'UPDATE_EXERCISE_NOTES': {
+      if (!state.workout) return state;
+      const exercises = state.workout.exercises.map(ex =>
+        ex.instanceId === action.exerciseInstanceId ? { ...ex, notes: action.notes } : ex
+      );
+      return { ...state, workout: { ...state.workout, exercises } };
+    }
+
     default:
       return state;
   }
@@ -352,6 +363,7 @@ type Ctx = {
     secondaryMuscles?: string[];
     trackingMethods?: TrackingMethod[];
     numSets?: number;
+    notes?: string;
     templateMeta?: TemplateSource;
   }>) => Promise<void>;
   endWorkout: () => Promise<{ result: ProgressionsResult; persistPromise: Promise<void> }>;
@@ -361,11 +373,17 @@ type Ctx = {
   maximizeWorkout: () => void;
   updateSet: (exerciseInstanceId: string, setId: string, newData: Partial<SetEntity['trackingData']>) => void;
   updateSetCompleted: (exerciseInstanceId: string, setId: string, completed: boolean) => void;
-  addExercises: (exercises: Omit<ExerciseEntity, 'setIds' | 'instanceId' | 'previousSets'>[]) => Promise<void>;
-  replaceExerciseWith: (targetInstanceId: string, exercises: Omit<ExerciseEntity, 'setIds' | 'instanceId' | 'previousSets'>[]) => Promise<void>;
+  addExercises: (
+    exercises: Array<Omit<ExerciseEntity, 'setIds' | 'instanceId' | 'previousSets'> & { notes?: string }>
+  ) => Promise<void>;
+  replaceExerciseWith: (
+    targetInstanceId: string,
+    exercises: Array<Omit<ExerciseEntity, 'setIds' | 'instanceId' | 'previousSets'> & { notes?: string }>
+  ) => Promise<void>;
   deleteSet: (exerciseInstanceId: string, setId: string) => void;
   deleteExercise: (exerciseInstanceId: string) => void;
   addSet: (exerciseInstanceId: string) => void;
+  updateExerciseNotes: (exerciseInstanceId: string, notes?: string) => void;
 };
 
 const WorkoutContext = createContext<Ctx | undefined>(undefined);
@@ -485,6 +503,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const previousSets = await fetchPreviousSessionData(exercise.exerciseId);
         return {
           ...exercise,
+          notes: exercise.notes ?? '',
           previousSets
         };
       })
@@ -499,6 +518,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const previousSets = await fetchPreviousSessionData(exercise.exerciseId);
         return {
           ...exercise,
+          notes: exercise.notes ?? '',
           previousSets
         };
       })
@@ -518,6 +538,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
           secondaryMuscles: ex.secondaryMuscles ?? [],
           trackingMethods: ex.trackingMethods ?? [],
           numSets: Math.max(1, Number(ex.numSets ?? 1)),
+          notes: ex.notes ?? '',
           previousSets,
         };
       })
@@ -567,6 +588,10 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateSetCompleted: Ctx['updateSetCompleted'] = (exerciseInstanceId, setId, completed) => {
     dispatch({ type: 'UPDATE_SET_COMPLETED', exerciseInstanceId, setId, completed });
+  };
+
+  const updateExerciseNotes: Ctx['updateExerciseNotes'] = (exerciseInstanceId, notes) => {
+    dispatch({ type: 'UPDATE_EXERCISE_NOTES', exerciseInstanceId, notes });
   };
 
   const endWorkoutWarnings = (): WarningItem[] => {
@@ -664,6 +689,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     replaceExerciseWith,
     deleteExercise,
     addSet,
+    updateExerciseNotes,
   };
 
   return <WorkoutContext.Provider value={value}>{children}</WorkoutContext.Provider>;

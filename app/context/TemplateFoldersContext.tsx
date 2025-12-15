@@ -10,6 +10,7 @@ export type TemplateExerciseSnapshot = {
   name: string;
   category: string;
   numSets: number;
+  notes?: string;
 };
 
 export type Template = {
@@ -105,6 +106,7 @@ export const TemplateFoldersProvider: React.FC<{ children: React.ReactNode }> = 
                     name: String(ex?.name ?? ''),
                     category: String(ex?.category ?? ''),
                     numSets: Number.isFinite(Number(ex?.numSets)) ? Number(ex.numSets) : 0,
+                    notes: typeof ex?.notes === 'string' ? ex.notes : undefined,
                   }))
                 : [];
               return {
