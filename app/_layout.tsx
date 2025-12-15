@@ -28,9 +28,15 @@ function AppLayout() {
   const platform = Platform.OS;
   const sidePageAnimation = platform === "ios" ? "ios_from_right" : "slide_from_right";
   const tabsAnimation = platform === "ios" ? "ios_from_left" : "slide_from_left";
+  const appBackgroundColor = '#121212';
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: appBackgroundColor },
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Screen name="(on-startup)" />
       <Stack.Screen 
@@ -73,8 +79,8 @@ function AppLayout() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#121212' }}>
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: '#121212' }}>
         <GluestackUIProvider mode="dark">
           <ThemeProvider>
             <AuthProvider>

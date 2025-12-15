@@ -79,9 +79,9 @@ export default function Settings() {
       </Button>
       <AlertDialog isOpen={showAlertDialog} onClose={handleClose} size="md">
         <AlertDialogBackdrop />
-        <AlertDialogContent>
+        <AlertDialogContent className={`bg-${theme}-background border-${theme}-steelGray`}>
           <AlertDialogHeader>
-            <Heading className="text-typography-950 font-semibold" size="md">
+            <Heading className="text-typography-950 font-semibold pb-3" size="md">
               Are you sure you want to sign out?
             </Heading>
           </AlertDialogHeader>
