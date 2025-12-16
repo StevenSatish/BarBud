@@ -1,15 +1,17 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
 import { Heading } from '@/components/ui/heading';
-import { Ionicons } from '@expo/vector-icons';
+import { Entypo, Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/app/context/ThemeContext';
+import { useEditWorkout } from '@/app/context/EditWorkoutContext';
 
 type ExerciseCount = {
 	exerciseId: string;
-	nameSnap: string;
 	completedSetCount: number;
+	name: string;
+	category: string;
 };
 
 export type SessionLike = {
@@ -25,12 +27,23 @@ type SessionCardProps = {
 
 export default function SessionCard({ session }: SessionCardProps) {
 	const { theme } = useTheme();
+	const { startEditing } = useEditWorkout();
 	const headerLine = `${formatTime(session.startAt)}, ${formatLongDate(session.startAt)}`;
 	return (
 		<View className={`border border-outline-200 rounded-xl shadow-sm bg-${theme}-button p-3 mb-3`}>
-			<Text className="text-typography-700">
-				{headerLine}
-			</Text>
+			<HStack className="items-start justify-between">
+				<View className="flex-1 pr-2">
+					<Text className="text-typography-700">
+						{headerLine}
+					</Text>
+				</View>
+				<Pressable
+					hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+					onPress={() => startEditing(session.id)}
+				>
+					<Entypo name="edit" size={18} color="white" />
+				</Pressable>
+			</HStack>
 			<HStack className="items-center">
 				<Ionicons name="time-outline" size={16} color={'white'} />
 				<Text className="text-typography-700 ml-1">
@@ -43,7 +56,7 @@ export default function SessionCard({ session }: SessionCardProps) {
 					<View>
 						{session.exerciseCounts.map((ex, idx) => (
 							<Text key={`${ex.exerciseId}-${idx}`} className="text-typography-700">
-								{ex.completedSetCount} x {ex.nameSnap}
+								{ex.completedSetCount} x {ex.name}
 							</Text>
 						))}
 					</View>

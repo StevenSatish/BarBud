@@ -11,8 +11,9 @@ import SessionCard from '@/app/components/SessionCard';
 export default function HistoryCalendarView() {
 	type ExerciseCount = {
 		exerciseId: string;
-		nameSnap: string;
 		completedSetCount: number;
+		name: string;
+		category: string;
 	};
 
 	type SessionSummary = {

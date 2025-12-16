@@ -103,7 +103,7 @@ export const writeSessionAndCollectInstances = async (
   const startDate = new Date(ws.startTimeISO);
   const dayKey = formatDayKey(startDate);
   const durationMin = Math.max(1, Math.round((endMs - startMs) / 1000 / 60));
-  const exerciseCounts: { exerciseId: string; nameSnap: string; completedSetCount: number }[] = [];
+  const exerciseCounts: { exerciseId: string; name: string; category: string; completedSetCount: number }[] = [];
   let totalCompletedSets = 0;
   const instanceInputs: ExerciseInstanceInput[] = [];
 
@@ -143,19 +143,17 @@ export const writeSessionAndCollectInstances = async (
     const completedSetCount = completed.length;
     if (completedSetCount > 0) {
       totalCompletedSets += completedSetCount;
-      exerciseCounts.push({ exerciseId: ex.exerciseId, nameSnap: `${ex.name} (${ex.category})`, completedSetCount });
-    }
+      exerciseCounts.push({ exerciseId: ex.exerciseId, name: ex.name, category: ex.category, completedSetCount });
 
-    const exerciseDoc: any = {
-      exerciseId: ex.exerciseId,
-      order: orderIndex + 1,
-      sets,
-    };
-    if (bestEst1RM > 0) exerciseDoc.est1rm = bestEst1RM;
+      const exerciseDoc: any = {
+        exerciseId: ex.exerciseId,
+        order: orderIndex + 1,
+        sets,
+      };
+      if (bestEst1RM > 0) exerciseDoc.est1rm = bestEst1RM;
 
-    batch.set(exRef, exerciseDoc, { merge: true });
+      batch.set(exRef, exerciseDoc, { merge: true });
 
-    if (completedSetCount > 0) {
       // Create instance data based on tracking methods
       const instanceData: ExerciseInstanceInput = {
         sessionId,

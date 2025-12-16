@@ -19,7 +19,6 @@ export type SetEntity = {
   order: number;         // 1-based order for UI
   completed: boolean;
   trackingData: Partial<Record<TrackingMethod, number | null>>;
-  timestamp: string;     // ISO
 };
 
 export type ExerciseEntity = {
@@ -169,7 +168,6 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
             order: i + 1,
             completed: false,
             trackingData: trackingMethods.reduce((acc, m) => ({ ...acc, [m]: null }), {} as Partial<Record<TrackingMethod, number | null>>),
-            timestamp: new Date().toISOString(),
           };
         }
         return {
@@ -278,7 +276,6 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
           acc[m] = (prev ?? null) as number | null;
           return acc;
         }, {} as Partial<Record<TrackingMethod, number | null>>),
-        timestamp: new Date().toISOString(),
       };
 
       const setsById = { ...state.workout.setsById, [newId]: newSet };
@@ -453,7 +450,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
           console.error('Error saving workout state:', e);
         }
       })();
-    }, 300);
+    }, 1000);
 
     return () => {
       if (saveTimerRef.current) {

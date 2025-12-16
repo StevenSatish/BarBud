@@ -12,6 +12,7 @@ import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
 import { router, useLocalSearchParams } from 'expo-router';
 import { setTemplateSelection } from '../(template)/selectionStore';
 import { useWorkout } from '../context/WorkoutContext';
+import { useEditWorkout } from '../context/EditWorkoutContext';
 import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
 import { Divider } from '@/components/ui/divider';
@@ -23,7 +24,7 @@ const MUSCLE_GROUPS = [
 ];
 
 const CATEGORIES = [
-  "Barbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
+  "Barbell", "Dumbbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
 ];
 
 const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
@@ -87,16 +88,22 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
   );
 }, (prev, next) => prev.isSelected === next.isSelected && prev.item.id === next.item.id);
 
-export default function AddExerciseDatabase() {
+export default function AddExerciseDatabase({ modeOverride } = {}) {
   const { theme } = useTheme();
   const { exerciseSections, loading} = useExerciseDB();
-  const { addExercises, replaceExerciseWith } = useWorkout();
+  const workoutCtx = useWorkout();
+  const editWorkoutCtx = useEditWorkout();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedExercises, setSelectedExercises] = useState({});
   const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
   const { targetInstanceId, mode, folderName = '', folderId = '' } = useLocalSearchParams();
+  const effectiveMode = modeOverride ?? mode;
+  const isTemplateMode = effectiveMode === 'template';
+  const isEditMode = effectiveMode === 'edit';
+  const addExercises = isEditMode ? editWorkoutCtx.addExercises : workoutCtx.addExercises;
+  const replaceExerciseWith = isEditMode ? editWorkoutCtx.replaceExerciseWith : workoutCtx.replaceExerciseWith;
 
   const handleExerciseToggle = useCallback((exercise) => {
     setSelectedExercises(prev => {
@@ -200,7 +207,7 @@ export default function AddExerciseDatabase() {
     }));
 
     // Template mode: return selection to template editor
-    if (mode === 'template') {
+    if (isTemplateMode) {
       setTemplateSelection(
         chosen.map((ex) => ({
           id: ex.id,

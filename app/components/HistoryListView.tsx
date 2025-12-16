@@ -9,8 +9,9 @@ import SessionCard from '@/app/components/SessionCard';
 
 type ExerciseCount = {
 	exerciseId: string;
-	nameSnap: string;
 	completedSetCount: number;
+	name: string;
+	category: string;
 };
 
 type SessionSummary = {

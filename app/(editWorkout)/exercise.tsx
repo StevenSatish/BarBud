@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Pressable } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
@@ -21,15 +21,11 @@ import {
 } from '@/components/ui/actionsheet';
 import { Divider } from '@/components/ui/divider';
 import ExerciseSet from './exerciseSet';
-import { PreviousSetData, useWorkout } from '../context/WorkoutContext';
+import { PreviousSetData, useEditWorkout } from '../context/EditWorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
 import { router } from 'expo-router';
 import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui/modal';
 import { Input, InputField, InputIcon } from '@/components/ui/input';
-import { useAuth } from '@/app/context/AuthProvider';
-import useExerciseDB from '@/app/context/ExerciseDBContext';
-import { FIREBASE_DB } from '@/FirebaseConfig';
-import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { EditIcon } from '@/components/ui/icon';
 
 type Props = {
@@ -56,18 +52,15 @@ function Exercise({ exercise }: Props) {
     workoutState,
     updateExerciseNotes,
     startReorderExercises,
-  } = useWorkout();
+  } = useEditWorkout();
   const [showActionsheet, setShowActionsheet] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const noteDraftRef = useRef('');
   const [noteInputKey, setNoteInputKey] = useState(0);
-  const { user } = useAuth();
-  const { fetchExercises } = useExerciseDB();
   const [noteError, setNoteError] = useState(false);
 
   const setsById = workoutState.workout?.setsById ?? {};
 
-  // Build the sets for this exercise from setIds.
   const mappedSets = useMemo(() => {
     return (exercise.setIds || []).map((id) => setsById[id]).filter(Boolean);
   }, [exercise.setIds, setsById]);
@@ -82,37 +75,20 @@ function Exercise({ exercise }: Props) {
 
   const handleAddNote = async () => {
     const trimmed = noteDraftRef.current.trim();
-    if (!trimmed || !user?.uid || !exercise.exerciseId) {
+    if (!trimmed) {
       setNoteError(true);
       return;
     }
     setNoteError(false);
-    try {
-      const ref = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exercise.exerciseId}`);
-      await updateDoc(ref, { notes: trimmed });
-      updateExerciseNotes(exercise.instanceId, trimmed);
-      if (fetchExercises) {
-        fetchExercises(); // refresh catalog cache so future workouts see updated note
-      }
-      noteDraftRef.current = '';
-      setNoteInputKey((k) => k + 1); // reset input
-      setShowNoteModal(false);
-    } catch (err) {
-      console.warn('Failed to save exercise note', err);
-    }
+    updateExerciseNotes(exercise.instanceId, trimmed);
+    noteDraftRef.current = '';
+    setNoteInputKey((k) => k + 1);
+    setShowNoteModal(false);
   };
 
   const handleDeleteNote = async () => {
-    if (!user?.uid || !exercise?.exerciseId) return;
-    try {
-      const ref = doc(FIREBASE_DB, `users/${user.uid}/exercises/${exercise.exerciseId}`);
-      await updateDoc(ref, { notes: deleteField() });
-      updateExerciseNotes(exercise.instanceId, undefined);
-      fetchExercises?.();
-      setShowActionsheet(false);
-    } catch (err) {
-      console.warn('Failed to delete exercise note', err);
-    }
+    updateExerciseNotes(exercise.instanceId, undefined);
+    setShowActionsheet(false);
   };
 
   const renderRightActions = useCallback((setId: string) => {
@@ -223,7 +199,7 @@ function Exercise({ exercise }: Props) {
             onPress={() => {
               setShowActionsheet(false);
               router.push({
-                pathname: '/AddExersiceDatabase',
+                pathname: '/(editWorkout)/AddExersiceDatabaseProxy',
                 params: { targetInstanceId: exercise.instanceId },
               });
             }}

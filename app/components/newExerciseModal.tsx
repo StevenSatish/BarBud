@@ -103,7 +103,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   ];
   
   const CATEGORIES = [
-    "Barbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
+    "Barbell", "Dumbbell", "Bodyweight", "Weighted", "Cable", "Machine", "Other"
   ];
 
   const TRACKING_METHODS = [

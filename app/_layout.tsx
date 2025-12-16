@@ -3,6 +3,7 @@ import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from './context/AuthProvider';
 import { WorkoutProvider } from './context/WorkoutContext';
+import { EditWorkoutProvider } from './context/EditWorkoutContext';
 import { ExerciseDBProvider } from './context/ExerciseDBContext';
 import { TemplateFoldersProvider } from './context/TemplateFoldersContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -56,6 +57,14 @@ function AppLayout() {
         }}
       />
       <Stack.Screen 
+        name="(editWorkout)" 
+        options={{
+          animation: sidePageAnimation,
+          presentation: "modal",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
         name="(template)" 
         options={{
           animation: sidePageAnimation,
@@ -85,11 +94,13 @@ export default function RootLayout() {
           <ThemeProvider>
             <AuthProvider>
               <WorkoutProvider>
-                <ExerciseDBProvider>
-                  <TemplateFoldersProvider>
-                    <AppLayout />
-                  </TemplateFoldersProvider>
-                </ExerciseDBProvider>
+                <EditWorkoutProvider>
+                  <ExerciseDBProvider>
+                    <TemplateFoldersProvider>
+                      <AppLayout />
+                    </TemplateFoldersProvider>
+                  </ExerciseDBProvider>
+                </EditWorkoutProvider>
               </WorkoutProvider>
             </AuthProvider>
           </ThemeProvider>
