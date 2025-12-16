@@ -230,14 +230,6 @@ export default function EditWorkoutScreen() {
           </Box>
 
           <Box className={`w-24 flex items-end pr-2`}>
-          <Button
-            size="md"
-            onPress={() => setShowEndWorkoutAlert(true)}
-            className={`bg-primary-800`}
-            isDisabled={isSaving}
-          >
-            <ButtonText className={`text-secondary-0`}>{isSaving ? 'Saving...' : 'Save'}</ButtonText>
-          </Button>
           </Box>
         </HStack>
 

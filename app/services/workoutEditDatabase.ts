@@ -309,28 +309,6 @@ const deriveTrackingFromInstance = (inst: ExerciseInstanceDoc, fallback: Trackin
   return methods;
 };
 
-const fetchExerciseSetsForInstance = async (
-  uid: string,
-  sessionId: string,
-  exerciseInSessionId: string
-): Promise<SetEntity[]> => {
-  const exRef = doc(FIREBASE_DB, `users/${uid}/sessions/${sessionId}/exercises/${exerciseInSessionId}`);
-  const snap = await getDoc(exRef);
-  if (!snap.exists()) return [];
-  const data = snap.data() as any;
-  const sets = Array.isArray(data?.sets) ? data.sets : [];
-  return sets.map((s: any, idx: number) => ({
-    id: s?.id || String(idx),
-    order: s?.order ?? idx + 1,
-    completed: true,
-    trackingData: {
-      weight: s?.trackingData?.weight ?? null,
-      reps: s?.trackingData?.reps ?? null,
-      time: s?.trackingData?.time ?? null,
-    },
-  }));
-};
-
 const recomputeMetricsForExercise = async (
   uid: string,
   exerciseId: string,
@@ -358,70 +336,60 @@ const recomputeMetricsForExercise = async (
     const data = snap.data() as ExerciseInstanceDoc;
     const tracking = deriveTrackingFromInstance(data, trackingFromState ?? []);
     const date = (data.date instanceof Date ? data.date : new Date((data as any).date?.seconds * 1000 || data.date)) as Date;
-    const sessionId = data.sessionId;
-    const exerciseInSessionId = data.exerciseInSessionId;
-
-    // Use sets to recover richer metrics where possible
-    const sets = await fetchExerciseSetsForInstance(uid, sessionId, exerciseInSessionId);
-    const aggregates = computeExerciseAggregates(
-      sets as ReturnType<typeof normalizeCompletedSets>,
-      tracking
-    );
-
-    const completedSetCount = sets.length || data.completedSetCount || 0;
+    const completedSetCount = data.completedSetCount || 0;
     agg.totalSets += completedSetCount;
 
     if (tracking.includes('reps')) {
-      agg.totalReps += aggregates.totalReps || data.totalReps || data.completedRepCount || 0;
-      agg.maxTopReps = Math.max(agg.maxTopReps, aggregates.topReps || data.topReps || 0);
+      agg.totalReps += data.totalReps || data.completedRepCount || 0;
+      agg.maxTopReps = Math.max(agg.maxTopReps, data.topReps || 0);
       agg.maxTotalReps = Math.max(
         agg.maxTotalReps,
-        aggregates.totalReps || data.totalReps || data.completedRepCount || 0
+        data.totalReps || data.completedRepCount || 0
       );
     }
     if (tracking.includes('time') && !tracking.includes('weight')) {
-      agg.totalTime += aggregates.totalTime || data.totalTime || 0;
-      agg.maxTopTime = Math.max(agg.maxTopTime, aggregates.topTime || data.topTime || 0);
-      agg.maxTotalTime = Math.max(agg.maxTotalTime, aggregates.totalTime || data.totalTime || 0);
+      agg.totalTime += data.totalTime || 0;
+      agg.maxTopTime = Math.max(agg.maxTopTime, data.topTime || 0);
+      agg.maxTotalTime = Math.max(agg.maxTotalTime, data.totalTime || 0);
     }
     if (tracking.includes('weight')) {
-      agg.maxTopWeight = Math.max(agg.maxTopWeight, aggregates.topWeight || data.topWeight || 0);
-      agg.maxBestEst1RM = Math.max(agg.maxBestEst1RM, aggregates.bestEst1RM || data.bestEst1RM || 0);
+      agg.maxTopWeight = Math.max(agg.maxTopWeight, data.topWeight || 0);
+      agg.maxBestEst1RM = Math.max(agg.maxBestEst1RM, data.bestEst1RM || 0);
       if (tracking.includes('reps')) {
         agg.maxTopRepsAtTopWeight = Math.max(
           agg.maxTopRepsAtTopWeight,
-          aggregates.topReps || 0
+          data.topReps || 0
         );
-        agg.totalVolumeAllTime += aggregates.volume || data.volume || 0;
-        agg.totalReps += aggregates.totalReps || data.completedRepCount || 0;
+        agg.totalVolumeAllTime += data.volume || 0;
+        agg.totalReps += data.totalReps || data.completedRepCount || 0;
       }
       if (tracking.includes('time')) {
         agg.maxTopTimeAtTopWeight = Math.max(
           agg.maxTopTimeAtTopWeight,
-          aggregates.topTime || data.topTime || 0
+          data.topTime || 0
         );
-        agg.totalTime += aggregates.totalTime || data.totalTime || 0;
+        agg.totalTime += data.totalTime || 0;
       }
     }
 
     if (date.getTime() > lastSessionDate) {
       lastSessionDate = date.getTime();
-      lastSessionId = sessionId;
+      lastSessionId = data.sessionId;
       // store aggregates for last session after loop
-      agg.lastTopWeight = aggregates.topWeight || data.topWeight;
-      agg.lastBestEst1RM = aggregates.bestEst1RM || data.bestEst1RM;
-      agg.lastVolume = aggregates.volume || data.volume;
-      agg.lastTopRepsAtTopWeight = tracking.includes('reps') ? aggregates.topReps || 0 : undefined;
-      agg.lastTopTimeAtTopWeight = tracking.includes('time') ? aggregates.topTime || 0 : undefined;
-      agg.lastTopReps = !tracking.includes('weight') && tracking.includes('reps') ? aggregates.topReps || data.topReps || 0 : undefined;
+      agg.lastTopWeight = data.topWeight || 0;
+      agg.lastBestEst1RM = data.bestEst1RM || 0;
+      agg.lastVolume = data.volume || 0;
+      agg.lastTopRepsAtTopWeight = tracking.includes('reps') ? data.topReps || 0 : undefined;
+      agg.lastTopTimeAtTopWeight = tracking.includes('time') ? data.topTime || 0 : undefined;
+      agg.lastTopReps = !tracking.includes('weight') && tracking.includes('reps') ? data.topReps || 0 : undefined;
       agg.lastTotalReps =
         !tracking.includes('weight') && tracking.includes('reps')
-          ? aggregates.totalReps || data.totalReps || data.completedRepCount || 0
+          ? data.totalReps || data.completedRepCount || 0
           : undefined;
       agg.lastTopTime =
-        !tracking.includes('weight') && tracking.includes('time') ? aggregates.topTime || data.topTime || 0 : undefined;
+        !tracking.includes('weight') && tracking.includes('time') ? data.topTime || 0 : undefined;
       agg.lastTotalTime =
-        !tracking.includes('weight') && tracking.includes('time') ? aggregates.totalTime || data.totalTime || 0 : undefined;
+        !tracking.includes('weight') && tracking.includes('time') ? data.totalTime || 0 : undefined;
     }
   }
 
