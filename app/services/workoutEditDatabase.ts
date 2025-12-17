@@ -3,6 +3,7 @@ import { collection, doc, getDoc, getDocs, writeBatch } from 'firebase/firestore
 import { FIREBASE_DB } from '@/FirebaseConfig';
 
 import { estimate1RM } from './workoutDatabase';
+import { triggerExerciseRefetch } from '../context/ExerciseDBContext';
 
 export type TrackingMethod = 'weight' | 'reps' | 'time';
 
@@ -20,6 +21,7 @@ export type ExerciseEntity = {
   category: string;
   trackingMethods: TrackingMethod[];
   setIds: string[];
+  order?: number;
 };
 
 export type WorkoutData = {
@@ -138,7 +140,7 @@ const writeSessionAndExercises = async (
   const dayKey = formatDayKey(startDate);
   const durationMin = Math.max(1, Math.round((endMs - startDate.getTime()) / 1000 / 60));
 
-  const exerciseCounts: Array<{ exerciseId: string; name: string; category: string; completedSetCount: number }> = [];
+  const exerciseCounts: Array<{ exerciseId: string; name: string; category: string; completedSetCount: number; order: number }> = [];
   let totalCompletedSets = 0;
   const instances: ExerciseInstanceDoc[] = [];
   const touchedExerciseIds = new Set<string>();
@@ -146,7 +148,17 @@ const writeSessionAndExercises = async (
 
   const currentExerciseIds = new Set<string>();
 
-  ws.exercises.forEach((ex, orderIndex) => {
+  const orderedExercises = ws.exercises
+    .map((ex, idx) => ({ ex, idx }))
+    .sort((a, b) => {
+      const ao = a.ex.order ?? a.idx + 1;
+      const bo = b.ex.order ?? b.idx + 1;
+      if (ao !== bo) return ao - bo;
+      return a.idx - b.idx;
+    })
+    .map(({ ex }) => ex);
+
+  orderedExercises.forEach((ex, orderIndex) => {
     touchedExerciseIds.add(ex.exerciseId);
 
     const completedSets = normalizeCompletedSets(ex, ws.setsById);
@@ -161,12 +173,13 @@ const writeSessionAndExercises = async (
       name: ex.name,
       category: ex.category,
       completedSetCount: completedSets.length,
+      order: ex.order ?? orderIndex + 1,
     });
 
     const exRef = doc(exercisesRef, ex.instanceId);
     const exerciseDoc: any = {
       exerciseId: ex.exerciseId,
-      order: orderIndex + 1,
+      order: ex.order ?? orderIndex + 1,
       sets: completedSets.map((s) => ({
         id: s.id,
         order: s.order,
@@ -459,6 +472,8 @@ export const writeEditedSession = async (
   for (const exerciseId of touchedExerciseIds) {
     await recomputeMetricsForExercise(uid, exerciseId, stateTracking.get(exerciseId));
   }
+
+  await triggerExerciseRefetch();
 
   return { date };
 };

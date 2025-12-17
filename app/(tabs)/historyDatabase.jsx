@@ -14,6 +14,7 @@ import NewExerciseModal from '../components/newExerciseModal';
 import { useTheme } from '@/app/context/ThemeContext';
 import { router } from 'expo-router';
 import { Divider } from '@/components/ui/divider';
+import { Platform } from 'react-native';
 
 
 // Static data arrays
@@ -160,7 +161,7 @@ export default function HistoryDatabase() {
   ), [theme]);
 
   const ItemSeparator = useCallback(() => (
-    <Divider className={`bg-${theme}-accent`} orientation="horizontal" />
+    <Divider className={`bg-${theme}-lightGray`} orientation="horizontal" />
   ), [theme]);
   
   if (loading) {
@@ -177,7 +178,7 @@ export default function HistoryDatabase() {
         isOpen={showNewExerciseModal} 
         onClose={() => setShowNewExerciseModal(false)} 
       />
-      <KeyboardAvoidingView behavior="padding" className="flex-1">
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <View className="w-full items-center justify-center px-4 py-3">
           <Text className="text-typography-800 text-2xl font-bold text-center">Exercise Database</Text>
         </View>

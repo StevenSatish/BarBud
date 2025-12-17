@@ -1,4 +1,5 @@
-import { View, SectionList, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity } from 'react-native';
+import { View, SectionList, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo, useCallback } from 'react';
@@ -93,6 +94,7 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
   const { exerciseSections, loading} = useExerciseDB();
   const workoutCtx = useWorkout();
   const editWorkoutCtx = useEditWorkout();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -189,7 +191,7 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
   ), []);
 
   const ItemSeparator = useCallback(() => (
-    <Divider className={`bg-${theme}-accent`} orientation="horizontal" />
+    <Divider className={`bg-${theme}-lightGray`} orientation="horizontal" />
   ), [theme]);
   
   const handleAddExercises = () => {
@@ -243,7 +245,10 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
         isOpen={showNewExerciseModal} 
         onClose={() => setShowNewExerciseModal(false)} 
       />
-      <KeyboardAvoidingView behavior="padding" className="flex-1">
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'margin'} 
+        className="flex-1"
+      >
         <HStack className="w-full items-center justify-between px-4 my-2">
           <Input className="h-12 rounded-full bg-background-100 w-3/4">
             <InputField 
@@ -341,13 +346,14 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
           renderSectionHeader={renderSectionHeader}
           keyExtractor={keyExtractor}
           keyboardShouldPersistTaps="handled"
+          //keyboardDismissMode="on-drag"
           extraData={selectedExercises}
           initialNumToRender={12}
           maxToRenderPerBatch={16}
           windowSize={8}
           removeClippedSubviews={true}
           updateCellsBatchingPeriod={50}
-          contentContainerStyle={{ paddingVertical: 8 }}
+          contentContainerStyle={{ paddingVertical: 8, paddingBottom: (insets?.bottom ?? 0) + 160 }}
           stickySectionHeadersEnabled={true}
           ItemSeparatorComponent={ItemSeparator}
           ListEmptyComponent={

@@ -25,6 +25,7 @@ export type ExerciseEntity = {
   setIds: string[];
   previousSets?: PreviousSetData[];
   notes?: string;
+  order?: number;
 };
 
 export type PreviousSetData = {
@@ -69,7 +70,7 @@ type Action =
 
 const initialState: WorkoutState = {
   isActive: false,
-  isMinimized: false,
+  isMinimized: false,     
   isReorderingExercises: false,
   workout: {
     startTimeISO: new Date().toISOString(),
@@ -78,6 +79,14 @@ const initialState: WorkoutState = {
     setsById: {},
   },
 };
+
+const normalizeExerciseOrder = (exercises: ExerciseEntity[]): ExerciseEntity[] =>
+  exercises.map((ex, idx) => ({ ...ex, order: idx + 1 }));
+
+const sortAndNormalizePersistedOrder = (exercises: ExerciseEntity[]): ExerciseEntity[] =>
+  [...exercises]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((ex, idx) => ({ ...ex, order: idx + 1 }));
 
 function reducer(state: WorkoutState, action: Action): WorkoutState {
   switch (action.type) {
@@ -101,7 +110,16 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
     case 'MAXIMIZE':
       return { ...state, isMinimized: false };
     case 'HYDRATE':
-      return { ...action.payload, isReorderingExercises: action.payload?.isReorderingExercises ?? false };
+      return {
+        ...action.payload,
+        isReorderingExercises: action.payload?.isReorderingExercises ?? false,
+        workout: action.payload?.workout
+          ? {
+              ...action.payload.workout,
+              exercises: sortAndNormalizePersistedOrder(action.payload.workout.exercises ?? []),
+            }
+          : action.payload.workout,
+      };
     case 'ADD_EXERCISES': {
       if (!state.workout) return state;
       const payload = action.payload.map((e) => ({
@@ -111,7 +129,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       }));
       return {
         ...state,
-        workout: { ...state.workout, exercises: [...state.workout.exercises, ...payload] },
+        workout: { ...state.workout, exercises: normalizeExerciseOrder([...state.workout.exercises, ...payload]) },
       };
     }
     case 'DELETE_EXERCISE': {
@@ -124,14 +142,16 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
         delete setsById[id];
       });
 
+      const remainingExercises = state.workout.exercises.filter((e) => e.instanceId !== action.exerciseInstanceId);
+
       return {
         ...state,
         workout: {
           ...state.workout,
-          exercises: state.workout.exercises.filter((e) => e.instanceId !== action.exerciseInstanceId),
+          exercises: normalizeExerciseOrder(remainingExercises),
           setsById,
         },
-        isReorderingExercises: state.workout.exercises.length - 1 > 0 ? state.isReorderingExercises : false,
+        isReorderingExercises: remainingExercises.length > 0 ? state.isReorderingExercises : false,
       };
     }
     case 'REPLACE_EXERCISE_WITH': {
@@ -153,7 +173,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
 
       const before = state.workout.exercises.slice(0, exIdx);
       const after = state.workout.exercises.slice(exIdx + 1);
-      const newExercises = [...before, ...replacementExercises, ...after];
+      const newExercises = normalizeExerciseOrder([...before, ...replacementExercises, ...after]);
 
       return {
         ...state,
@@ -261,7 +281,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
 
       return {
         ...state,
-        workout: { ...state.workout, exercises: [...reordered, ...missing] },
+        workout: { ...state.workout, exercises: normalizeExerciseOrder([...reordered, ...missing]) },
       };
     }
     case 'SET_START_TIME': {
@@ -337,13 +357,18 @@ export const EditWorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       // Map exerciseId -> name/category from exerciseCounts to recover display info
       const displayByExerciseId: Record<string, { name?: string; category?: string }> = {};
+      const orderByExerciseId: Record<string, number> = {};
       if (Array.isArray(sessionData.exerciseCounts)) {
-        sessionData.exerciseCounts.forEach((item: any) => {
+        sessionData.exerciseCounts.forEach((item: any, idx: number) => {
           if (item?.exerciseId) {
             displayByExerciseId[item.exerciseId] = {
               name: item.name ?? '',
               category: item.category ?? '',
             };
+            if (orderByExerciseId[item.exerciseId] === undefined) {
+              orderByExerciseId[item.exerciseId] =
+                typeof item.order === 'number' ? item.order : idx + 1;
+            }
           }
         });
       }
@@ -397,6 +422,7 @@ export const EditWorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
           setIds,
           previousSets: [],
           notes: d?.notes ?? '',
+          order: typeof d?.order === 'number' ? d.order : orderByExerciseId[exerciseId],
         } as ExerciseEntity;
       });
 
@@ -407,7 +433,7 @@ export const EditWorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
         workout: {
           startTimeISO: startAt.toISOString(),
           endTimeISO: endAt.toISOString(),
-          exercises,
+          exercises: normalizeExerciseOrder(exercises),
           setsById,
         },
       };

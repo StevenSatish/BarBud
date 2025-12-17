@@ -277,7 +277,7 @@ export default function StartWorkoutTab() {
                           color={colors.light}
                         />
                         <Entypo name="folder" size={18} color={colors.light} />
-                        <Text className='text-typography-800 text-lg'>{f.name}</Text>
+                        <Text size="xl" bold className='text-typography-800'>{f.name}</Text>
                       </HStack>
                       <Menu
                         className={`bg-${theme}-background`}

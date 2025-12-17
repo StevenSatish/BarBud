@@ -45,7 +45,8 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
   );
   const exercisesLine = useMemo(() => {
     const names = template.exercises?.map((ex) => `${ex.name} (${ex.category})`).filter(Boolean) ?? [];
-    return names.join(', ');
+    const joined = names.join(', ');
+    return joined.length > 88 ? `${joined.slice(0, 88)}...` : joined;
   }, [template.exercises]);
 
   const resetRenameInput = () => {
@@ -165,9 +166,31 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
         console.error('Cannot move template: no authenticated user');
         return;
       }
+      const safeTemplateName = template.templateName ?? 'Template';
+      const sanitizedExercises =
+        template.exercises?.map((ex, idx) => {
+          const name = ex?.name ?? 'Exercise';
+          const category = ex?.category ?? '';
+          const numSetsRaw = (ex as any)?.numSets;
+          const numSets =
+            typeof numSetsRaw === 'number' && Number.isFinite(numSetsRaw) && numSetsRaw > 0
+              ? numSetsRaw
+              : 1;
+          const exerciseId =
+            ex?.exerciseId ??
+            slugify(name) ??
+            `exercise-${idx}`;
+          return {
+            exerciseId,
+            name,
+            category,
+            numSets,
+          };
+        }) ?? [];
+
       const payload: any = {
-        templateName: template.templateName,
-        exercises: template.exercises ?? [],
+        templateName: safeTemplateName,
+        exercises: sanitizedExercises,
       };
       if (template.lastPerformedAt) payload.lastPerformedAt = template.lastPerformedAt;
 
@@ -225,10 +248,10 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
     <Pressable
       onPress={() => setViewModalOpen(true)}
       hitSlop={6}
-      className={`rounded border border-outline-200 bg-${theme}-background px-3 py-3`}
+      className={`rounded border border-outline-200 bg-${theme}-button px-3 py-3`}
     >
       <HStack className='items-center justify-between'>
-        <Text className='text-typography-800 text-lg font-semibold'>{template.templateName}</Text>
+        <Text size="xl" bold className='text-typography-800'>{template.templateName}</Text>
         <Menu
           className={`bg-${theme}-button`}
           placement="bottom left"

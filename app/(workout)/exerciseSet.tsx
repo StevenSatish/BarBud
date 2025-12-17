@@ -41,15 +41,25 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
   };
 
   const handleInputChange = (method: string, value: string) => {
+    const trimmed = value.replace(',', '.').trim();
+    const numericValue =
+      trimmed === ''
+        ? null
+        : (() => {
+            const parsed = parseFloat(trimmed);
+            return Number.isFinite(parsed) ? parsed : null;
+          })();
+
     const newTrackingData = {
       ...set.trackingData,
-      [method]: parseInt(value) || null
+      [method]: numericValue,
     };
     updateSet(instanceId, setId, newTrackingData);
     
     // Check if any tracking method is now empty and unselect checkbox if so
     const hasEmptyTracking = trackingMethods.some((trackingMethod: string) => {
-      const trackingValue = trackingMethod === method ? (parseInt(value) || null) : set.trackingData[trackingMethod];
+      const trackingValue =
+        trackingMethod === method ? numericValue : set.trackingData[trackingMethod];
       return !trackingValue;
     });
     
@@ -139,7 +149,7 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
                 className="text-typography-800 text-center text-lg"
                 placeholder={getPlaceholder(method)}
                 value={set.trackingData[method]?.toString() || ''}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 onChangeText={(value) => handleInputChange(method, value)}
                 selectTextOnFocus={true}
                 textAlign="center"

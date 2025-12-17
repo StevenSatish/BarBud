@@ -2,6 +2,7 @@
 import { collection, doc, writeBatch, getDoc, WriteBatch } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import * as Crypto from 'expo-crypto';
+import { triggerExerciseRefetch } from '../context/ExerciseDBContext';
 
 // Types
 export type ExerciseInstanceInput = {
@@ -45,6 +46,7 @@ export type ExerciseEntity = {
   trackingMethods: string[];
   setIds: string[];
   previousSets?: any[];
+  order?: number;
 };
 
 // Helper functions (exact same as in WorkoutContext)
@@ -103,11 +105,21 @@ export const writeSessionAndCollectInstances = async (
   const startDate = new Date(ws.startTimeISO);
   const dayKey = formatDayKey(startDate);
   const durationMin = Math.max(1, Math.round((endMs - startMs) / 1000 / 60));
-  const exerciseCounts: { exerciseId: string; name: string; category: string; completedSetCount: number }[] = [];
+  const exerciseCounts: { exerciseId: string; name: string; category: string; completedSetCount: number; order: number }[] = [];
   let totalCompletedSets = 0;
   const instanceInputs: ExerciseInstanceInput[] = [];
 
-  ws.exercises.forEach((ex: ExerciseEntity, orderIndex: number) => {
+  const orderedExercises = ws.exercises
+    .map((ex, idx) => ({ ex, idx }))
+    .sort((a, b) => {
+      const ao = a.ex.order ?? a.idx + 1;
+      const bo = b.ex.order ?? b.idx + 1;
+      if (ao !== bo) return ao - bo;
+      return a.idx - b.idx;
+    })
+    .map(({ ex }) => ex);
+
+  orderedExercises.forEach((ex: ExerciseEntity, orderIndex: number) => {
     const exerciseInSessionId = Crypto.randomUUID();
     const exRef = doc(collection(sessionRef, 'exercises'), exerciseInSessionId);
 
@@ -143,11 +155,17 @@ export const writeSessionAndCollectInstances = async (
     const completedSetCount = completed.length;
     if (completedSetCount > 0) {
       totalCompletedSets += completedSetCount;
-      exerciseCounts.push({ exerciseId: ex.exerciseId, name: ex.name, category: ex.category, completedSetCount });
+      exerciseCounts.push({
+        exerciseId: ex.exerciseId,
+        name: ex.name,
+        category: ex.category,
+        completedSetCount,
+        order: ex.order ?? orderIndex + 1,
+      });
 
       const exerciseDoc: any = {
         exerciseId: ex.exerciseId,
-        order: orderIndex + 1,
+        order: ex.order ?? orderIndex + 1,
         sets,
       };
       if (bestEst1RM > 0) exerciseDoc.est1rm = bestEst1RM;
@@ -498,4 +516,6 @@ export const writeExerciseMetricsForSession = async (uid: string, ws: WorkoutDat
 
   await lastBatch.commit();
   await allTimeBatch.commit();
+  // Refresh exercise catalog cache to surface new lastPerformed/metrics
+  await triggerExerciseRefetch();
 };

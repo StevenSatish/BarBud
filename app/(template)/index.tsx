@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView, TextInput } from 'react-native';
+import { TextInput, Platform, KeyboardAvoidingView } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import ReorderableList, { useReorderableDrag, useIsActive } from 'react-native-reorderable-list';
 import { Pressable } from 'react-native';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
@@ -133,113 +133,134 @@ export default function TemplateEditor() {
     }
   };
 
-  const renderItem = useCallback(
-    ({ item, drag}: RenderItemParams<TemplateExercise>) => (
-      <HStack
-        className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}
-      >
-        <HStack className="items-center gap-3 flex-1">
-          <Pressable onLongPress={drag} onPressIn={drag} delayLongPress={120} hitSlop={10}>
-            <Entypo name="menu" size={20} color="white" />
-          </Pressable>
-          <Text className="text-typography-800 text-base flex-1 mr-3">
-            {item.name} {`(${item.category})`}
+  const reorderArray = <T,>(arr: T[], from: number, to: number) => {
+    const next = [...arr];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
+  };
+
+  const Row = useCallback(
+    ({ item }: { item: TemplateExercise }) => {
+      const drag = useReorderableDrag();
+      const isActive = useIsActive();
+      return (
+        <HStack
+          className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}
+          style={{ marginHorizontal: 8 }}
+        >
+          <HStack className="items-center gap-3 flex-1">
+            <Pressable onLongPress={drag} onPressIn={drag} delayLongPress={120} hitSlop={10}>
+              <Entypo name="menu" size={20} color={isActive ? '#ccc' : 'white'} />
+            </Pressable>
+            <Text className="text-typography-800 text-base flex-1 mr-3">
+              {item.name} {`(${item.category})`}
+            </Text>
+          </HStack>
+          <HStack className="items-center gap-2">
+            <Text className="text-typography-700">sets:</Text>
+            <TextInput
+              className="text-typography-800 border border-outline-200 rounded px-2 py-1 w-16 text-center"
+              keyboardType="numeric"
+              placeholderTextColor="rgba(255,255,255,0.6)"
+              value={item.sets}
+              onChangeText={(num) => {
+                if (!/^\d*$/.test(num)) return;
+                setExercises((prev) =>
+                  prev.map((ex) => (ex.uiId === item.uiId ? { ...ex, sets: num } : ex))
+                );
+              }}
+            />
+            <Pressable
+              onPress={() => setExercises((prev) => prev.filter((ex) => ex.uiId !== item.uiId))}
+              hitSlop={10}
+              className="ml-2"
+            >
+              <Entypo name="trash" size={18} color="rgba(220, 38, 38, 0.8)" />
+            </Pressable>
+          </HStack>
+        </HStack>
+      );
+    },
+    [theme, setExercises]
+  );
+
+  const Header = (
+    <VStack space="md" className="px-4 pt-4">
+      <HStack className="items-center justify-between">
+        <Pressable onPress={() => router.replace('/(tabs)/startWorkout'  )} className="w-12 items-start">
+          <FontAwesome5 name="chevron-left" size={22} color="white" />
+        </Pressable>
+        <Box className="flex-1 items-center">
+          <Text size="3xl" className="text-typography-800 text-center">
+            {folderName && folderName !== 'None' ? `Folder: ${folderName}` : 'Template Editor'}
           </Text>
-        </HStack>
-        <HStack className="items-center gap-2">
-          <Text className="text-typography-700">sets:</Text>
-          <TextInput
-            className="text-typography-800 border border-outline-200 rounded px-2 py-1 w-16 text-center"
-            keyboardType="numeric"
-            placeholderTextColor="rgba(255,255,255,0.6)"
-            value={item.sets}
-            onChangeText={(num) => {
-              if (!/^\d*$/.test(num)) return;
-              setExercises((prev) =>
-                prev.map((ex) => (ex.uiId === item.uiId ? { ...ex, sets: num } : ex))
-              );
-            }}
-          />
-          <Pressable
-            onPress={() => setExercises((prev) => prev.filter((ex) => ex.uiId !== item.uiId))}
-            hitSlop={10}
-            className="ml-2"
-          >
-            <Entypo name="trash" size={18} color="rgba(220, 38, 38, 0.8)" />
-          </Pressable>
-        </HStack>
+        </Box>
+        <Box className="w-12" />
       </HStack>
-    ),
-    [theme]
+      <Box className="w-full">
+        <TextInput
+          className={`text-typography-800 text-3xl border rounded py-2 border-${nameError ? 'error-700' : `${theme}-background`
+            }`}
+          placeholder="Template Name..."
+          placeholderTextColor="rgba(255,255,255,0.6)"
+          value={templateName}
+          onChangeText={(text) => {
+            setTemplateName(text);
+            if (nameError && text.trim()) setNameError(false);
+          }}
+        />
+      </Box>
+    </VStack>
+  );
+
+  const Footer = (
+    <VStack space="sm" className="px-4 pb-4 mt-2">
+      <Button
+        className={`bg-${theme}-button`}
+        action="secondary"
+        onPress={() =>
+          router.push({
+            pathname: '/(template)/AddExersiceDatabaseProxy',
+            params: { mode: 'template', folderName: folderName ?? '', folderId: '' },
+          })
+        }
+      >
+        <ButtonText className="text-primary-800">Add Exercises</ButtonText>
+      </Button>
+      <Button className={`bg-${theme}-accent`} onPress={handleSaveTemplate} isDisabled={saving}>
+        <ButtonText className="text-typography-800">Save Template</ButtonText>
+      </Button>
+      <Button
+        variant="link" action="negative" onPress={() => router.replace('/(tabs)/startWorkout')}>
+        <ButtonText className="text-error-700">Discard Template</ButtonText>
+      </Button>
+    </VStack>
   );
 
   return (
     <SafeAreaView className={`flex-1 bg-${theme}-background`}>
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-        className="flex-1"
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
       >
-        <VStack space="md" className="flex-1 px-4 py-4">
-          <HStack className="items-center justify-between">
-            <Pressable onPress={() => router.replace('/(tabs)/startWorkout'  )} className="w-12 items-start">
-              <FontAwesome5 name="chevron-left" size={22} color="white" />
-            </Pressable>
-            <Box className="flex-1 items-center">
-              <Text size="3xl" className="text-typography-800 text-center">
-                {folderName && folderName !== 'None' ? `Folder: ${folderName}` : 'Template Editor'}
-              </Text>
-            </Box>
-            <Box className="w-12" />
-          </HStack>
-          <Box className="w-full">
-            <TextInput
-              className={`text-typography-800 text-3xl border rounded py-2 border-${nameError ? 'error-700' : `${theme}-background`
-                }`}
-              placeholder="Template Name..."
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              value={templateName}
-              onChangeText={(text) => {
-                setTemplateName(text);
-                if (nameError && text.trim()) setNameError(false);
-              }}
-            />
-          </Box>
-
-          {exercises.length > 0 && <DraggableFlatList
-            scrollEnabled={exercises.length > 8}
-            data={exercises}
-            keyExtractor={(item: TemplateExercise) => item.uiId}
-            renderItem={renderItem}
-            onDragEnd={({ data }: { data: TemplateExercise[] }) => setExercises(data)}
-            activationDistance={0}
-            keyboardShouldPersistTaps="always"
-            contentContainerStyle={{ gap: 10, paddingBottom: 8 }}
-          />
-          }
-          <VStack space="sm" className="mt-2">
-            <Button
-              className={`bg-${theme}-button`}
-              action="secondary"
-              onPress={() =>
-                router.push({
-                  pathname: '/(template)/AddExersiceDatabaseProxy',
-                  params: { mode: 'template', folderName: folderName ?? '', folderId: '' },
-                })
-              }
-            >
-              <ButtonText className="text-primary-800">Add Exercises</ButtonText>
-            </Button>
-            <Button className={`bg-${theme}-accent`} onPress={handleSaveTemplate} isDisabled={saving}>
-              <ButtonText className="text-typography-800">Save Template</ButtonText>
-            </Button>
-            <Button
-              variant="link" action="negative" onPress={() => router.replace('/(tabs)/startWorkout')}>
-              <ButtonText className="text-error-700">Discard Template</ButtonText>
-            </Button>
-          </VStack>
-        </VStack>
-      </ScrollView>
+        <ReorderableList
+          style={{ flex: 1 }}
+          data={exercises}
+          keyExtractor={(item: TemplateExercise) => item.uiId}
+          renderItem={({ item }: { item: TemplateExercise }) => <Row item={item} />}
+          onReorder={({ from, to }) => {
+            const next = reorderArray(exercises, from, to);
+            setExercises(next);
+          }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          contentContainerStyle={{ gap: 10, paddingBottom: 0 }}
+          ListHeaderComponent={Header}
+          ListFooterComponent={Footer}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

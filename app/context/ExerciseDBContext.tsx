@@ -5,6 +5,21 @@ import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 
+// Allow non-component code to trigger a refetch of exercises
+let exerciseRefetcher: (() => Promise<void>) | null = null;
+export const registerExerciseRefetcher = (fn: () => Promise<void>) => {
+  exerciseRefetcher = fn;
+};
+export const triggerExerciseRefetch = async () => {
+  if (exerciseRefetcher) {
+    try {
+      await exerciseRefetcher();
+    } catch (error) {
+      console.error('Error triggering exercise refetch:', error);
+    }
+  }
+};
+
 type ExerciseSectionType = {
   title: string;
   data: any[];
@@ -129,6 +144,8 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       setLoading(false);
     }
   };
+  // Make fetchExercises available outside of React via triggerExerciseRefetch
+  registerExerciseRefetcher(fetchExercises);
 
   // Load exercises when the user is authenticated. Show cached immediately (SWR).
   useEffect(() => {

@@ -31,6 +31,7 @@ export type ExerciseEntity = {
   trackingMethods: TrackingMethod[];
   setIds: string[];      // ordered list of set IDs
   previousSets?: PreviousSetData[]; // Previous session data for pre-population
+  order?: number;        // explicit order for rendering/persistence
 };
 
 export type PreviousSetData = {
@@ -104,6 +105,14 @@ type Action =
 
 const STORAGE_KEY = 'workoutState';
 
+const normalizeExerciseOrder = (exercises: ExerciseEntity[]): ExerciseEntity[] =>
+  exercises.map((ex, idx) => ({ ...ex, order: idx + 1 }));
+
+const sortAndNormalizePersistedOrder = (exercises: ExerciseEntity[]): ExerciseEntity[] =>
+  [...exercises]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((ex, idx) => ({ ...ex, order: idx + 1 }));
+
 const initialState: WorkoutState = {
   isActive: false,
   isMinimized: false,
@@ -141,14 +150,23 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       return { ...state, isMinimized: false };
 
     case 'HYDRATE':
-      return { ...action.payload, isReorderingExercises: action.payload?.isReorderingExercises ?? false };
+      return {
+        ...action.payload,
+        isReorderingExercises: action.payload?.isReorderingExercises ?? false,
+        workout: action.payload?.workout
+          ? {
+              ...action.payload.workout,
+              exercises: sortAndNormalizePersistedOrder(action.payload.workout.exercises ?? []),
+            }
+          : action.payload.workout,
+      };
 
     case 'ADD_EXERCISES': {
       if (!state.workout) return state;
       const payload = action.payload.map(e => ({ instanceId: Crypto.randomUUID(), ...e, setIds: [] as string[] }));
       return {
         ...state,
-        workout: { ...state.workout, exercises: [...state.workout.exercises, ...payload] },
+        workout: { ...state.workout, exercises: normalizeExerciseOrder([...state.workout.exercises, ...payload]) },
       };
     }
 
@@ -188,7 +206,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
         ...state,
         workout: {
           ...state.workout,
-          exercises: [...state.workout.exercises, ...newExercises],
+          exercises: normalizeExerciseOrder([...state.workout.exercises, ...newExercises]),
           setsById,
         },
       };
@@ -215,14 +233,16 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
         delete setsById[id];
       });
 
+      const remainingExercises = state.workout.exercises.filter(e => e.instanceId !== action.exerciseInstanceId);
+
       return {
         ...state,
         workout: {
           ...state.workout,
-          exercises: state.workout.exercises.filter(e => e.instanceId !== action.exerciseInstanceId),
+          exercises: normalizeExerciseOrder(remainingExercises),
           setsById,
         },
-        isReorderingExercises: state.workout.exercises.length - 1 > 0 ? state.isReorderingExercises : false,
+        isReorderingExercises: remainingExercises.length > 0 ? state.isReorderingExercises : false,
       };
     }
 
@@ -246,7 +266,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
 
       const before = state.workout.exercises.slice(0, exIdx);
       const after = state.workout.exercises.slice(exIdx + 1);
-      const newExercises = [...before, ...replacementExercises, ...after];
+      const newExercises = normalizeExerciseOrder([...before, ...replacementExercises, ...after]);
 
       return {
         ...state,
@@ -369,7 +389,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
 
       return {
         ...state,
-        workout: { ...state.workout, exercises: [...reordered, ...missing] },
+        workout: { ...state.workout, exercises: normalizeExerciseOrder([...reordered, ...missing]) },
       };
     }
 

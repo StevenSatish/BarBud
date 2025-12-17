@@ -3,10 +3,9 @@ import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Link, useRootNavigationState, router } from 'expo-router';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import ReorderableList, { useReorderableDrag, useIsActive } from 'react-native-reorderable-list';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Entypo from '@expo/vector-icons/Entypo';
-
 import { useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
 import useTemplateFolders from '../context/TemplateFoldersContext';
@@ -49,6 +48,17 @@ export default function WorkoutScreen() {
 
   const currentWorkout = workoutState.workout;
   const startTimeISO = currentWorkout?.startTimeISO;
+  const orderedExercises = currentWorkout
+    ? [...currentWorkout.exercises]
+        .map((ex, idx) => ({ ex, idx }))
+        .sort((a, b) => {
+          const ao = a.ex.order ?? a.idx + 1;
+          const bo = b.ex.order ?? b.idx + 1;
+          if (ao !== bo) return ao - bo;
+          return a.idx - b.idx;
+        })
+        .map(({ ex }) => ex)
+    : [];
 
   // Always compute warnings and run effects before any early returns
   const warnings = endWorkoutWarnings();
@@ -99,19 +109,32 @@ export default function WorkoutScreen() {
     );
   }
 
+  const reorderArray = <T,>(arr: T[], from: number, to: number) => {
+    const next = [...arr];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
+  };
+
   if (workoutState.isReorderingExercises && currentWorkout) {
-    const renderItem = ({ item, drag }: RenderItemParams<typeof currentWorkout.exercises[number]>) => (
-      <Pressable onLongPress={drag} onPressIn={drag} hitSlop={10}>
-        <HStack className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}>
-          <HStack className="items-center gap-3 flex-1">
-            <Entypo name="menu" size={20} color="white" />
-            <Text className="text-typography-800 text-base flex-1 mr-3">
-              {item.name} {item.category ? `(${item.category})` : ''}
-            </Text>
+    const Row = ({ item }: { item: (typeof orderedExercises)[number] }) => {
+      const drag = useReorderableDrag();
+      const isActive = useIsActive();
+      return (
+        <Pressable onLongPress={drag} onPressIn={drag} hitSlop={10}>
+          <HStack className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}>
+            <HStack className="items-center gap-3 flex-1">
+              <Entypo name="menu" size={20} color={isActive ? '#ccc' : 'white'} />
+              <Text className="text-typography-800 text-base flex-1 mr-3">
+                {item.name} {item.category ? `(${item.category})` : ''}
+              </Text>
+            </HStack>
           </HStack>
-        </HStack>
-      </Pressable>
-    );
+        </Pressable>
+      );
+    };
+
+    const renderItem = ({ item }: { item: (typeof orderedExercises)[number] }) => <Row item={item} />;
 
     return (
       <SafeAreaView className={`bg-${theme}-background flex-1`}>
@@ -119,12 +142,15 @@ export default function WorkoutScreen() {
           <Heading size="xl" className="text-typography-800 text-center">
             Reorder Exercises
           </Heading>
-          <DraggableFlatList
-            data={currentWorkout.exercises}
+          <ReorderableList
+            style={{ flex: 1 }}
+            data={orderedExercises}
             keyExtractor={(item) => item.instanceId}
             renderItem={renderItem}
-            onDragEnd={({ data }) => reorderExercises(data.map((ex) => ex.instanceId))}
-            activationDistance={0}
+            onReorder={({ from, to }) => {
+              const next = reorderArray(orderedExercises, from, to);
+              reorderExercises(next.map((ex) => ex.instanceId));
+            }}
             keyboardShouldPersistTaps="always"
             contentContainerStyle={{ gap: 10, paddingBottom: 8 }}
           />
@@ -149,7 +175,7 @@ export default function WorkoutScreen() {
           onClose={() => setShowEndWorkoutAlert(false)}
         >
           <AlertDialogBackdrop />
-          <AlertDialogContent className="bg-background-0 border-outline-100">
+          <AlertDialogContent className={`bg-${theme}-background border-${theme}-steelGray`}>
             <AlertDialogHeader>
               <Heading size="lg" className="text-typography-800 font-semibold">
                 Finish Workout?
@@ -247,8 +273,8 @@ export default function WorkoutScreen() {
           keyboardDismissMode="none"
         >
           <VStack space="md" className="w-full px-2 pb-4">
-              {currentWorkout.exercises.length > 0 &&
-                currentWorkout.exercises.map((exercise) => (
+              {orderedExercises.length > 0 &&
+                orderedExercises.map((exercise) => (
                   <Exercise
                     key={exercise.instanceId}
                     exercise={exercise}
