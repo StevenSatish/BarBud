@@ -41,6 +41,19 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
+          name="chat"
+          listeners={{
+            focus: () => AsyncStorage.setItem('lastPage', 'chat'),
+            tabPress: () => AsyncStorage.setItem('lastPage', 'chat'),
+          }}
+          options={{
+            title: 'Chat',
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="chatbox-ellipses-sharp" size={28} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="startWorkout"
           listeners={{
             focus: () => AsyncStorage.setItem('lastPage', 'startWorkout'),
