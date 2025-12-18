@@ -156,7 +156,7 @@ const writeSessionAndExercises = async (
       if (ao !== bo) return ao - bo;
       return a.idx - b.idx;
     })
-    .map(({ ex }) => ex);
+    .map(({ ex }, idx) => ({ ...ex, order: idx + 1 }));
 
   orderedExercises.forEach((ex, orderIndex) => {
     touchedExerciseIds.add(ex.exerciseId);

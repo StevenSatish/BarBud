@@ -316,7 +316,7 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
             trigger={({ ...triggerProps }) => {
               return (
                 <Button {...triggerProps} className={`rounded-full ${selectedCategory ? `bg-${theme}-light` : 'bg-background-800'}`}>
-                  <ButtonText >{selectedCategory || "Any Category"}</ButtonText>
+                  <ButtonText className={`text-typography-0`}>{selectedCategory || "Any Category"}</ButtonText>
                 </Button>
               )
             }}

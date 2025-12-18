@@ -534,7 +534,10 @@ export default function ExerciseChartsTab({
                 </Text>
               )}
 
-              <View style={{ height: 260 }} onLayout={onChartLayout}>
+              <View
+                style={{ height: 260, width: '93%', alignSelf: 'center' }}
+                onLayout={onChartLayout}
+              >
                 {chartData.length > 0 && xDomain ? (
                   <View style={{ flex: 1, flexDirection: 'row' }}>
                     {/* Y-axis labels */}
