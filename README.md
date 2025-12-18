@@ -13,8 +13,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    - Go to [Firebase](https://console.firebase.google.com)
    - Create a project
    - Select Web in the "Add an app to get started" selection
-   - Register App, duplicate FirebaseConfigExample.ts and copy the firebaseConfig into your new FirebaseConfigExample copy.ts
-   - Rename FirebaseConfigExample copy.ts to FirebaseConfig.ts
+   - Register App, fill out your .sample_env file (you also have to set up an OpenAI API key if you want to work on that feature), and rename it to just ".env"
 
 3. Start the app
 
