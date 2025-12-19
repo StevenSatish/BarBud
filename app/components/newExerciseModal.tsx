@@ -96,6 +96,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
 
   const [trackingMethod, setTrackingMethod] = useState<string>('');
   const [trackingMethodError, setTrackingMethodError] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const MUSCLE_GROUPS = [
     "Abs", "Back", "Biceps", "Chest", "Shoulders", "Quads", 
@@ -139,14 +140,22 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
       setExerciseNameError(false);
     }
     if (!hasErrors) {
-      const result = await createExercise(trimmedName, category, muscleGroup, secondaryMuscleGroups, [trackingMethod]);
-      if (result.success) {
-        exerciseNameDraftRef.current = '';
-        setExerciseNameInputKey((k) => k + 1);
-        onClose();
-      } else {
-        setError(result.error || "Failed to create exercise");
-      }
+      setShowConfirm(true);
+    }
+  };
+
+  const handleConfirmCreate = async () => {
+    const trimmedName = exerciseNameDraftRef.current.trim();
+    const result = await createExercise(trimmedName, category, muscleGroup, secondaryMuscleGroups, [trackingMethod]);
+    if (result.success) {
+      exerciseNameDraftRef.current = '';
+      setExerciseNameInputKey((k) => k + 1);
+      setShowSecondaryMuscles(false);
+      setShowConfirm(false);
+      onClose();
+    } else {
+      setShowConfirm(false);
+      setError(result.error || "Failed to create exercise");
     }
   };
 
@@ -355,6 +364,39 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
           </ActionsheetItem>
         </ActionsheetContent>
       </Actionsheet>
+
+      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} className={"z-1000"}>
+        <ModalBackdrop />
+        <ModalContent className={`bg-${theme}-background border-${theme}-lightGray`}>
+          <ModalHeader>
+            <Text className="text-xl font-bold text-typography-800">Confirm Create Exercise</Text>
+            <ModalCloseButton onPress={() => setShowConfirm(false)}>
+              <Text className="text-typography-500">✕</Text>
+            </ModalCloseButton>
+          </ModalHeader>
+          <ModalBody>
+            <Text className="text-typography-800">
+              Create {exerciseNameDraftRef.current.trim() || 'this exercise'} ({category || 'Category'})?
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button 
+              variant="outline" 
+              action="secondary"
+              onPress={() => setShowConfirm(false)}
+              className="mr-3"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button 
+              action="primary" 
+              onPress={handleConfirmCreate}
+            >
+              <ButtonText>Confirm</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
     </Modal>
   );
