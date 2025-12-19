@@ -56,7 +56,7 @@ export default function SessionCard({ session }: SessionCardProps) {
 					<View>
 						{session.exerciseCounts.map((ex, idx) => (
 							<Text key={`${ex.exerciseId}-${idx}`} className="text-typography-700">
-								{ex.completedSetCount} x {ex.name}
+								{`${ex.completedSetCount} x ${ex.name} (${ex.category})`}
 							</Text>
 						))}
 					</View>

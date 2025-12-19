@@ -128,7 +128,7 @@ export default function HistoryCalendarView() {
 			const dotCount = Math.min(count, 4);
 			const dots = Array.from({ length: dotCount }).map((_, i) => ({
 				key: `${dayKey}-s${i + 1}`,
-				color: colors.accent,
+				color: colors.light,
 				selectedDotColor: colors.light,
 			}));
 			next[dayKey] = { dots };
@@ -224,7 +224,7 @@ export default function HistoryCalendarView() {
 						todayTextColor: colors.accent,
 					arrowColor: 'white',
 					monthTextColor: 'white',
-						dotColor: colors.accent,
+						dotColor: colors.light,
 						selectedDotColor: colors.light,
 
 						textDayFontWeight: '500',
@@ -253,9 +253,12 @@ export default function HistoryCalendarView() {
 							<Text className={`text-${theme}-steelGray`}>No sessions for this day.</Text>
 						</View>
 					) : (
-						selectedDaySessions.map((s) => (
-							<SessionCard key={s.id} session={s} />
-						))
+						selectedDaySessions
+							.slice()
+							.sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+							.map((s) => (
+								<SessionCard key={s.id} session={s} />
+							))
 					)}
 				</View>
 			)}

@@ -11,9 +11,6 @@
     "test": "jest --watchAll",
     "lint": "expo lint"
   },
-  "jest": {
-    "preset": "jest-expo"
-  },
   "dependencies": {
     "@expo/html-elements": "^0.4.2",
     "@expo/metro-runtime": "~6.1.2",

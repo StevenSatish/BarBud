@@ -143,7 +143,7 @@ export const writeSessionAndCollectInstances = async (
     completed.forEach((s: SetEntity) => {
       const w = (s.trackingData.weight ?? 0) as number;
       const r = (s.trackingData.reps ?? 0) as number;
-      if (Number.isFinite(w) && Number.isFinite(r) && r > 0) {
+      if (Number.isFinite(w) && Number.isFinite(r)) {
         topWeight = Math.max(topWeight, w);
         volume += w * r;
         completedRepCount += r;
@@ -318,6 +318,8 @@ export default async function writeExerciseMetricsWeightReps(
   if (lastTopWeight > (prev.maxTopWeight ?? 0)) {
     maxTopWeight = lastTopWeight;
     maxTopRepsAtTopWeight = lastTopRepsAtTopWeight || 0;
+  } else if (lastTopWeight === prev.maxTopWeight) {
+    maxTopRepsAtTopWeight = Math.max(prev.maxTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight);
   }
   if (maxTopWeight > 0) allTimeData.maxTopWeight = maxTopWeight;
   if (maxTopRepsAtTopWeight > 0) allTimeData.maxTopRepsAtTopWeight = maxTopRepsAtTopWeight;

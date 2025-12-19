@@ -25,7 +25,7 @@ export default async function calculateProgressionsForWorkout(
 	const items: ProgressionItem[] = [];
 
 	const formatIncrease = (prev: number, next: number): string => {
-		if (!Number.isFinite(prev) || prev <= 0) return '+New';
+		if (!Number.isFinite(prev) || prev <= 0) return `${next}lbs`;
 		const pct = ((next - prev) / prev) * 100;
 		return pct > 0 ? `+${pct.toFixed(1)}%` : '+0%';
 	};
@@ -105,20 +105,28 @@ export default async function calculateProgressionsForWorkout(
 		// Determine prioritized PR per exercise
 		let chosen: ProgressionItem | null = null;
 
+		const prevAllTopWeight = prevAll.maxTopWeight ?? 0;
+		const prevLastTopWeight = prevLast.lastTopWeight ?? 0;
+
 		if (hasWeight && hasReps) {
 			// AllTime priorities
-            if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevAll.maxTopWeight ?? 0)) {
+            if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevAllTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
-                    change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
+                    change: formatIncrease(prevAllTopWeight, lastTopWeight),
                     kind: 'allTime',
                     exerciseId: ex.exerciseId,
                     category: 'standard',
                 };
             }
-			if (!chosen && lastTopWeight === (prevAll.maxTopWeight ?? 0) && Number.isFinite(lastTopRepsAtTopWeight) && lastTopRepsAtTopWeight > (prevAll.maxTopRepsAtTopWeight ?? 0)) {
+			if (
+				!chosen &&
+				lastTopWeight === prevAllTopWeight &&
+				Number.isFinite(lastTopRepsAtTopWeight) &&
+				lastTopRepsAtTopWeight > (prevAll.maxTopRepsAtTopWeight ?? 0)
+			) {
                 chosen = {
                     exerciseName: ex.name,
                     changeType: 'Top Set',
@@ -130,12 +138,12 @@ export default async function calculateProgressionsForWorkout(
                 };
 			}
 			// lastSession priorities
-			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevLast.lastTopWeight ?? 0)) {
+			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevLastTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
-                    change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
+                    change: formatIncrease(prevLastTopWeight, lastTopWeight),
                     kind: 'lastSession',
                     exerciseId: ex.exerciseId,
                     category: 'standard',
@@ -144,7 +152,7 @@ export default async function calculateProgressionsForWorkout(
 			// Only consider Top Set Reps if top weight is unchanged from last session
 			if (
 				!chosen &&
-				lastTopWeight === (prevLast.lastTopWeight ?? 0) &&
+				lastTopWeight === prevLastTopWeight &&
 				Number.isFinite(lastTopRepsAtTopWeight) &&
 				lastTopRepsAtTopWeight > (prevLast.lastTopRepsAtTopWeight ?? 0)
 			) {
@@ -184,18 +192,23 @@ export default async function calculateProgressionsForWorkout(
 			}
 		} else if (hasWeight && hasTime) {
 			// AllTime priorities
-			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevAll.maxTopWeight ?? 0)) {
+			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevAllTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
-                    change: formatIncrease(prevAll.maxTopWeight ?? 0, lastTopWeight),
+                    change: formatIncrease(prevAllTopWeight, lastTopWeight),
                     kind: 'allTime',
                     exerciseId: ex.exerciseId,
                     category: 'standard',
                 };
 			}
-			if (!chosen && lastTopWeight === (prevAll.maxTopWeight ?? 0) && Number.isFinite(lastTopTimeAtTopWeight) && lastTopTimeAtTopWeight > (prevAll.maxTopTimeAtTopWeight ?? 0)) {
+			if (
+				!chosen &&
+				lastTopWeight === prevAllTopWeight &&
+				Number.isFinite(lastTopTimeAtTopWeight) &&
+				lastTopTimeAtTopWeight > (prevAll.maxTopTimeAtTopWeight ?? 0)
+			) {
                 chosen = {
                     exerciseName: ex.name,
                     changeType: 'Top Set',
@@ -207,12 +220,12 @@ export default async function calculateProgressionsForWorkout(
                 };
 			}
 			// lastSession priorities
-			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > (prevLast.lastTopWeight ?? 0)) {
+			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevLastTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
-                    change: formatIncrease(prevLast.lastTopWeight ?? 0, lastTopWeight),
+                    change: formatIncrease(prevLastTopWeight, lastTopWeight),
                     kind: 'lastSession',
                     exerciseId: ex.exerciseId,
                     category: 'standard',
@@ -221,7 +234,7 @@ export default async function calculateProgressionsForWorkout(
 			// Only consider Top Set Time if top weight is unchanged from last session
 			if (
 				!chosen &&
-				lastTopWeight === (prevLast.lastTopWeight ?? 0) &&
+				lastTopWeight === prevLastTopWeight &&
 				Number.isFinite(lastTopTimeAtTopWeight) &&
 				lastTopTimeAtTopWeight > (prevLast.lastTopTimeAtTopWeight ?? 0)
 			) {

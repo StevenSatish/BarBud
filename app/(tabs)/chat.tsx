@@ -126,8 +126,6 @@ templates for you that'll appear in the 'Workout' tab.`,
       },
     );
 
-    console.log('Template written to Firestore:', templateName);
-
     try {
         const latestFolders = await fetchFolders();
         await fetchTemplates(latestFolders);
@@ -202,9 +200,6 @@ then reply with exactly one message starting with "Template:" followed by strict
         stream: false,
       });
 
-      // Debug: log the full completion in case content is empty
-      console.log('OpenAI completion response:', safeStringify(completion));
-
       const reply = completion?.choices?.[0]?.message?.content?.trim() || '';
       const sentinel = 'Creating template, supply exercises';
 
@@ -247,13 +242,9 @@ then reply with exactly one message starting with "Template:" followed by strict
           stream: false,
         });
 
-        console.log('OpenAI followup completion:', safeStringify(followup));
-
         const templateReply =
           followup?.choices?.[0]?.message?.content?.trim() ||
           'Sorry, I only like to talk about working out.';
-
-        console.log('Template reply:', templateReply);
 
         if (templateReply.trim() === 'Creating template, supply exercises') {
           setMessages((prev) => [
