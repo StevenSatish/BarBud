@@ -35,14 +35,13 @@ templates for you that'll appear in the 'Workout' tab.`,
   const [templateWaiting, setTemplateWaiting] = useState(false);
   const { fetchFolders, fetchTemplates } = useTemplateFolders();
 
-  // Prefer config-injected key; fall back to env (web/dev)
   const apiKey =
-    process.env.EXPO_PUBLIC_OPENAI_API_KEY ||
-    (Constants.expoConfig?.extra as any)?.openaiApiKey ||
-    (Constants as any).manifest2?.extra?.openaiApiKey ||
-    (Constants as any).manifest?.extra?.openaiApiKey ||
-    process.env.OPENAI_API_KEY ||
-    '';
+  (Constants.expoConfig?.extra as any)?.openaiApiKey ||
+  (Constants as any).manifest2?.extra?.openaiApiKey ||
+  (Constants as any).manifest?.extra?.openaiApiKey ||
+  process.env.EXPO_PUBLIC_OPENAI_API_KEY ||
+  process.env.OPENAI_API_KEY ||
+  '';
 
   const safeStringify = (value: unknown) => {
     try {
