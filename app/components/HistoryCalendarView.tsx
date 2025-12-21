@@ -133,7 +133,8 @@ export default function HistoryCalendarView() {
 			}));
 			next[dayKey] = { dots };
 		});
-		setMarkedDates(next);
+		// Merge with existing marked dates instead of replacing
+		setMarkedDates(prev => ({ ...prev, ...next }));
 	}
 
 	function prefetchAdjacentMonths(uid: string, monthKey: string): void {
@@ -168,20 +169,40 @@ export default function HistoryCalendarView() {
 		setSelectedDayKey(d.dateString);
 	}
 
+	// Recolor dots based on current theme colors
+	const recoloredMarkedDates = useMemo(() => {
+		const recolored: Record<string, any> = {};
+		Object.entries(markedDates).forEach(([dayKey, marking]) => {
+			if (marking.dots && Array.isArray(marking.dots)) {
+				recolored[dayKey] = {
+					...marking,
+					dots: marking.dots.map((dot: any) => ({
+						...dot,
+						color: colors.light,
+						selectedDotColor: colors.light,
+					})),
+				};
+			} else {
+				recolored[dayKey] = marking;
+			}
+		});
+		return recolored;
+	}, [markedDates, colors.light]);
+
 	// Merge selection into marked dates (so the selected day is highlighted)
 	const mergedMarkedDates = useMemo(() => {
-		if (!selectedDayKey) return markedDates;
+		if (!selectedDayKey) return recoloredMarkedDates;
 		return {
-			...markedDates,
+			...recoloredMarkedDates,
 			[selectedDayKey]: {
-				...(markedDates[selectedDayKey] || {}),
+				...(recoloredMarkedDates[selectedDayKey] || {}),
 				selected: true,
 				selectedColor: colors.accent,
 				selectedTextColor: colors.background,
 				selectedDotColor: colors.light,
 			},
 		};
-	}, [markedDates, selectedDayKey, colors.accent, colors.background]);
+	}, [recoloredMarkedDates, selectedDayKey, colors.accent, colors.background, colors.light]);
 
 	const isSelectedMonthLoaded = useMemo(() => {
 		if (!selectedDayKey) return false;
