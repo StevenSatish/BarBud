@@ -5,6 +5,7 @@ import { initializeAuth, getReactNativePersistence, browserSessionPersistence } 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 import Constants from 'expo-constants';
+import { getFunctions } from "firebase/functions";
 
 const extraConfig =
   (Constants.expoConfig as any)?.extra?.firebase ??
@@ -37,3 +38,4 @@ const persistence =
 
 export const FIREBASE_AUTH = initializeAuth(FIREBASE_APP, { persistence });
 export const FIREBASE_DB = getFirestore(FIREBASE_APP);
+export const FIREBASE_FUNCTIONS = getFunctions(FIREBASE_APP);

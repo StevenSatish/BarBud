@@ -46,7 +46,7 @@ export default function Signup() {
             setIsInvalidConfirmPass(true);
             valid = false;
         }
-        if (!await checkUsername()) {
+        if (!username.trim()) {
             setIsInvalidUsername(true);
             valid = false;
         }
@@ -61,15 +61,6 @@ export default function Signup() {
         if (valid) {
             signUp();
         }
-    };
-
-    const checkUsername = async () => {
-        const usersRef = collection(FIREBASE_DB, 'users');
-        const querySnapshot = await getDocs(query(usersRef, where('username', '==', username)));
-        if (querySnapshot.size > 0) {
-            return false;
-        }
-        return true;
     };
 
     const signUp = async () => {
@@ -139,7 +130,7 @@ export default function Signup() {
                 <Heading size="xl" className="text-typography-700 font-bold">Register</Heading>
                 <FormControl isInvalid={isInvalidUsername}>
                     <FormControlLabel>
-                        <FormControlLabelText className="text-typography-700 font-medium">Username</FormControlLabelText>
+                        <FormControlLabelText className="text-typography-700 font-medium">Display Name</FormControlLabelText>
                     </FormControlLabel>
                     <Input className="my-1 border border-outline-300 bg-background-100" size={"md"}>
                         <InputField
@@ -153,7 +144,7 @@ export default function Signup() {
                     <FormControlError>
                         <FormControlErrorIcon as={AlertCircleIcon} />
                         <FormControlErrorText className="text-error-500">
-                            Sorry, username is not available
+                            Gotta put something in there
                         </FormControlErrorText>
                     </FormControlError>
                 </FormControl>
@@ -204,7 +195,7 @@ export default function Signup() {
                     <FormControlError>
                         <FormControlErrorIcon as={AlertCircleIcon} />
                         <FormControlErrorText>
-                            That's not 8 characters, bozo
+                            That's not 8 characters man
                         </FormControlErrorText>
                     </FormControlError>
                 </FormControl>
