@@ -1,11 +1,12 @@
 import React, { memo, useState } from 'react'
+import { Pressable } from 'react-native'
 import { Box } from '@/components/ui/box'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
 import {
-    Checkbox,
-    CheckboxIndicator,
-    CheckboxIcon,
+  Checkbox,
+  CheckboxIndicator,
+  CheckboxIcon,
 } from "@/components/ui/checkbox"
 import { CheckIcon } from "@/components/ui/icon"
 import { Input, InputField } from "@/components/ui/input"
@@ -32,38 +33,38 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
       ...set.trackingData,
     };
 
-    if (trackingData.weight !== undefined) newTrackingData.weight = Number(trackingData.weight) || null;
-    if (trackingData.reps !== undefined) newTrackingData.reps = Number(trackingData.reps) || null;
-    if (trackingData.time !== undefined) newTrackingData.time = Number(trackingData.time) || null;
+    if (trackingData.weight !== undefined) newTrackingData.weight = trackingData.weight || null;
+    if (trackingData.reps !== undefined) newTrackingData.reps = trackingData.reps || null;
+    if (trackingData.time !== undefined) newTrackingData.time = trackingData.time || null;
 
     setSetInvalid({});
     updateSet(instanceId, setId, newTrackingData);
+    updateSetCompleted(instanceId, setId, false);
   };
 
   const handleInputChange = (method: string, value: string) => {
-    const trimmed = value.replace(',', '.').trim();
-    const numericValue =
-      trimmed === ''
-        ? null
-        : (() => {
-            const parsed = parseFloat(trimmed);
-            return Number.isFinite(parsed) ? parsed : null;
-          })();
-
     const newTrackingData = {
       ...set.trackingData,
-      [method]: numericValue,
+      [method]: value || null
     };
     updateSet(instanceId, setId, newTrackingData);
-    
+
+    // Clear invalid state for this field if it was previously invalid
+    if (setInvalid[method]) {
+      setSetInvalid((prev) => {
+        const newInvalid = { ...prev };
+        delete newInvalid[method];
+        return newInvalid;
+      });
+    }
+
     // Check if any tracking method is now empty and unselect checkbox if so
     const hasEmptyTracking = trackingMethods.some((trackingMethod: string) => {
-      const trackingValue =
-        trackingMethod === method ? numericValue : set.trackingData[trackingMethod];
-      return !trackingValue;
+      const trackingValue = trackingMethod === method ? (value || null) : set.trackingData[trackingMethod];
+      // Check if value is null, undefined, empty string, or just whitespace
+      return !trackingValue || (typeof trackingValue === 'string' && trackingValue.trim() === '');
     });
-    
-    // If any tracking method is empty and the set is currently completed, mark it as not completed
+
     if (hasEmptyTracking && set.completed) {
       updateSetCompleted(instanceId, setId, false);
     }
@@ -76,32 +77,38 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
   };
 
   const toggleCompleted = () => {
-    if (!set.completed) {
+    if (set.completed) {
+      updateSetCompleted(instanceId, setId, false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else {
       // Check if any tracking method is empty
       const newInvalidState: { [key: string]: boolean } = {};
       let hasInvalid = false;
 
       trackingMethods.forEach((method: string) => {
-        if (!set.trackingData[method]) {
+        const value = set.trackingData[method];
+        // Check if value is null, undefined, empty string, or just whitespace
+        // Note: 0 is a valid value, so we explicitly check for null/undefined/empty strings
+        const isEmpty = value === null || 
+                       value === undefined || 
+                       (typeof value === 'string' && value.trim() === '');
+        
+        if (isEmpty) {
           newInvalidState[method] = true;
           hasInvalid = true;
         }
       });
-
+      
       setSetInvalid(newInvalidState);
-
+      
       if (hasInvalid) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        updateSetCompleted(instanceId, setId, false);
         return;
+      } else {
+        updateSetCompleted(instanceId, setId, true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-    }
-
-    updateSetCompleted(instanceId, setId, !set.completed);
-
-    if (set.completed) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   };
 
@@ -111,35 +118,35 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
         <Text size="md" bold className={`text-typography-800 text-center text-${theme}-lightText`}>{index + 1}</Text>
       </Box>
       <Button variant="link" className="flex-[1] items-center justify-center" onPress={applyPreviousToSet}>
-         <ButtonText size="md" className={`text-typography-800 text-center text-${theme}-lightText font-bold`}>
-           {(() => {
-             // Get previous session data for this set position (not order)
-             if (!previousSets) return '-';
-             
-             // Find the current set's position in the exercise's setIds array
-             const currentSetIndex = setIds.findIndex((id: string) => id === setId);
-             if (currentSetIndex === -1) return '-';
-             
-             // Get previous data by position (0-based index)
-             const previousSet = previousSets[currentSetIndex];
-             if (!previousSet) return '-';
-             
-             const { trackingData } = previousSet;
-             const parts = [];
-             
-             if (trackingData.weight && trackingData.reps) {
-               parts.push(`${trackingData.weight} x ${trackingData.reps}`);
-             } else if (trackingData.weight && trackingData.time) {
-               parts.push(`${trackingData.weight} x ${trackingData.time}s`);
-             } else if (trackingData.reps) {
-               parts.push(`${trackingData.reps}`);
-             } else if (trackingData.time) {
-               parts.push(`${trackingData.time}s`);
-             }
-             
-             return parts.length > 0 ? parts.join(', ') : '-';
-           })()}
-         </ButtonText>
+        <ButtonText size="md" className={`text-typography-800 text-center text-${theme}-lightText font-bold`}>
+          {(() => {
+            // Get previous session data for this set position (not order)
+            if (!previousSets) return '-';
+
+            // Find the current set's position in the exercise's setIds array
+            const currentSetIndex = setIds.findIndex((id: string) => id === setId);
+            if (currentSetIndex === -1) return '-';
+
+            // Get previous data by position (0-based index)
+            const previousSet = previousSets[currentSetIndex];
+            if (!previousSet) return '-';
+
+            const { trackingData } = previousSet;
+            const parts = [];
+
+            if (trackingData.weight && trackingData.reps) {
+              parts.push(`${trackingData.weight} x ${trackingData.reps}`);
+            } else if (trackingData.weight && trackingData.time) {
+              parts.push(`${trackingData.weight} x ${trackingData.time}s`);
+            } else if (trackingData.reps) {
+              parts.push(`${trackingData.reps}`);
+            } else if (trackingData.time) {
+              parts.push(`${trackingData.time}s`);
+            }
+
+            return parts.length > 0 ? parts.join(', ') : '-';
+          })()}
+        </ButtonText>
       </Button>
       {trackingMethods.map((method: any) => (
         <Box key={method} style={{ flex: 2 / trackingMethods.length }} className="items-center justify-center">
@@ -153,23 +160,29 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
                 onChangeText={(value) => handleInputChange(method, value)}
                 selectTextOnFocus={true}
                 textAlign="center"
-                />
+              />
             </Input>
           </FormControl>
         </Box>
       ))}
       <Box className="flex-[0.75] items-center justify-center">
-        <Checkbox
-          className="w-full items-center justify-center"
-          size="lg"
-          value="completed"
-          isChecked={set.completed && !Object.values(setInvalid).some(invalid => invalid)}
-          onChange={toggleCompleted}
+        <Pressable
+          onPress={toggleCompleted}
+          hitSlop={10}
+          className="items-center justify-center"
         >
-          <CheckboxIndicator>
-            <CheckboxIcon as={CheckIcon} />
-          </CheckboxIndicator>
-        </Checkbox>
+          <Checkbox
+            className="items-center justify-center"
+            size="lg"
+            value="completed"
+            isChecked={set.completed}
+            pointerEvents="none"
+          >
+            <CheckboxIndicator>
+              <CheckboxIcon as={CheckIcon} />
+            </CheckboxIndicator>
+          </Checkbox>
+        </Pressable>
       </Box>
     </HStack>
   )

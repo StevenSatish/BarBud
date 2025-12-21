@@ -18,7 +18,7 @@ export type SetEntity = {
   id: string;            // stable UUID
   order: number;         // 1-based order for UI
   completed: boolean;
-  trackingData: Partial<Record<TrackingMethod, number | null>>;
+  trackingData: Partial<Record<TrackingMethod, number | null | string>>;
 };
 
 export type ExerciseEntity = {
@@ -349,13 +349,33 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       const set = state.workout.setsById[action.setId];
       if (!set) return state;
 
+      // Parse tracking data values from strings to floats when completing the set
+      let parsedTrackingData = { ...set.trackingData };
+      if (action.completed) {
+        parsedTrackingData = Object.entries(set.trackingData).reduce((acc, [key, value]) => {
+          const method = key as TrackingMethod;
+          if (typeof value === 'string') {
+            const trimmed = value.replace(',', '.').trim();
+            if (trimmed === '') {
+              acc[method] = null;
+            } else {
+              const parsed = parseFloat(trimmed);
+              acc[method] = Number.isFinite(parsed) ? parsed : null;
+            }
+          } else {
+            acc[method] = value;
+          }
+          return acc;
+        }, {} as Partial<Record<TrackingMethod, number | null | string>>);
+      }
+
       return {
         ...state,
         workout: {
           ...state.workout,
           setsById: {
             ...state.workout.setsById,
-            [action.setId]: { ...set, completed: action.completed },
+            [action.setId]: { ...set, completed: action.completed, trackingData: parsedTrackingData },
           },
         },
       };

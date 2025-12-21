@@ -11,7 +11,7 @@ export type SetEntity = {
   id: string;
   order: number;
   completed: boolean;
-  trackingData: Partial<Record<TrackingMethod, number | null>>;
+  trackingData: Partial<Record<TrackingMethod, number | null | string>>;
 };
 
 export type ExerciseEntity = {
@@ -70,7 +70,7 @@ type Action =
 
 const initialState: WorkoutState = {
   isActive: false,
-  isMinimized: false,     
+  isMinimized: false,
   isReorderingExercises: false,
   workout: {
     startTimeISO: new Date().toISOString(),
@@ -99,7 +99,7 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
           startTimeISO: new Date().toISOString(),
           endTimeISO: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
           exercises: [],
-    setsById: {},
+          setsById: {},
         },
       };
     }
@@ -115,9 +115,9 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
         isReorderingExercises: action.payload?.isReorderingExercises ?? false,
         workout: action.payload?.workout
           ? {
-              ...action.payload.workout,
-              exercises: sortAndNormalizePersistedOrder(action.payload.workout.exercises ?? []),
-            }
+            ...action.payload.workout,
+            exercises: sortAndNormalizePersistedOrder(action.payload.workout.exercises ?? []),
+          }
           : action.payload.workout,
       };
     case 'ADD_EXERCISES': {
@@ -249,17 +249,38 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       const set = state.workout.setsById[action.setId];
       if (!set) return state;
 
+      // Parse tracking data values from strings to floats when completing the set
+      let parsedTrackingData = { ...set.trackingData };
+      if (action.completed) {
+        parsedTrackingData = Object.entries(set.trackingData).reduce((acc, [key, value]) => {
+          const method = key as TrackingMethod;
+          if (typeof value === 'string') {
+            const trimmed = value.replace(',', '.').trim();
+            if (trimmed === '') {
+              acc[method] = null;
+            } else {
+              const parsed = parseFloat(trimmed);
+              acc[method] = Number.isFinite(parsed) ? parsed : null;
+            }
+          } else {
+            acc[method] = value;
+          }
+          return acc;
+        }, {} as Partial<Record<TrackingMethod, number | null | string>>);
+      }
+
       return {
         ...state,
         workout: {
           ...state.workout,
           setsById: {
             ...state.workout.setsById,
-            [action.setId]: { ...set, completed: action.completed },
+            [action.setId]: { ...set, completed: action.completed, trackingData: parsedTrackingData },
           },
         },
       };
     }
+    
     case 'UPDATE_EXERCISE_NOTES': {
       if (!state.workout) return state;
       const exercises = state.workout.exercises.map((ex) =>
@@ -349,8 +370,8 @@ export const EditWorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
         (sessionData.endAt && typeof sessionData.endAt.toDate === 'function'
           ? sessionData.endAt.toDate()
           : sessionData.endAt
-          ? new Date(sessionData.endAt)
-          : null) ||
+            ? new Date(sessionData.endAt)
+            : null) ||
         (typeof sessionData.durationMin === 'number' && sessionData.durationMin > 0
           ? new Date(startAt.getTime() + sessionData.durationMin * 60 * 1000)
           : new Date(startAt.getTime() + 60 * 60 * 1000));
@@ -542,7 +563,7 @@ export const EditWorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const endMs = parsedEnd > startMs ? parsedEnd : startMs + 60 * 1000;
     setIsSaving(true);
     try {
-      await writeEditedSession(user.uid, sessionId, ws, endMs);
+      await writeEditedSession(user.uid, sessionId, ws as any, endMs);
     } catch (err) {
       console.error('Failed to write edited session', err);
     } finally {
