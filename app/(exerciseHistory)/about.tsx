@@ -24,8 +24,10 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
     if (hasWeight && hasReps) {
       result.prRows = [
         { label: 'Best Set', value: `${metrics.maxTopWeight} lbs x ${metrics.maxTopRepsAtTopWeight }` },
-        { label: 'Estimated 1RM', value: `${metrics.maxBestEst1RM} lbs`},
       ];
+      if (metrics.maxBestEst1RM != null) {
+        result.prRows.push({ label: 'Estimated 1RM', value: `${metrics.maxBestEst1RM} lbs`});
+      }
       result.lifetimeRows = [
         { label: 'Total Sets', value: metrics.totalSets },
         { label: 'Total Reps', value: metrics.totalReps },
