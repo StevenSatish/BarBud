@@ -122,14 +122,24 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
       };
     case 'ADD_EXERCISES': {
       if (!state.workout) return state;
-      const payload = action.payload.map((e) => ({
-        instanceId: Crypto.randomUUID(),
-        ...e,
-        setIds: [],
-      }));
+      const setsById = { ...state.workout.setsById };
+      const payload = action.payload.map((e) => {
+        const instanceId = Crypto.randomUUID();
+        const setId = Crypto.randomUUID();
+        const trackingMethods = e.trackingMethods ?? [];
+        
+        setsById[setId] = {
+          id: setId,
+          order: 1,
+          completed: false,
+          trackingData: trackingMethods.reduce((acc, m) => ({ ...acc, [m]: null }), {} as Partial<Record<TrackingMethod, number | null>>),
+        };
+        
+        return { instanceId, ...e, setIds: [setId] };
+      });
       return {
         ...state,
-        workout: { ...state.workout, exercises: normalizeExerciseOrder([...state.workout.exercises, ...payload]) },
+        workout: { ...state.workout, exercises: normalizeExerciseOrder([...state.workout.exercises, ...payload]), setsById },
       };
     }
     case 'DELETE_EXERCISE': {
