@@ -105,7 +105,12 @@ export default function HistoryDatabase() {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     if (!Number.isFinite(diffMs) || diffMs < 0) return null;
+    const minutes = Math.floor(diffMs / (1000 * 60));
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (hours < 1) {
+      const m = Math.max(1, minutes);
+      return `${m} ${m === 1 ? 'minute' : 'minutes'} ago`;
+    }
     if (hours < 24) {
       const h = Math.max(1, hours);
       return `${h} ${h === 1 ? 'hour' : 'hours'} ago`;

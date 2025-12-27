@@ -397,7 +397,10 @@ const deriveTrackingFromInstance = (inst: ExerciseInstanceDoc, fallback: Trackin
 const recomputeMetricsForExercise = async (
   uid: string,
   exerciseId: string,
-  trackingFromState: TrackingMethod[] | undefined
+  trackingFromState: TrackingMethod[] | undefined,
+  currentSessionId?: string,
+  currentSessionStartDate?: Date,
+  currentSessionEndDate?: Date
 ) => {
   const instancesSnap = await getDocs(
     collection(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}/instances`)
@@ -417,6 +420,7 @@ const recomputeMetricsForExercise = async (
 
   let lastSessionDate = 0;
   let lastSessionId: string | undefined;
+  
   for (const snap of instancesSnap.docs) {
     const data = snap.data() as ExerciseInstanceDoc;
     const tracking = deriveTrackingFromInstance(data, trackingFromState ?? []);
@@ -513,9 +517,24 @@ const recomputeMetricsForExercise = async (
   batch.set(allTimeRef, allTimeDoc, { merge: true });
 
   // Update lastPerformedAt when there were completed sets
-  if (agg.totalSets > 0 && lastSessionDate) {
-    const exerciseRef = doc(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}`);
-    batch.set(exerciseRef, { lastPerformedAt: new Date(lastSessionDate) }, { merge: true });
+  // Use currentSessionEndDate if the most recent session is the one being edited
+  if (agg.totalSets > 0 && lastSessionId) {
+    let lastPerformedDate: Date | null = null;
+    
+    // If the most recent session is the one being edited, use the provided endDate
+    if (currentSessionId && currentSessionStartDate && currentSessionEndDate && 
+        lastSessionId === currentSessionId && 
+        Math.abs(lastSessionDate - currentSessionStartDate.getTime()) < 60000) { // Within 1 minute tolerance
+      lastPerformedDate = currentSessionEndDate;
+    } else if (lastSessionDate) {
+      // Fall back to startDate if not the edited session
+      lastPerformedDate = new Date(lastSessionDate);
+    }
+    
+    if (lastPerformedDate) {
+      const exerciseRef = doc(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}`);
+      batch.set(exerciseRef, { lastPerformedAt: lastPerformedDate }, { merge: true });
+    }
   }
 
   await batch.commit();
@@ -540,8 +559,10 @@ export const writeEditedSession = async (
 
   // Recompute metrics for changed exercises
   const stateTracking = new Map(ws.exercises.map((ex) => [ex.exerciseId, ex.trackingMethods]));
+  const startDate = new Date(ws.startTimeISO);
+  const endDate = new Date(endMs);
   for (const exerciseId of changedExerciseIds) {
-    await recomputeMetricsForExercise(uid, exerciseId, stateTracking.get(exerciseId));
+    await recomputeMetricsForExercise(uid, exerciseId, stateTracking.get(exerciseId), sessionId, startDate, endDate);
   }
 
   await triggerExerciseRefetch();

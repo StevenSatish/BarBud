@@ -487,7 +487,7 @@ export const writeExerciseMetricsForSession = async (uid: string, ws: WorkoutDat
   const lastBatch = writeBatch(FIREBASE_DB);
   const allTimeBatch = writeBatch(FIREBASE_DB);
 
-  const startDate = new Date(ws.startTimeISO);
+  const endDate = new Date();
 
   // Compute per-exercise metrics from this session (completed sets only)
   for (const ex of ws.exercises) {
@@ -499,7 +499,7 @@ export const writeExerciseMetricsForSession = async (uid: string, ws: WorkoutDat
 
     // Update lastPerformedAt here for any exercise with completed sets
     const exerciseRef = doc(FIREBASE_DB, `users/${uid}/exercises/${ex.exerciseId}`);
-    lastBatch.set(exerciseRef, { lastPerformedAt: startDate }, { merge: true });
+    lastBatch.set(exerciseRef, { lastPerformedAt: endDate }, { merge: true });
 
     const hasWeight = ex.trackingMethods.includes('weight');
     const hasReps = ex.trackingMethods.includes('reps');
