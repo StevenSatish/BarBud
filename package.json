@@ -12,8 +12,8 @@
     "lint": "expo lint"
   },
   "overrides": {
-  "react-native-calendars": {
-    "react-native-safe-area-context": "5.6.2"
+    "react-native-calendars": {
+      "react-native-safe-area-context": "5.6.2"
     }
   },
   "dependencies": {
@@ -72,6 +72,7 @@
     "expo-status-bar": "~3.0.9",
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
+    "expo-updates": "~29.0.15",
     "expo-web-browser": "~15.0.10",
     "firebase": "^11.6.1",
     "lucide-react-native": "^0.483.0",

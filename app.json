@@ -2,13 +2,19 @@
   "expo": {
     "name": "BarBud",
     "slug": "BarBud",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "jsc",
+    "updates": {
+      "url": "https://u.expo.dev/788de249-a313-415a-8ae3-4134cc773186"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stevensatish.BarBud",
