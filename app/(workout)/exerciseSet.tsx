@@ -43,6 +43,8 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
   };
 
   const handleInputChange = (method: string, value: string) => {
+    updateSetCompleted(instanceId, setId, false);
+
     const newTrackingData = {
       ...set.trackingData,
       [method]: value || null
@@ -56,17 +58,6 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
         delete newInvalid[method];
         return newInvalid;
       });
-    }
-
-    // Check if any tracking method is now empty and unselect checkbox if so
-    const hasEmptyTracking = trackingMethods.some((trackingMethod: string) => {
-      const trackingValue = trackingMethod === method ? (value || null) : set.trackingData[trackingMethod];
-      // Check if value is null, undefined, empty string, or just whitespace
-      return !trackingValue || (typeof trackingValue === 'string' && trackingValue.trim() === '');
-    });
-
-    if (hasEmptyTracking && set.completed) {
-      updateSetCompleted(instanceId, setId, false);
     }
   };
 
