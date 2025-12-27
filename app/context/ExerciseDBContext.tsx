@@ -1,6 +1,5 @@
 // app/context/ExerciseDBContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
@@ -37,7 +36,6 @@ const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undef
 export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [exerciseSections, setExerciseSections] = useState<ExerciseSectionType[]>([]);
   const [loading, setLoading] = useState(true);
-  const STORAGE_KEY = 'exerciseSectionsCache';
 
   const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => {
     const user = FIREBASE_AUTH.currentUser;
@@ -59,36 +57,73 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       return { success: false, error: "An exercise with this name and category already exists" };
     }
     
+    const trackingMethodsArray = trackingMethods.map(method => {
+      // Map single tracking method to array of individual tracking methods
+      switch (method.toLowerCase()) {
+        case 'weight x reps':
+          return ['weight', 'reps'];
+        case 'weight x time':
+          return ['weight', 'time'];
+        case 'reps':
+          return ['reps'];
+        case 'time':
+          return ['time'];
+        default:
+          return [method.toLowerCase()];
+      }
+    }).flat();
+
     const exerciseData = {
       name: trimmedExerciseName,
       category: trimmedCategory,
       exerciseId,
       muscleGroup: trimmedMuscleGroup,
       secondaryMuscles: trimmedSecondaryMuscleGroups,
-      trackingMethods: trackingMethods.map(method => {
-        // Map single tracking method to array of individual tracking methods
-        switch (method.toLowerCase()) {
-          case 'weight x reps':
-            return ['weight', 'reps'];
-          case 'weight x time':
-            return ['weight', 'time'];
-          case 'reps':
-            return ['reps'];
-          case 'time':
-            return ['time'];
-          default:
-            return [method.toLowerCase()];
-        }
-      }).flat(),
+      trackingMethods: trackingMethodsArray,
       notes: '',
+      isDeleted: false,
     };
 
     try {
       await setDoc(exerciseRef, exerciseData);
-      await fetchExercises(); // Refresh the exercises list
+      
+      // Optimistically add the exercise to state immediately
+      const newExercise = {
+        id: exerciseId,
+        ...exerciseData,
+      };
+      
+      setExerciseSections(prevSections => {
+        const firstLetter = trimmedExerciseName.charAt(0).toUpperCase();
+        const existingSectionIndex = prevSections.findIndex(s => s.title === firstLetter);
+        
+        if (existingSectionIndex >= 0) {
+          // Add to existing section
+          const updatedSections = [...prevSections];
+          const updatedData = [...updatedSections[existingSectionIndex].data, newExercise]
+            .sort((a: any, b: any) => a.name.localeCompare(b.name));
+          updatedSections[existingSectionIndex] = {
+            ...updatedSections[existingSectionIndex],
+            data: updatedData,
+          };
+          return updatedSections;
+        } else {
+          // Create new section
+          const newSection = {
+            title: firstLetter,
+            data: [newExercise],
+          };
+          return [...prevSections, newSection].sort((a, b) => a.title.localeCompare(b.title));
+        }
+      });
+      
+      // Then fetch to ensure consistency with database
+      await fetchExercises();
       return { success: true };
     } catch (error) {
       console.error('Error adding exercise:', error);
+      // Revert optimistic update on error
+      await fetchExercises();
       return { success: false, error: "Failed to create exercise" };
     }
   };
@@ -134,10 +169,6 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
         }));
       
       setExerciseSections(sections);
-      // Persist cache
-      try {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(sections));
-      } catch {}
     } catch (error) {
       console.error('Error fetching exercises:', error);
     } finally {
@@ -147,26 +178,14 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
   // Make fetchExercises available outside of React via triggerExerciseRefetch
   registerExerciseRefetcher(fetchExercises);
 
-  // Load exercises when the user is authenticated. Show cached immediately (SWR).
+  // Load exercises when the user is authenticated. Always fetch fresh data.
   useEffect(() => {
     const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
       if (user) {
-        (async () => {
-          try {
-            const cached = await AsyncStorage.getItem(STORAGE_KEY);
-            if (cached) {
-              const parsed = JSON.parse(cached);
-              if (Array.isArray(parsed)) {
-                setExerciseSections(parsed);
-                setLoading(false);
-              }
-            }
-          } catch {}
-          // Revalidate in background
-          fetchExercises();
-        })();
+        fetchExercises();
       } else {
         setExerciseSections([]);
+        setLoading(false);
       }
     });
     
