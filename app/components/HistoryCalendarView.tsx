@@ -128,8 +128,8 @@ export default function HistoryCalendarView() {
 			const dotCount = Math.min(count, 4);
 			const dots = Array.from({ length: dotCount }).map((_, i) => ({
 				key: `${dayKey}-s${i + 1}`,
-				color: colors.light,
-				selectedDotColor: colors.light,
+				color: colors.lightText,
+				selectedDotColor: colors.lightText,
 			}));
 			next[dayKey] = { dots };
 		});
@@ -178,8 +178,8 @@ export default function HistoryCalendarView() {
 					...marking,
 					dots: marking.dots.map((dot: any) => ({
 						...dot,
-						color: colors.light,
-						selectedDotColor: colors.light,
+						color: colors.lightText,
+						selectedDotColor: colors.lightText,
 					})),
 				};
 			} else {
@@ -187,7 +187,7 @@ export default function HistoryCalendarView() {
 			}
 		});
 		return recolored;
-	}, [markedDates, colors.light]);
+	}, [markedDates, colors.lightText]);
 
 	// Merge selection into marked dates (so the selected day is highlighted)
 	const mergedMarkedDates = useMemo(() => {
@@ -199,10 +199,10 @@ export default function HistoryCalendarView() {
 				selected: true,
 				selectedColor: colors.accent,
 				selectedTextColor: colors.background,
-				selectedDotColor: colors.light,
+				selectedDotColor: colors.lightText,
 			},
 		};
-	}, [recoloredMarkedDates, selectedDayKey, colors.accent, colors.background, colors.light]);
+	}, [recoloredMarkedDates, selectedDayKey, colors.accent, colors.background, colors.lightText]);
 
 	const isSelectedMonthLoaded = useMemo(() => {
 		if (!selectedDayKey) return false;
@@ -212,8 +212,8 @@ export default function HistoryCalendarView() {
 
 	const calendarKey = useMemo(() => {
 		// Changing key forces Calendar to remount and pick up new theme
-		return `${theme}-${colors.background}-${colors.accent}-${colors.light}`;
-	}, [theme, colors.background, colors.accent, colors.light]);
+		return `${theme}-${colors.background}-${colors.accent}-${colors.lightText}`;
+	}, [theme, colors.background, colors.accent, colors.lightText]);
 
 	return (
 		<ScrollView className={`bg-${theme}-background`}>
@@ -245,8 +245,8 @@ export default function HistoryCalendarView() {
 						todayTextColor: colors.accent,
 					arrowColor: 'white',
 					monthTextColor: 'white',
-						dotColor: colors.light,
-						selectedDotColor: colors.light,
+						dotColor: colors.lightText,
+						selectedDotColor: colors.lightText,
 
 						textDayFontWeight: '500',
 						textMonthFontWeight: '400',
