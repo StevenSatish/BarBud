@@ -194,7 +194,7 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
     <Divider className={`bg-${theme}-lightGray`} orientation="horizontal" />
   ), [theme]);
   
-  const handleAddExercises = () => {
+  const handleAddExercises = async () => {
     const chosen = Object.values(selectedExercises);
     if (chosen.length === 0) return;
 
@@ -223,11 +223,11 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
 
     // Workout mode (existing behavior)
     if (targetInstanceId) {
-      replaceExerciseWith(String(targetInstanceId), normalized);
+      await replaceExerciseWith(String(targetInstanceId), normalized);
       router.back();
       return;
     }
-    addExercises(normalized);
+    await addExercises(normalized);
     router.back();
   };
 

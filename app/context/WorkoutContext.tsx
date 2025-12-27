@@ -553,12 +553,6 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const instanceData = instanceDoc.data();
       const { sessionId, exerciseInSessionId } = instanceData;
 
-      // Get the session data
-      const sessionRef = doc(FIREBASE_DB, `users/${user.uid}/sessions/${sessionId}`);
-      const sessionDoc = await getDoc(sessionRef);
-      
-      if (!sessionDoc.exists()) return [];
-
       // Get the exercise data from the session
       const exerciseRef = doc(FIREBASE_DB, `users/${user.uid}/sessions/${sessionId}/exercises/${exerciseInSessionId}`);
       const exerciseDoc = await getDoc(exerciseRef);
