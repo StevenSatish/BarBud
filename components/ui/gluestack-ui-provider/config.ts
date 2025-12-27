@@ -11,6 +11,7 @@ export const config = {
      '--color-blue-background': '10 15 28',     /* rgb(10, 15, 28)  — darker navy background */
      '--color-blue-button':     '22 32 56',     /* rgb(22, 32, 56)  — deep blue-gray button */
      '--color-blue-accent':     '58 112 172',   /* rgb(58, 112, 172) — muted blue accent */
+     '--color-blue-setCompleted': '44 80 126',  /* rgb(44, 80, 126) — medium blue between button and accent */
      '--color-blue-light':      '140 175 220',  /* rgb(140, 175, 220) — soft light blue highlight */
      '--color-blue-steelGray':  '85 95 110',    /* rgb(85, 95, 110) — dark steel-blue neutral */
      '--color-blue-lightGray':  '120 135 155',  /* rgb(120, 135, 155) — muted gray-blue panels */
@@ -22,6 +23,7 @@ export const config = {
      '--color-cyan-background': '8 18 22',      /* rgb(8, 18, 22) — deep teal-black background */
      '--color-cyan-button':     '18 36 44',     /* rgb(18, 36, 44) — dark cyan-gray button */
      '--color-cyan-accent':     '45 150 160',   /* rgb(45, 150, 160) — muted teal accent */
+     '--color-cyan-setCompleted': '34 104 114', /* rgb(34, 104, 114) — medium teal between button and accent */
      '--color-cyan-light':      '130 195 200',  /* rgb(130, 195, 200) — soft pale teal highlight */
      '--color-cyan-steelGray':  '85 105 110',   /* rgb(85, 105, 110) — dark cyan-gray neutral */
      '--color-cyan-lightGray':  '130 150 155',  /* rgb(130, 150, 155) — desaturated cyan-gray panel */
@@ -33,6 +35,7 @@ export const config = {
      '--color-pink-background': '25 12 20',     /* rgb(25, 12, 20) — dark wine background */
      '--color-pink-button':     '45 20 35',     /* rgb(45, 20, 35) — deep burgundy-pink button */
      '--color-pink-accent':     '185 75 130',   /* rgb(185, 75, 130) — muted rose accent */
+     '--color-pink-setCompleted': '115 47 82',  /* rgb(115, 47, 82) — bright rosy text, softened */
      '--color-pink-light':      '225 155 185',  /* rgb(225, 155, 185) — soft pink highlight */
      '--color-pink-steelGray':  '100 85 95',    /* rgb(100, 85, 95) — gray with pink undertone */
      '--color-pink-lightGray':  '145 130 140',  /* rgb(145, 130, 140) — desaturated rose-gray panel */
@@ -44,6 +47,7 @@ export const config = {
      '--color-green-background': '8 15 10',     /* rgb(8, 15, 10) — near-black green background */
      '--color-green-button':     '20 45 28',    /* rgb(20, 45, 28) — deep moss green button */
      '--color-green-accent':     '70 150 95',   /* rgb(70, 150, 95) — muted forest green accent */
+     '--color-green-setCompleted': '48 98 66',  /* rgb(48, 98, 66) — medium green between button and accent */
      '--color-green-light':      '150 195 160', /* rgb(150, 195, 160) — pale forest highlight */
      '--color-green-steelGray':  '90 105 95',   /* rgb(90, 105, 95) — cool gray-green neutral */
      '--color-green-lightGray':  '140 155 145', /* rgb(140, 155, 145) — moss-gray panel */
@@ -54,9 +58,10 @@ export const config = {
      '--color-orange-background': '18 10 6',     /* rgb(18, 10, 6) — very dark brown-black background */
      '--color-orange-button':     '45 25 15',    /* rgb(45, 25, 15) — deep bronze-orange button */
      '--color-orange-accent':     '200 120 60',  /* rgb(200, 120, 60) — muted amber accent */
+     '--color-orange-setCompleted': '132 78 42', /* rgb(132, 78, 42) — medium orange between button and accent */
      '--color-orange-light':      '225 175 130', /* rgb(225, 175, 130) — soft orange highlight */
      '--color-orange-steelGray':  '100 90 80',   /* rgb(100, 90, 80) — dark neutral brown-gray */
-     '--color-orange-lightGray':  '150 135 120',
+     '--color-orange-lightGray':  '150 135 120', /* rgb(150, 135, 120) — desaturated brown-gray panel */
      '--color-orange-lightText':  '230 210 190',  /* #e6d2be — warm amber-tinted light text */
   
   
@@ -221,6 +226,7 @@ export const config = {
    '--color-blue-background': '10 15 28',     /* rgb(10, 15, 28)  — darker navy background */
    '--color-blue-button':     '22 32 56',     /* rgb(22, 32, 56)  — deep blue-gray button */
    '--color-blue-accent':     '58 112 172',   /* rgb(58, 112, 172) — muted blue accent */
+   '--color-blue-setCompleted': '44 80 126',  /* rgb(44, 80, 126) — medium blue between button and accent */
    '--color-blue-light':      '140 175 220',  /* rgb(140, 175, 220) — soft light blue highlight */
    '--color-blue-steelGray':  '85 95 110',    /* rgb(85, 95, 110) — dark steel-blue neutral */
    '--color-blue-lightGray':  '120 135 155',  /* rgb(120, 135, 155) — muted gray-blue panels */
@@ -232,6 +238,7 @@ export const config = {
    '--color-cyan-background': '8 18 22',      /* rgb(8, 18, 22) — deep teal-black background */
    '--color-cyan-button':     '18 36 44',     /* rgb(18, 36, 44) — dark cyan-gray button */
    '--color-cyan-accent':     '45 150 160',   /* rgb(45, 150, 160) — muted teal accent */
+   '--color-cyan-setCompleted': '34 104 114', /* rgb(34, 104, 114) — medium teal between button and accent */
    '--color-cyan-light':      '130 195 200',  /* rgb(130, 195, 200) — soft pale teal highlight */
    '--color-cyan-steelGray':  '85 105 110',   /* rgb(85, 105, 110) — dark cyan-gray neutral */
    '--color-cyan-lightGray':  '130 150 155',  /* rgb(130, 150, 155) — desaturated cyan-gray panel */
@@ -243,6 +250,7 @@ export const config = {
    '--color-pink-background': '25 12 20',     /* rgb(25, 12, 20) — dark wine background */
    '--color-pink-button':     '45 20 35',     /* rgb(45, 20, 35) — deep burgundy-pink button */
    '--color-pink-accent':     '185 75 130',   /* rgb(185, 75, 130) — muted rose accent */
+   '--color-pink-setCompleted': '115 47 82',  /* rgb(115, 47, 82) — bright rosy text, softened */
    '--color-pink-light':      '225 155 185',  /* rgb(225, 155, 185) — soft pink highlight */
    '--color-pink-steelGray':  '100 85 95',    /* rgb(100, 85, 95) — gray with pink undertone */
    '--color-pink-lightGray':  '145 130 140',  /* rgb(145, 130, 140) — desaturated rose-gray panel */
@@ -254,6 +262,7 @@ export const config = {
    '--color-green-background': '8 15 10',     /* rgb(8, 15, 10) — near-black green background */
    '--color-green-button':     '20 45 28',    /* rgb(20, 45, 28) — deep moss green button */
    '--color-green-accent':     '70 150 95',   /* rgb(70, 150, 95) — muted forest green accent */
+   '--color-green-setCompleted': '48 98 66',  /* rgb(48, 98, 66) — medium green between button and accent */
    '--color-green-light':      '150 195 160', /* rgb(150, 195, 160) — pale forest highlight */
    '--color-green-steelGray':  '90 105 95',   /* rgb(90, 105, 95) — cool gray-green neutral */
    '--color-green-lightGray':  '140 155 145', /* rgb(140, 155, 145) — moss-gray panel */
@@ -264,6 +273,7 @@ export const config = {
    '--color-orange-background': '18 10 6',     /* rgb(18, 10, 6) — very dark brown-black background */
    '--color-orange-button':     '45 25 15',    /* rgb(45, 25, 15) — deep bronze-orange button */
    '--color-orange-accent':     '200 120 60',  /* rgb(200, 120, 60) — muted amber accent */
+   '--color-orange-setCompleted': '132 78 42', /* rgb(132, 78, 42) — medium orange between button and accent */
    '--color-orange-light':      '225 175 130', /* rgb(225, 175, 130) — soft orange highlight */
    '--color-orange-steelGray':  '100 90 80',   /* rgb(100, 90, 80) — dark neutral brown-gray */
    '--color-orange-lightGray':  '150 135 120',

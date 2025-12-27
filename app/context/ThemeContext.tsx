@@ -29,6 +29,7 @@ const themeColors: Record<ThemeType, any> = {
     tab:        'rgb(32, 18, 28)',     // soft plum tab bar
     button:     'rgb(45, 20, 35)',     // dark burgundy-pink button
     accent:     'rgb(185, 75, 130)',   // muted rose accent
+    setCompleted: 'rgb(115, 47, 82)',  // bright rosy text, softened
     light:      'rgb(225, 155, 185)',  // soft pink highlight
     lightText:  'rgb(235, 200, 220)',  // bright rosy text, softened
     steelGray:  'rgb(100, 85, 95)',    // pinkish neutral text

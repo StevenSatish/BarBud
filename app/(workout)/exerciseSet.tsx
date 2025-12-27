@@ -113,7 +113,7 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
   };
 
   return (
-    <HStack className={`items-center py-3 ${set.completed ? `bg-${theme}-button` : `bg-${theme}-background`}`}>
+    <HStack className={`items-center py-3 ${set.completed ? `bg-${theme}-setCompleted` : `bg-${theme}-background`}`}>
       <Box className="flex-[0.75] items-center justify-center">
         <Text size="md" bold className={`text-typography-800 text-center text-${theme}-lightText`}>{index + 1}</Text>
       </Box>
@@ -151,7 +151,7 @@ function ExerciseSetComponent({ set, setId, index, instanceId, trackingMethods, 
       {trackingMethods.map((method: any) => (
         <Box key={method} style={{ flex: 2 / trackingMethods.length }} className="items-center justify-center">
           <FormControl className="w-full max-w-[90px]" isInvalid={setInvalid[method]}>
-            <Input className="mx-2" variant="outline" size="md">
+            <Input className={`mx-2 ${set.completed ? 'border-primary-200' : ''}`} variant="outline" size="md">
               <InputField
                 className="text-typography-800 text-center text-lg"
                 placeholder={getPlaceholder(method)}

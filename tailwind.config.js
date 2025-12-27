@@ -8,7 +8,7 @@ module.exports = {
   safelist: [
     {
       pattern:
-        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator|blue|cyan|pink|green|orange)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|accent|button|muted|success|info|light|steelGray|lightGray|background|lightText)/,
+        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator|blue|cyan|pink|green|orange)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|accent|button|muted|success|info|light|steelGray|lightGray|background|lightText|setCompleted)/,
     },
   ],
   theme: {
@@ -18,6 +18,7 @@ module.exports = {
           background: 'rgb(var(--color-blue-background)/<alpha-value>)',
           button: 'rgb(var(--color-blue-button)/<alpha-value>)',
           accent: 'rgb(var(--color-blue-accent)/<alpha-value>)',
+          setCompleted: 'rgb(var(--color-blue-setCompleted)/<alpha-value>)',
           light: 'rgb(var(--color-blue-light)/<alpha-value>)',
           lightText: 'rgb(var(--color-blue-lightText)/<alpha-value>)',
           steelGray: 'rgb(var( --color-blue-steelGray)/<alpha-value>)',
@@ -27,6 +28,7 @@ module.exports = {
           background: 'rgb(var(--color-cyan-background)/<alpha-value>)',
           button: 'rgb(var(--color-cyan-button)/<alpha-value>)',
           accent: 'rgb(var(--color-cyan-accent)/<alpha-value>)',
+          setCompleted: 'rgb(var(--color-cyan-setCompleted)/<alpha-value>)',
           light: 'rgb(var(--color-cyan-light)/<alpha-value>)',
           lightText: 'rgb(var(--color-cyan-lightText)/<alpha-value>)',
           steelGray: 'rgb(var(--color-cyan-steelGray)/<alpha-value>)',
@@ -36,6 +38,7 @@ module.exports = {
           background: 'rgb(var(--color-pink-background)/<alpha-value>)',
           button: 'rgb(var(--color-pink-button)/<alpha-value>)',
           accent: 'rgb(var(--color-pink-accent)/<alpha-value>)',
+          setCompleted: 'rgb(var(--color-pink-setCompleted)/<alpha-value>)',
           light: 'rgb(var(--color-pink-light)/<alpha-value>)',
           lightText: 'rgb(var(--color-pink-lightText)/<alpha-value>)',
           steelGray: 'rgb(var(--color-pink-steelGray)/<alpha-value>)',
@@ -45,6 +48,7 @@ module.exports = {
           background: 'rgb(var(--color-green-background)/<alpha-value>)',
           button: 'rgb(var(--color-green-button)/<alpha-value>)',
           accent: 'rgb(var(--color-green-accent)/<alpha-value>)',
+          setCompleted: 'rgb(var(--color-green-setCompleted)/<alpha-value>)',
           light: 'rgb(var(--color-green-light)/<alpha-value>)',
           lightText: 'rgb(var(--color-green-lightText)/<alpha-value>)',
           steelGray: 'rgb(var(--color-green-steelGray)/<alpha-value>)',
@@ -54,6 +58,7 @@ module.exports = {
           background: 'rgb(var(--color-orange-background)/<alpha-value>)',
           button: 'rgb(var(--color-orange-button)/<alpha-value>)',
           accent: 'rgb(var(--color-orange-accent)/<alpha-value>)',
+          setCompleted: 'rgb(var(--color-orange-setCompleted)/<alpha-value>)',
           light: 'rgb(var(--color-orange-light)/<alpha-value>)',
           lightText: 'rgb(var(--color-orange-lightText)/<alpha-value>)',
           steelGray: 'rgb(var(--color-orange-steelGray)/<alpha-value>)',
