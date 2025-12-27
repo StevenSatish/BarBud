@@ -34,6 +34,8 @@ export default function HistoryDatabase() {
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showNewExerciseModal, setShowNewExerciseModal] = useState(false);
+  const [isMuscleGroupMenuOpen, setIsMuscleGroupMenuOpen] = useState(false);
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
 
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim() && !selectedMuscleGroup && !selectedCategory) {
@@ -74,10 +76,14 @@ export default function HistoryDatabase() {
 
   const handleMuscleGroupSelect = (value) => {
     setSelectedMuscleGroup(value === selectedMuscleGroup ? '' : value);
+    setIsMuscleGroupMenuOpen(false);
+    setIsCategoryMenuOpen(false);
   };
 
   const handleCategorySelect = (value) => {
     setSelectedCategory(value === selectedCategory ? '' : value);
+    setIsMuscleGroupMenuOpen(false);
+    setIsCategoryMenuOpen(false);
   };
   
   const formatLastPerformed = useCallback((value) => {
@@ -211,9 +217,11 @@ export default function HistoryDatabase() {
           <Menu
             placement="bottom"
             offset={0}
+            isOpen={isMuscleGroupMenuOpen}
+            onClose={() => setIsMuscleGroupMenuOpen(false)}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedMuscleGroup ? `bg-${theme}-light` : 'bg-background-800'}`}>
+                <Button {...triggerProps} onPress={() => setIsMuscleGroupMenuOpen(true)} className={`rounded-full ${selectedMuscleGroup ? `bg-${theme}-light` : 'bg-background-800'}`}>
                   <ButtonText className={`text-${theme}-background`}>{selectedMuscleGroup || "Any Muscle Group"}</ButtonText>
                 </Button>
               )
@@ -233,9 +241,11 @@ export default function HistoryDatabase() {
           <Menu
             placement="bottom"
             offset={0}
+            isOpen={isCategoryMenuOpen}
+            onClose={() => setIsCategoryMenuOpen(false)}
             trigger={({ ...triggerProps }) => {
               return (
-                <Button {...triggerProps} className={`rounded-full ${selectedCategory ? `bg-${theme}-light` : 'bg-background-800'}`}>
+                <Button {...triggerProps} onPress={() => setIsCategoryMenuOpen(true)} className={`rounded-full ${selectedCategory ? `bg-${theme}-light` : 'bg-background-800'}`}>
                   <ButtonText className={`text-typography-0`}>{selectedCategory || "Any Category"}</ButtonText>
                 </Button>
               )
