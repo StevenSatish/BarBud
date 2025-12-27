@@ -36,6 +36,7 @@ export default function WorkoutScreen() {
     endWorkout,
     endWorkoutWarnings,
     cancelWorkout,
+    navigateToProgressions,
     finishReorderExercises,
     reorderExercises,
   } = useWorkout();
@@ -83,8 +84,8 @@ export default function WorkoutScreen() {
   const handleConfirmFinish = async () => {
     setShowEndWorkoutAlert(false);
     const { result, persistPromise } = await endWorkout();
-    // Navigate first for snappier UX
-    router.replace({ pathname: '/(workout)/progressions', params: { data: JSON.stringify(result) } });
+    // Navigate to progressions (which handles cancel and storage cleanup)
+    await navigateToProgressions(result);
     // Refresh folders/templates in the background after writes finish
     persistPromise
       .then(() => Promise.all([fetchFolders(), fetchTemplates()]))

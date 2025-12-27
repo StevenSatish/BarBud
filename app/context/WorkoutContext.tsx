@@ -450,6 +450,7 @@ type Ctx = {
   endWorkout: () => Promise<{ result: ProgressionsResult; persistPromise: Promise<void> }>;
   endWorkoutWarnings: () => WarningItem[];
   cancelWorkout: () => Promise<void>;
+  navigateToProgressions: (result: ProgressionsResult) => Promise<void>;
   minimizeWorkout: () => void;
   maximizeWorkout: () => void;
   updateSet: (exerciseInstanceId: string, setId: string, newData: Partial<SetEntity['trackingData']>) => void;
@@ -534,6 +535,14 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const maximizeWorkout = () => {
     dispatch({ type: 'MAXIMIZE' });
     router.replace('/(workout)');
+  };
+
+  const navigateToProgressions: Ctx['navigateToProgressions'] = async (result) => {
+    // Navigate first for snappier UX
+    router.replace({ pathname: '/(workout)/progressions', params: { data: JSON.stringify(result) } });
+    // Cancel workout state and remove from storage
+    dispatch({ type: 'CANCEL' });
+    await AsyncStorage.removeItem(STORAGE_KEY);
   };
 
   // Fetch previous session data for an exercise
@@ -770,6 +779,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     endWorkout,
     endWorkoutWarnings,
     cancelWorkout,
+    navigateToProgressions,
     minimizeWorkout,
     maximizeWorkout,
     updateSet,

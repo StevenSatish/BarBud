@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Confetti from 'react-native-confetti';
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { useTheme } from "@/app/context/ThemeContext";
-import { useWorkout } from "@/app/context/WorkoutContext";
 import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
 import { Heading } from "@/components/ui/heading";
@@ -35,7 +34,6 @@ type ProgressionsResult = {
 export default function ProgressionsScreen() {
   const confettiRef = useRef<any>(null);
   const { theme, colors } = useTheme();
-  const { cancelWorkout } = useWorkout();
   const params = useLocalSearchParams();
   const [usernameFromDb, setUsernameFromDb] = useState<string>("");
   const data = useMemo(() => {
@@ -198,7 +196,7 @@ export default function ProgressionsScreen() {
           )}
 
           <Box className="mt-4">
-            <Button size="md" action="primary" onPress={() => cancelWorkout()}>
+            <Button size="md" action="primary" onPress={() => router.replace('/(tabs)')}>
               <ButtonText>Continue</ButtonText>
             </Button>
           </Box>
