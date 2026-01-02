@@ -471,6 +471,9 @@ export const EditWorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
         } as ExerciseEntity;
       });
 
+      // Sort exercises by their loaded order before normalizing
+      const sortedExercises = [...exercises].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      
       const loadedState: WorkoutState = {
         isActive: true,
         isMinimized: false,
@@ -478,7 +481,7 @@ export const EditWorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
         workout: {
           startTimeISO: startAt.toISOString(),
           endTimeISO: endAt.toISOString(),
-          exercises: normalizeExerciseOrder(exercises),
+          exercises: normalizeExerciseOrder(sortedExercises),
           setsById,
         },
       };
