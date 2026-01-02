@@ -1,8 +1,17 @@
 // app/context/ExerciseDBContext.tsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
+
+// Retry configuration
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY_MS = 1000; // 1 second
+const EMPTY_STATE_REFETCH_DELAY_MS = 2000; // Wait before refetching on empty state
+const MAX_EMPTY_STATE_RETRIES = 2; // Limit retries when exercises are unexpectedly empty
+
+// Helper: delay for a given number of milliseconds
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Allow non-component code to trigger a refetch of exercises
 let exerciseRefetcher: (() => Promise<void>) | null = null;
@@ -36,6 +45,8 @@ const ExerciseDBContext = createContext<ExerciseDBContextType | undefined>(undef
 export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [exerciseSections, setExerciseSections] = useState<ExerciseSectionType[]>([]);
   const [loading, setLoading] = useState(true);
+  const emptyStateRetryCount = useRef(0);
+  const isRefetchingDueToEmpty = useRef(false);
 
   const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => {
     const user = FIREBASE_AUTH.currentUser;
@@ -118,21 +129,23 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       });
       
       // Then fetch to ensure consistency with database
-      await fetchExercises();
+      await fetchExercises(0);
       return { success: true };
     } catch (error) {
       console.error('Error adding exercise:', error);
       // Revert optimistic update on error
-      await fetchExercises();
+      await fetchExercises(0);
       return { success: false, error: "Failed to create exercise" };
     }
   };
 
-  const fetchExercises = async () => {
+  const fetchExercises = useCallback(async (retryCount = 0): Promise<void> => {
     try {
       setLoading(true);
       const currentUser = FIREBASE_AUTH.currentUser;
       if (!currentUser) {
+        // No user - ensure we clear exercises and stop loading
+        setExerciseSections([]);
         setLoading(false);
         return;
       }
@@ -145,8 +158,17 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
         ...doc.data(),
       }));
 
-      // Exclude soft-deleted exercises
-      const activeExercises = exercisesList.filter((exercise: any) => !exercise.isDeleted);
+      // Exclude soft-deleted exercises and exercises without valid names
+      const activeExercises = exercisesList.filter((exercise: any) => {
+        // Skip deleted exercises
+        if (exercise.isDeleted) return false;
+        // Skip exercises without a valid name (prevents crash)
+        if (!exercise.name || typeof exercise.name !== 'string' || exercise.name.trim() === '') {
+          console.warn('Exercise missing valid name:', exercise.id);
+          return false;
+        }
+        return true;
+      });
       
       const groupedExercises = activeExercises.reduce((acc: any, exercise: any) => {
         const firstLetter = exercise.name.charAt(0).toUpperCase();
@@ -169,20 +191,40 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
         }));
       
       setExerciseSections(sections);
+      setLoading(false);
+      // Reset empty state retry counter on successful fetch with data
+      if (sections.length > 0) {
+        emptyStateRetryCount.current = 0;
+      }
     } catch (error) {
-      console.error('Error fetching exercises:', error);
-    } finally {
+      console.error(`Error fetching exercises (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error);
+      
+      // Retry with exponential backoff if we haven't exceeded max retries
+      if (retryCount < MAX_RETRIES) {
+        const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryCount);
+        console.log(`Retrying in ${delayMs}ms...`);
+        await delay(delayMs);
+        return fetchExercises(retryCount + 1);
+      }
+      
+      // All retries exhausted - keep existing data if we have any
+      console.error('All retry attempts failed. Keeping existing exercise data.');
       setLoading(false);
     }
-  };
+  }, []);
   // Make fetchExercises available outside of React via triggerExerciseRefetch
-  registerExerciseRefetcher(fetchExercises);
+  // Wrap to ensure we always call with retryCount = 0
+  useEffect(() => {
+    registerExerciseRefetcher(() => fetchExercises(0));
+  }, [fetchExercises]);
 
   // Load exercises when the user is authenticated. Always fetch fresh data.
   useEffect(() => {
     const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
       if (user) {
-        fetchExercises();
+        // Reset retry counter on fresh auth
+        emptyStateRetryCount.current = 0;
+        fetchExercises(0);
       } else {
         setExerciseSections([]);
         setLoading(false);
@@ -190,7 +232,40 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
     });
     
     return () => unsubscribe();
-  }, []);
+  }, [fetchExercises]);
+
+  // Auto-refetch when exercises are unexpectedly empty
+  // This catches edge cases where exercises disappear due to race conditions or errors
+  useEffect(() => {
+    // Skip if loading, no user, already refetching, or we've hit the retry limit
+    if (loading) return;
+    if (!FIREBASE_AUTH.currentUser) return;
+    if (exerciseSections.length > 0) return;
+    if (isRefetchingDueToEmpty.current) return;
+    if (emptyStateRetryCount.current >= MAX_EMPTY_STATE_RETRIES) {
+      console.warn('Exercise database appears to be empty after multiple refetch attempts');
+      return;
+    }
+
+    // Exercises are empty when they shouldn't be - schedule a refetch
+    console.log(`Exercises unexpectedly empty, scheduling refetch (attempt ${emptyStateRetryCount.current + 1}/${MAX_EMPTY_STATE_RETRIES})`);
+    isRefetchingDueToEmpty.current = true;
+    emptyStateRetryCount.current += 1;
+
+    const timeoutId = setTimeout(() => {
+      fetchExercises(0).finally(() => {
+        isRefetchingDueToEmpty.current = false;
+      });
+    }, EMPTY_STATE_REFETCH_DELAY_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+      isRefetchingDueToEmpty.current = false;
+    };
+  }, [exerciseSections, loading, fetchExercises]);
+
+  // Memoize the public fetchExercises to always start with retryCount = 0
+  const publicFetchExercises = useCallback(() => fetchExercises(0), [fetchExercises]);
 
   return (
     <ExerciseDBContext.Provider
@@ -198,7 +273,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
         exerciseSections,
         loading,
         createExercise,
-        fetchExercises,
+        fetchExercises: publicFetchExercises,
       }}
     >
       {children}

@@ -19,7 +19,7 @@ import { Platform } from 'react-native';
 
 // Static data arrays
 const MUSCLE_GROUPS = [
-  "Abs", "Back", "Biceps", "Chest", "Shoulders", "Quads", 
+  "Abs", "Back", "Biceps", "Triceps", "Chest", "Shoulders", "Quads", 
   "Forearms", "Calves", "Glutes", "Hamstrings", "Other"
 ];
 

@@ -99,7 +99,7 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const MUSCLE_GROUPS = [
-    "Abs", "Back", "Biceps", "Chest", "Shoulders", "Quads", 
+    "Abs", "Back", "Biceps", "Triceps", "Chest", "Shoulders", "Quads", 
     "Forearms", "Calves", "Glutes", "Hamstrings", "Other"
   ];
   
