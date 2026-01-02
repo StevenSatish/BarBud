@@ -175,11 +175,25 @@ function reducer(state: WorkoutState, action: Action): WorkoutState {
         delete cleanedSetsById[id];
       });
 
-      const replacementExercises: ExerciseEntity[] = action.payload.map((e) => ({
-        instanceId: Crypto.randomUUID(),
-        ...e,
-        setIds: [],
-      }));
+      // Create replacement exercises with one initial empty set each
+      const replacementExercises: ExerciseEntity[] = action.payload.map((e) => {
+        const instanceId = Crypto.randomUUID();
+        const setId = Crypto.randomUUID();
+        const trackingMethods = e.trackingMethods ?? [];
+
+        cleanedSetsById[setId] = {
+          id: setId,
+          order: 1,
+          completed: false,
+          trackingData: trackingMethods.reduce((acc, m) => ({ ...acc, [m]: null }), {} as Partial<Record<TrackingMethod, number | null>>),
+        };
+
+        return {
+          instanceId,
+          ...e,
+          setIds: [setId],
+        };
+      });
 
       const before = state.workout.exercises.slice(0, exIdx);
       const after = state.workout.exercises.slice(exIdx + 1);
