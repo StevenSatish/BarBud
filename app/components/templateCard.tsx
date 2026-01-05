@@ -248,10 +248,10 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
     <Pressable
       onPress={() => setViewModalOpen(true)}
       hitSlop={6}
-      className={`rounded border border-outline-200 bg-${theme}-button px-3 py-3`}
+      className={`rounded-xl border border-outline-200 bg-${theme}-button px-3 py-3`}
     >
       <HStack className='items-center justify-between'>
-        <Text size="xl" bold className='text-typography-800'>{template.templateName}</Text>
+        <Text size="lg" bold className='text-typography-800'>{template.templateName}</Text>
         <Menu
           className={`bg-${theme}-button`}
           placement="bottom left"
@@ -291,15 +291,15 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
 
       <Box className='mt-2'>
         {exercisesLine ? (
-          <Text className='text-typography-800'>{exercisesLine}</Text>
+          <Text className='text-typography-700'>{exercisesLine}</Text>
         ) : (
           <Text className='text-typography-700'>No exercises listed.</Text>
         )}
       </Box>
       {lastPerformedLabel ? (
         <HStack className="items-center space-x-1 mt-1">
-          <Feather name="clock" size={12} color="gray" />
-          <Text className='ml-1 text-gray-400 text-base'>{lastPerformedLabel}</Text>
+          <Feather name="clock" size={12} color="rgba(255,255,255,0.5)" />
+          <Text size="sm" className='ml-1 text-typography-700'>{lastPerformedLabel}</Text>
         </HStack>
       ) : null}
 

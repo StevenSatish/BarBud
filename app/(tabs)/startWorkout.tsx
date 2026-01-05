@@ -212,14 +212,14 @@ export default function StartWorkoutTab() {
   return (
     <SafeAreaView className={`flex-1 bg-${theme}-background`}>
       <Box className={`flex-1 bg-${theme}-background`}>
-        <Box className='px-2 py-4 gap-3'>
-          <Box className='w-full flex-row justify-between items-center'>
-            <Button className={`bg-${theme}-button`} action='secondary' size = 'xl'onPress={openTemplateSheet}>
-              <ButtonText size = 'md' >Create Template</ButtonText>
+        <Box className='px-4 pt-3 pb-2 gap-3'>
+          <Box className='w-full flex-row items-center gap-2'>
+            <Button className={`bg-${theme}-button flex-1`} action='secondary' size='xl' onPress={openTemplateSheet}>
+              <ButtonText size='md'>Create Template</ButtonText>
               <Feather name="list" size={18} color={colors.light} />
             </Button>
-            <Button className={`bg-${theme}-button w-1/2`} action='secondary' size ='xl' onPress={openFolderModal}>
-              <ButtonText size = 'md' >Create Folder</ButtonText>
+            <Button className={`bg-${theme}-button flex-1`} action='secondary' size='xl' onPress={openFolderModal}>
+              <ButtonText size='md'>Create Folder</ButtonText>
               <Feather name="folder-plus" size={18} color={colors.light} />
             </Button>
           </Box>
@@ -236,9 +236,10 @@ export default function StartWorkoutTab() {
           className='flex-1'
           contentContainerStyle={{
             flexGrow: 1,
-            paddingHorizontal: 16,
-            paddingBottom: 16,
-            gap: 12,
+            paddingHorizontal: 14,
+            paddingBottom: 18,
+            paddingTop: 6,
+            gap: 10,
           }}
         >
           <Box className='flex-1'>
@@ -249,7 +250,7 @@ export default function StartWorkoutTab() {
 
               if (isNone) {
                 return (
-                  <Box key={f.id} className='gap-2 mb-2'>
+                  <Box key={f.id} className='gap-2 mb-3 pt-1'>
                     {templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} folderName={f.name} />)}
                   </Box>
                 );
@@ -266,16 +267,16 @@ export default function StartWorkoutTab() {
                     }
                   >
                     <HStack
-                      className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}
+                      className='items-center justify-between px-1 py-2'
                     >
                       <HStack className='items-center gap-2'>
                         <Feather
                           name={isOpen ? 'chevron-down' : 'chevron-right'}
-                          size={18}
-                          color={colors.light}
+                          size={16}
+                          color="rgba(255,255,255,0.65)"
                         />
-                        <Feather name="folder" size={18} color={colors.light} />
-                        <Text size="xl" bold className='text-typography-800'>{f.name}</Text>
+                        <Feather name="folder" size={24} color="rgba(255,255,255,0.65)" />
+                        <Text size="2xl" bold className='text-typography-800'>{f.name}</Text>
                       </HStack>
                       <Menu
                         className={`bg-${theme}-background`}
@@ -296,8 +297,9 @@ export default function StartWorkoutTab() {
                       </Menu>
                     </HStack>
                   </Pressable>
+                  <Box className='border-b border-outline-100 opacity-50' />
                   {isOpen ? (
-                    <Box className='pl-8 pr-2 py-2 gap-2'>
+                    <Box className='pl-10 pr-0 pt-2 pb-3 gap-2'>
                       {templates.length ? (
                         templates.map((t) => <TemplateCard key={t.id} template={t} folderId={f.id} folderName={f.name} />)
                       ) : (
