@@ -5,8 +5,7 @@ import { Button, ButtonText } from '@/components/ui/button';
 import React, { useState, useMemo, useCallback } from 'react';
 import useExerciseDB  from '../context/ExerciseDBContext';
 import { Input, InputField, InputSlot } from '@/components/ui/input';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import Entypo from '@expo/vector-icons/Entypo';
+import Feather from '@expo/vector-icons/Feather';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Menu, MenuItemLabel, MenuItem } from '@/components/ui/menu';
@@ -82,7 +81,7 @@ const ExerciseItem = React.memo(({ item, isSelected, onToggle }) => {
           </Text>
           {lastPerformedLabel ? (
             <HStack space="xs" className="items-center">
-              <Entypo name="back-in-time" size={12} color="gray" />
+              <Feather name="clock" size={12} color="gray" />
               <Text className="text-gray-400 text-base">
                 {lastPerformedLabel}
               </Text>
@@ -274,7 +273,7 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
               textContentType="oneTimeCode"
             />
             <InputSlot className="pr-4">
-              <Ionicons name="search" size={20} color="white" />
+              <Feather name="search" size={20} color="white" />
             </InputSlot>
           </Input>
           {(() => {
@@ -352,7 +351,7 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
             onPress={() => setShowNewExerciseModal(true)}
           >
             <ButtonText>New</ButtonText>
-            <Ionicons name="add" size={20} color="black"/>
+            <Feather name="plus" size={20} color="black"/>
           </Button>
         </HStack>
         <SectionList

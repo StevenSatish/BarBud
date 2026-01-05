@@ -4,7 +4,7 @@ import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useTheme } from '@/app/context/ThemeContext';
 import type { Template } from '@/app/context/TemplateFoldersContext';
-import { Entypo } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { HStack } from '@/components/ui/hstack';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
 import { Pressable, TextInput } from 'react-native';
@@ -258,7 +258,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
           offset={4}
           trigger={({ ...triggerProps }) => (
             <Pressable hitSlop={10} {...triggerProps}>
-              <Entypo name="dots-three-horizontal" size={18} color="white" />
+              <Feather name="more-horizontal" size={18} color="white" />
             </Pressable>
           )}
         >
@@ -298,7 +298,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
       </Box>
       {lastPerformedLabel ? (
         <HStack className="items-center space-x-1 mt-1">
-          <Entypo name="back-in-time" size={12} color="gray" />
+          <Feather name="clock" size={12} color="gray" />
           <Text className='ml-1 text-gray-400 text-base'>{lastPerformedLabel}</Text>
         </HStack>
       ) : null}
@@ -401,7 +401,7 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
                   disabled={moving}
                   onPress={() => handleMoveTemplate(f.id)}
                 >
-                  {f.id !== 'none' ? <Entypo name="folder" size={18} color="white" /> : null}
+                  {f.id !== 'none' ? <Feather name="folder" size={18} color="white" /> : null}
                   <ActionsheetItemText size='lg' className='text-typography-800'>
                     {f.name}
                   </ActionsheetItemText>

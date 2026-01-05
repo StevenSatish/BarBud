@@ -3,7 +3,7 @@ import { useWorkout } from '../context/WorkoutContext';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useTheme } from '@/app/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Entypo } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import {
   Actionsheet,
   ActionsheetBackdrop,
@@ -212,17 +212,15 @@ export default function StartWorkoutTab() {
   return (
     <SafeAreaView className={`flex-1 bg-${theme}-background`}>
       <Box className={`flex-1 bg-${theme}-background`}>
-        <Box className='px-4 py-4 gap-3'>
+        <Box className='px-2 py-4 gap-3'>
           <Box className='w-full flex-row justify-between items-center'>
-            <Button className={`bg-${theme}-button`} action='secondary' size='xl' onPress={openTemplateSheet}>
-              <Entypo name="plus" size={18} color={colors.light} />
-              <ButtonText>Template</ButtonText>
-              <Entypo name="list" size={18} color={colors.light} />
+            <Button className={`bg-${theme}-button`} action='secondary' size = 'xl'onPress={openTemplateSheet}>
+              <ButtonText size = 'md' >Create Template</ButtonText>
+              <Feather name="list" size={18} color={colors.light} />
             </Button>
-            <Button className={`bg-${theme}-button w-1/2`} action='secondary' size='xl' onPress={openFolderModal}>
-              <Entypo name="plus" size={18} color={colors.light} />
-              <ButtonText>Folder</ButtonText>
-              <Entypo name="folder" size={18} color={colors.light} />
+            <Button className={`bg-${theme}-button w-1/2`} action='secondary' size ='xl' onPress={openFolderModal}>
+              <ButtonText size = 'md' >Create Folder</ButtonText>
+              <Feather name="folder-plus" size={18} color={colors.light} />
             </Button>
           </Box>
           <Box className='items-center mt-1 mb-1'>
@@ -271,12 +269,12 @@ export default function StartWorkoutTab() {
                       className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}
                     >
                       <HStack className='items-center gap-2'>
-                        <Entypo
+                        <Feather
                           name={isOpen ? 'chevron-down' : 'chevron-right'}
                           size={18}
                           color={colors.light}
                         />
-                        <Entypo name="folder" size={18} color={colors.light} />
+                        <Feather name="folder" size={18} color={colors.light} />
                         <Text size="xl" bold className='text-typography-800'>{f.name}</Text>
                       </HStack>
                       <Menu
@@ -285,7 +283,7 @@ export default function StartWorkoutTab() {
                         offset={4}
                         trigger={({ ...triggerProps }) => (
                           <Pressable hitSlop={10} {...triggerProps}>
-                            <Entypo name="dots-three-horizontal" size={18} color="white" />
+                            <Feather name="more-horizontal" size={18} color="white" />
                           </Pressable>
                         )}
                       >
@@ -340,7 +338,7 @@ export default function StartWorkoutTab() {
                   });
                 }}
               >
-                {f.id !== `none` ? <Entypo name="folder" size={18} color={colors.light} /> : null}
+                {f.id !== `none` ? <Feather name="folder" size={18} color={colors.light} /> : null}
                 <ActionsheetItemText size='lg' className='text-typography-800'>{f.name}</ActionsheetItemText>
               </ActionsheetItem>
             ))

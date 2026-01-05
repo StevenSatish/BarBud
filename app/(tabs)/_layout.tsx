@@ -75,7 +75,7 @@ export default function TabsLayout() {
           options={{
             title: 'Exercises',
             tabBarIcon: ({ color }) => (
-              <Ionicons name="barbell-outline" size={28} color={color} />
+              <Ionicons name="barbell-sharp" size={28} color={color} />
             ),
           }}
         />
@@ -88,7 +88,7 @@ export default function TabsLayout() {
           options={{
             title: 'Settings',
             tabBarIcon: ({ color }) => (
-              <Ionicons name="settings" size={28} color={color} />
+              <Ionicons name="settings-sharp" size={28} color={color} />
             ),
           }}
         />

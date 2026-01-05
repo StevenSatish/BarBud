@@ -5,11 +5,13 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useTheme } from "@/app/context/ThemeContext";
 import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
+import { HStack } from "@/components/ui/hstack";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "@/components/ui/scroll-view";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 function formatOrdinal(n: number): string {
   const s = ["th", "st", "nd", "rd"] as const;
@@ -152,16 +154,20 @@ export default function ProgressionsScreen() {
                       {group.exerciseName}
                     </Text>
                     {group.items.map((it, j) => (
-                      <Text
+                      <HStack
                         key={`all_item_${group.exerciseId}_${j}`}
-                        className="text-typography-800"
+                        className="items-center"
+                        space="xs"
                       >
-                        {"-       "}
-                        {it.changeType} {it.changeSpec}{" "}
-                        <Text className={`text-${theme}-light font-semibold`}>
-                          {it.change}
+                        <Text className="text-typography-800">
+                          {"-       "}
+                          {it.changeType} {it.changeSpec}{" "}
+                          <Text className={`text-${theme}-light font-semibold`}>
+                            {it.change}
+                          </Text>
                         </Text>
-                      </Text>
+                        <Ionicons name="trophy-sharp" size={16} color={colors.light} />
+                      </HStack>
                     ))}
                   </VStack>
                 </Box>

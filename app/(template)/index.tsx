@@ -10,7 +10,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useTheme } from '@/app/context/ThemeContext';
-import { Entypo, FontAwesome5 } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { consumeTemplateSelection } from './selectionStore';
 import { doc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
@@ -151,7 +151,7 @@ export default function TemplateEditor() {
         >
           <HStack className="items-center gap-3 flex-1">
             <Pressable onLongPress={drag} onPressIn={drag} delayLongPress={120} hitSlop={10}>
-              <Entypo name="menu" size={20} color={isActive ? '#ccc' : 'white'} />
+              <Feather name="menu" size={20} color={isActive ? '#ccc' : 'white'} />
             </Pressable>
             <Text className="text-typography-800 text-base flex-1 mr-3">
               {item.name} {`(${item.category})`}
@@ -176,7 +176,7 @@ export default function TemplateEditor() {
               hitSlop={10}
               className="ml-2"
             >
-              <Entypo name="trash" size={18} color="rgba(220, 38, 38, 0.8)" />
+              <Feather name="trash" size={18} color="rgba(220, 38, 38, 0.8)" />
             </Pressable>
           </HStack>
         </HStack>
@@ -189,7 +189,7 @@ export default function TemplateEditor() {
     <VStack space="md" className="px-4 pt-4">
       <HStack className="items-center justify-between">
         <Pressable onPress={() => router.replace('/(tabs)/startWorkout'  )} className="w-12 items-start">
-          <FontAwesome5 name="chevron-left" size={22} color="white" />
+          <Feather name="chevron-left" size={22} color="white" />
         </Pressable>
         <Box className="flex-1 items-center">
           <Text size="3xl" className="text-typography-800 text-center">

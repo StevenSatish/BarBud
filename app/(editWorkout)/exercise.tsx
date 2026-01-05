@@ -2,9 +2,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Pressable } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
-import Entypo from '@expo/vector-icons/Entypo';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Feather from '@expo/vector-icons/Feather';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
@@ -121,7 +119,7 @@ function Exercise({ exercise }: Props) {
             onPress={() => deleteSet(exercise.instanceId, setId)}
             android_ripple={{ color: '#dc2626' }}
           >
-            <FontAwesome name="trash-o" size={24} color="white" />
+            <Feather name="trash-2" size={24} color="white" />
           </Pressable>
         </Reanimated.View>
       );
@@ -135,7 +133,7 @@ function Exercise({ exercise }: Props) {
           <Text size="lg" className="text-typography-800 font-bold ">
             {`${exercise.name} ${exercise.category !== 'Other' ? `(${exercise.category})` : ''}`}
           </Text>
-          <Entypo name="dots-three-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)} />
+          <Feather name="more-horizontal" size={24} color="white" onPress={() => setShowActionsheet(true)} />
         </HStack>
         {exercise?.notes ? (
           <Box className="px-2">
@@ -157,7 +155,7 @@ function Exercise({ exercise }: Props) {
             </Box>
           ))}
           <Box className="flex-[0.75] items-center justify-center">
-            <AntDesign name="check" size={24} color="white" />
+            <Feather name="check" size={24} color="white" />
           </Box>
         </HStack>
 

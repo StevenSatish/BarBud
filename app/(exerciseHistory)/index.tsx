@@ -18,7 +18,7 @@ import ChartsTab from './charts';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { collection, getDocs, orderBy, query, limit, Timestamp } from 'firebase/firestore';
-import { Entypo, FontAwesome5 } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 
 type TabKey = 'about' | 'history' | 'charts';
 
@@ -245,7 +245,7 @@ export default function ExerciseHistoryScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
             className="w-24 pl-3 flex items-start"
           >
-            <FontAwesome5 name="chevron-down" size={28} color="white" />
+            <Feather name="chevron-down" size={28} color="white" />
           </Pressable>
 
           <Box className="flex-1 items-center justify-center">
@@ -259,7 +259,7 @@ export default function ExerciseHistoryScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={() => setShowDeleteConfirm(true)}
           >
-            <Entypo name="trash" size={24} color="rgba(220, 38, 38, 0.8)" />
+            <Feather name="trash" size={24} color="rgba(220, 38, 38, 0.8)" />
           </Pressable>
         </HStack>
 

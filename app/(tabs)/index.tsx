@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/app/context/ThemeContext';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import Feather from '@expo/vector-icons/Feather';
 import HistoryCalendarView from '@/app/components/HistoryCalendarView';
 import HistoryListView from '@/app/components/HistoryListView';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function History() {
 	const { theme } = useTheme();
@@ -25,7 +24,7 @@ export default function History() {
 						className={(isCalendar ? `bg-${theme}-accent` : '') + ' w-12 h-12 items-center justify-center'}
 						hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
 					>
-						<FontAwesome5 name="calendar-alt" size={18} color={isCalendar ? 'white' : 'gray'} />
+						<Feather name="calendar" size={18} color={isCalendar ? 'white' : 'gray'} />
 					</Pressable>
 					<View className="w-px h-12 bg-outline-200" />
 					<Pressable
@@ -33,7 +32,7 @@ export default function History() {
 						className={(!isCalendar ? `bg-${theme}-accent` : '') + ' w-12 h-12 items-center justify-center'}
 						hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
 					>
-						<FontAwesome5 name="list" size={18} color={!isCalendar ? 'white' : 'gray'} />
+						<Feather name="list" size={18} color={!isCalendar ? 'white' : 'gray'} />
 					</Pressable>
 				</View>
 			</View>

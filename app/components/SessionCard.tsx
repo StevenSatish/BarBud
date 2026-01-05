@@ -3,7 +3,8 @@ import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
 import { Heading } from '@/components/ui/heading';
-import { Entypo, Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '@/app/context/ThemeContext';
 import { useEditWorkout } from '@/app/context/EditWorkoutContext';
 
@@ -41,7 +42,7 @@ export default function SessionCard({ session }: SessionCardProps) {
 					hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
 					onPress={() => startEditing(session.id)}
 				>
-					<Entypo name="edit" size={18} color="white" />
+					<Feather name="edit-2" size={18} color="white" />
 				</Pressable>
 			</HStack>
 			<HStack className="items-center">

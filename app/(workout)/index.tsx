@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Link, useRootNavigationState, router } from 'expo-router';
 import ReorderableList, { useReorderableDrag, useIsActive } from 'react-native-reorderable-list';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import Entypo from '@expo/vector-icons/Entypo';
+import Feather from '@expo/vector-icons/Feather';
 import { useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '@/app/context/ThemeContext';
 import useTemplateFolders from '../context/TemplateFoldersContext';
@@ -125,7 +124,7 @@ export default function WorkoutScreen() {
         <Pressable onLongPress={drag} onPressIn={drag} hitSlop={10}>
           <HStack className={`items-center justify-between rounded border border-outline-100 bg-${theme}-button px-3 py-3`}>
             <HStack className="items-center gap-3 flex-1">
-              <Entypo name="menu" size={20} color={isActive ? '#ccc' : 'white'} />
+              <Feather name="menu" size={20} color={isActive ? '#ccc' : 'white'} />
               <Text className="text-typography-800 text-base flex-1 mr-3">
                 {item.name} {item.category ? `(${item.category})` : ''}
               </Text>
@@ -248,7 +247,7 @@ export default function WorkoutScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
             className="w-24 pl-2 flex items-start"
           >
-            <FontAwesome5
+            <Feather
               name="chevron-left"
               size={24}
               color="white"

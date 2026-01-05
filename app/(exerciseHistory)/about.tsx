@@ -6,7 +6,7 @@ import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
 import { Spinner } from '@/components/ui/spinner';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 type MetricsAllTime = Record<string, number | string | undefined>;
 
@@ -101,7 +101,7 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
         <Heading size="xl" className="text-typography-800">
           Personal Records
         </Heading>
-        <FontAwesome5 name="trophy" size={18} color={colors.light} />
+        <Ionicons name="trophy-sharp" size={18} color={colors.light} />
       </HStack>
       <VStack className="gap-3 mb-5">
         {prRows.map((row) => (
