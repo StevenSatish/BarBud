@@ -21,6 +21,7 @@ function formatOrdinal(n: number): string {
 
 type ProgressionItem = {
   exerciseName: string;
+  exerciseCategory: string;
   changeType: string;
   changeSpec: string;
   change: string;
@@ -74,6 +75,7 @@ export default function ProgressionsScreen() {
       exerciseId: string;
       exerciseName: string;
       items: ProgressionItem[];
+      exerciseCategory: string;
     }[] = [];
     const seenIndexByExerciseId = new Map<string, number>();
     for (const it of allTimeItems) {
@@ -83,6 +85,7 @@ export default function ProgressionsScreen() {
         groups.push({
           exerciseId: it.exerciseId,
           exerciseName: it.exerciseName,
+          exerciseCategory: it.exerciseCategory,
           items: [it],
         });
       } else {
@@ -151,7 +154,7 @@ export default function ProgressionsScreen() {
                 >
                   <VStack>
                     <Text className="text-typography-800">
-                      {group.exerciseName}
+                      {group.exerciseName} ({group.exerciseCategory})
                     </Text>
                     {group.items.map((it, j) => (
                       <HStack
@@ -187,7 +190,7 @@ export default function ProgressionsScreen() {
                   className={`border-outline-200 bg-${theme}-button rounded-md p-4`}
                 >
                   <VStack>
-                    <Text className="text-typography-800">{it.exerciseName}</Text>
+                    <Text className="text-typography-800">{it.exerciseName} ({it.exerciseCategory})</Text>
                     <Text className="text-typography-800">
                       {"-       "}
                       {it.changeType} {it.changeSpec}{" "}

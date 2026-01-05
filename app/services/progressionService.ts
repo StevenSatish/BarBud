@@ -4,6 +4,7 @@ import { FIREBASE_DB } from '@/FirebaseConfig';
 
 export type ProgressionItem = {
     exerciseName: string;
+	exerciseCategory: string;
     changeType: 'Top Set' | 'Total' | 'New Estimated';
     changeSpec: 'Weight' | 'Reps' | 'Time' | 'Volume' | '1RM:';
     change: string;
@@ -113,6 +114,7 @@ export default async function calculateProgressionsForWorkout(
             if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevAllTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevAllTopWeight, lastTopWeight),
@@ -129,6 +131,7 @@ export default async function calculateProgressionsForWorkout(
 			) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevAll.maxTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
@@ -141,6 +144,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevLastTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevLastTopWeight, lastTopWeight),
@@ -158,6 +162,7 @@ export default async function calculateProgressionsForWorkout(
 			) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevLast.lastTopRepsAtTopWeight ?? 0, lastTopRepsAtTopWeight),
@@ -169,6 +174,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastVolume) && lastVolume > (prevLast.lastVolume ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Total',
                     changeSpec: 'Volume',
                     change: formatIncrease(prevLast.lastVolume ?? 0, lastVolume),
@@ -182,6 +188,7 @@ export default async function calculateProgressionsForWorkout(
 			if (Number.isFinite(lastBestEst1RM) && lastBestEst1RM > (prevAll.maxBestEst1RM ?? 0)) {
 				items.push({
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'New Estimated',
                     changeSpec: '1RM:',
 					change: `${lastBestEst1RM}lbs`,
@@ -195,6 +202,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevAllTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevAllTopWeight, lastTopWeight),
@@ -211,6 +219,7 @@ export default async function calculateProgressionsForWorkout(
 			) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevAll.maxTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
@@ -223,6 +232,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopWeight) && lastTopWeight > prevLastTopWeight) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Weight',
                     change: formatIncrease(prevLastTopWeight, lastTopWeight),
@@ -240,6 +250,7 @@ export default async function calculateProgressionsForWorkout(
 			) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevLast.lastTopTimeAtTopWeight ?? 0, lastTopTimeAtTopWeight),
@@ -253,6 +264,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopReps) && lastTopReps > (prevAll.maxTopReps ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevAll.maxTopReps ?? 0, lastTopReps),
@@ -265,6 +277,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTotalReps) && lastTotalReps > (prevAll.maxTotalReps ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Total',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevAll.maxTotalReps ?? 0, lastTotalReps),
@@ -277,6 +290,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopReps) && lastTopReps > (prevLast.lastTopReps ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevLast.lastTopReps ?? 0, lastTopReps),
@@ -288,6 +302,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTotalReps) && lastTotalReps > (prevLast.lastTotalReps ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Total',
                     changeSpec: 'Reps',
                     change: formatIncrease(prevLast.lastTotalReps ?? 0, lastTotalReps),
@@ -301,6 +316,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopTime) && lastTopTime > (prevAll.maxTopTime ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevAll.maxTopTime ?? 0, lastTopTime),
@@ -313,6 +329,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTotalTime) && lastTotalTime > (prevAll.maxTotalTime ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Total',
                     changeSpec: 'Time',
                     change: formatIncrease(prevAll.maxTotalTime ?? 0, lastTotalTime),
@@ -325,6 +342,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTopTime) && lastTopTime > (prevLast.lastTopTime ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Top Set',
                     changeSpec: 'Time',
                     change: formatIncrease(prevLast.lastTopTime ?? 0, lastTopTime),
@@ -337,6 +355,7 @@ export default async function calculateProgressionsForWorkout(
 			if (!chosen && Number.isFinite(lastTotalTime) && lastTotalTime > (prevLast.lastTotalTime ?? 0)) {
                 chosen = {
                     exerciseName: ex.name,
+                    exerciseCategory: ex.category,
                     changeType: 'Total',
                     changeSpec: 'Time',
                     change: formatIncrease(prevLast.lastTotalTime ?? 0, lastTotalTime),
