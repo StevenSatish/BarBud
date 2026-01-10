@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { collection, doc, getDoc, query, orderBy, limit, getDocs, increment, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, query, orderBy, limit, getDocs, setDoc, getCountFromServer } from 'firebase/firestore';
 import { 
   writeSessionAndCollectInstances, 
   writeExerciseInstances, 
@@ -729,17 +729,13 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // 1) Compute progressions first (no writes yet)
     const progressions = await calculateProgressionsForWorkout(uid, ws);
 
-    // 1a) Fetch workoutsCompleted BEFORE increment
+    // 1a) Count existing sessions BEFORE this workout is saved
     let workoutsCompletedBefore = 0;
     try {
       if (uid) {
-        const userRef = doc(FIREBASE_DB, 'users', uid);
-        const snap = await getDoc(userRef);
-        const data = snap.exists() ? (snap.data() as any) : {};
-        const raw = data?.workoutsCompleted;
-        if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 0) {
-          workoutsCompletedBefore = raw;
-        }
+        const sessionsRef = collection(FIREBASE_DB, `users/${uid}/sessions`);
+        const snapshot = await getCountFromServer(sessionsRef);
+        workoutsCompletedBefore = snapshot.data().count;
       }
     } catch {}
 
@@ -770,13 +766,6 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
           console.error('Failed to update template lastPerformedAt:', e);
         }
 
-        // Increment workoutsCompleted counter on user doc
-        try {
-          const userRef = doc(FIREBASE_DB, 'users', uid);
-          await setDoc(userRef, { workoutsCompleted: increment(1) }, { merge: true });
-        } catch (e) {
-          console.error('Failed to increment workoutsCompleted:', e);
-        }
       } catch (err) {
         console.error('Failed to write session to Firestore:', err);
       }
