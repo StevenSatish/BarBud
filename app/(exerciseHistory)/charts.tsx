@@ -517,7 +517,7 @@ export default function ExerciseChartsTab({
               {hoveredPoint ? (
                 <HStack className="items-baseline">
                   <Text size="3xl" bold className="text-typography-800">
-                    {hoveredPoint.value.toFixed(1)}
+                    {hoveredPoint.value.toFixed(2)}
                   </Text>
                   <Text size="lg" className="text-typography-800">
                     {selected.unit}:{' '}
