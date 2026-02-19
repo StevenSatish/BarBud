@@ -12,7 +12,7 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { useTheme } from '@/app/context/ThemeContext';
 import Feather from '@expo/vector-icons/Feather';
 import { consumeTemplateSelection } from './selectionStore';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import useTemplateFolders from '@/app/context/TemplateFoldersContext';
 
@@ -98,10 +98,10 @@ export default function TemplateEditor() {
       }
 
       const safeFolderId = typeof folderId === 'string' && folderId.length ? folderId : 'none';
-      const templateId =
-        (typeof templateIdParam === 'string' && templateIdParam.length
-          ? templateIdParam
-          : trimmedName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '')) || 'template';
+      const newTemplateId =
+        trimmedName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '') || 'template';
+      const oldTemplateId =
+        typeof templateIdParam === 'string' && templateIdParam.length ? templateIdParam : null;
 
       const mappedExercises = exercises.map((ex, idx) => {
         const num = parseInt(ex.sets, 10);
@@ -118,10 +118,15 @@ export default function TemplateEditor() {
         };
       });
 
-      await setDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', safeFolderId, 'templates', templateId), {
+      await setDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', safeFolderId, 'templates', newTemplateId), {
         templateName: trimmedName,
         exercises: mappedExercises,
       });
+
+      // If the ID changed, delete the old document
+      if (oldTemplateId && oldTemplateId !== newTemplateId) {
+        await deleteDoc(doc(FIREBASE_DB, 'users', user.uid, 'folders', safeFolderId, 'templates', oldTemplateId));
+      }
 
       const latestFolders = await fetchFolders();
       await fetchTemplates(latestFolders);
