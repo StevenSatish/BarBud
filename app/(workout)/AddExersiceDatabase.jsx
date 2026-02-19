@@ -139,7 +139,8 @@ export default function AddExerciseDatabase({ modeOverride } = {}) {
         const filteredData = section.data.filter(exercise => {
           // Text search filter
           const matchesSearch = !query || 
-            exercise.name.toLowerCase().includes(query) 
+            exercise.name.toLowerCase().includes(query) ||
+            exercise.category.toLowerCase().includes(query)
           
           // Muscle group filter
           const matchesMuscleGroup = !selectedMuscleGroup || 
