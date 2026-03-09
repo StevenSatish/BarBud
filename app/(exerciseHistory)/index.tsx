@@ -245,7 +245,7 @@ export default function ExerciseHistoryScreen() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
             className="w-24 pl-3 flex items-start"
           >
-            <Feather name="chevron-down" size={28} color="white" />
+            <Feather name="chevron-down" size={32} color="white" />
           </Pressable>
 
           <Box className="flex-1 items-center justify-center">

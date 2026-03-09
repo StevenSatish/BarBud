@@ -245,11 +245,11 @@ export default function WorkoutScreen() {
           <Pressable 
             onPress={minimizeWorkout}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
-            className="w-24 pl-2 flex items-start"
+            className="w-24 pl-1 flex items-start"
           >
             <Feather
               name="chevron-left"
-              size={24}
+              size={32}
               color="white"
             />
           </Pressable>
