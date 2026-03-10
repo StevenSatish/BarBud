@@ -46,9 +46,12 @@ export default function HistoryCalendarView() {
 
 	useEffect(() => {
 		if (!user?.uid) return;
-		// Load current month and prefetch neighbors
 		(async () => {
-			await ensureMonthLoaded(user.uid, currentMonthKey);
+			const prevMonthKey = getPrevMonthKey(currentMonthKey);
+			await Promise.all([
+				ensureMonthLoaded(user.uid, currentMonthKey),
+				ensureMonthLoaded(user.uid, prevMonthKey),
+			]);
 			updateMarkedDatesForMonth(currentMonthKey);
 			prefetchAdjacentMonths(user.uid, currentMonthKey);
 		})();
@@ -66,6 +69,12 @@ export default function HistoryCalendarView() {
 		const m = String(d.getMonth() + 1).padStart(2, '0');
 		const day = String(d.getDate()).padStart(2, '0');
 		return `${y}-${m}-${day}`;
+	}
+
+	function getPrevMonthKey(monthKey: string): string {
+		const [yStr, mStr] = monthKey.split('-');
+		const prev = new Date(Number(yStr), Number(mStr) - 2, 1);
+		return formatMonthKey(prev);
 	}
 
 	function getMonthRangeFromMonthKey(monthKey: string): { startDayKey: string; endDayKey: string } {
@@ -120,11 +129,28 @@ export default function HistoryCalendarView() {
 
 	function updateMarkedDatesForMonth(monthKey: string): void {
 		const dayMap = monthCacheRef.current[monthKey] || {};
-		const next: Record<string, any> = {};
+
+		// Include last 7 days of the previous month for calendar spillover
+		const prevKey = getPrevMonthKey(monthKey);
+		const prevDayMap = monthCacheRef.current[prevKey] || {};
+		const { endDayKey: prevEndDay } = getMonthRangeFromMonthKey(prevKey);
+		const prevEndDate = new Date(prevEndDay);
+		const spilloverStart = new Date(prevEndDate);
+		spilloverStart.setDate(spilloverStart.getDate() - 6);
+		const spilloverStartKey = formatDayKey(spilloverStart);
+
+		const combined: Record<string, SessionSummary[]> = {};
+		Object.entries(prevDayMap).forEach(([dayKey, sessions]) => {
+			if (dayKey >= spilloverStartKey) combined[dayKey] = sessions;
+		});
 		Object.entries(dayMap).forEach(([dayKey, sessions]) => {
+			combined[dayKey] = sessions;
+		});
+
+		const next: Record<string, any> = {};
+		Object.entries(combined).forEach(([dayKey, sessions]) => {
 			const count = sessions.length;
 			if (count <= 0) return;
-			// Cap visible dots to avoid overflow; identical color dots convey multiplicity
 			const dotCount = Math.min(count, 4);
 			const dots = Array.from({ length: dotCount }).map((_, i) => ({
 				key: `${dayKey}-s${i + 1}`,
@@ -133,7 +159,6 @@ export default function HistoryCalendarView() {
 			}));
 			next[dayKey] = { dots };
 		});
-		// Merge with existing marked dates instead of replacing
 		setMarkedDates(prev => ({ ...prev, ...next }));
 	}
 
