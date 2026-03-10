@@ -115,8 +115,9 @@ export default function HistoryDatabase() {
       const h = Math.max(1, hours);
       return `${h} ${h === 1 ? 'hour' : 'hours'} ago`;
     }
-    const days = Math.floor(hours / 24);
-    const d = Math.max(1, days);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const performed = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const d = Math.round((today - performed) / (1000 * 60 * 60 * 24));
     return `${d} ${d === 1 ? 'day' : 'days'} ago`;
   }, []);
 
