@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
-import { Link, useRootNavigationState, router } from 'expo-router';
+import { Link, useRootNavigationState } from 'expo-router';
 import ReorderableList, { useReorderableDrag, useIsActive } from 'react-native-reorderable-list';
 import Feather from '@expo/vector-icons/Feather';
 import { useWorkout } from '../context/WorkoutContext';
@@ -26,6 +26,7 @@ import {
 
 import WorkoutTimer from './workoutTimer';
 import Exercise from './exercise';
+import RestTimerPicker from './RestTimerPicker';
 
 export default function WorkoutScreen() {
   const { theme } = useTheme();
@@ -38,6 +39,9 @@ export default function WorkoutScreen() {
     navigateToProgressions,
     finishReorderExercises,
     reorderExercises,
+    restRemaining,
+    startRest,
+    cancelRest,
   } = useWorkout();
   const { fetchFolders, fetchTemplates } = useTemplateFolders();
   const navigationState = useRootNavigationState();
@@ -45,6 +49,7 @@ export default function WorkoutScreen() {
   const [showEndWorkoutAlert, setShowEndWorkoutAlert] = useState(false);
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [restTimerModalOpen, setRestTimerModalOpen] = useState(false);
 
   const currentWorkout = workoutState.workout;
   const startTimeISO = currentWorkout?.startTimeISO;
@@ -79,6 +84,11 @@ export default function WorkoutScreen() {
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [startTimeISO]);
+
+  const handleStartRest = useCallback((seconds: number) => {
+    setRestTimerModalOpen(false);
+    startRest(seconds);
+  }, [startRest]);
 
   const handleConfirmFinish = async () => {
     setShowEndWorkoutAlert(false);
@@ -241,18 +251,36 @@ export default function WorkoutScreen() {
           </AlertDialogContent>
         </AlertDialog>
 
+        <RestTimerPicker
+          isOpen={restTimerModalOpen}
+          onClose={() => setRestTimerModalOpen(false)}
+          onStart={handleStartRest}
+        />
+
         <HStack className={`w-full py-4 px-2 bg-${theme}-background items-center justify-between`}>
-          <Pressable 
-            onPress={minimizeWorkout}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 20 }}
-            className="w-24 pl-1 flex items-start"
-          >
-            <Feather
-              name="chevron-left"
-              size={32}
-              color="white"
-            />
-          </Pressable>
+          <HStack className="w-24 pl-1 items-center gap-3">
+            <Pressable 
+              onPress={minimizeWorkout}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Feather name="chevron-left" size={32} color="white" />
+            </Pressable>
+            {restRemaining != null && restRemaining > 0 ? (
+              <Pressable className="pl-7"
+                onPress={cancelRest}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name="x" size={24} color="rgba(220, 38, 38, 0.6)" />
+              </Pressable>
+            ) : (
+              <Pressable className="pl-7"
+                onPress={() => setRestTimerModalOpen(true)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name="clock" size={24} color="rgba(255,255,255,0.7)" />
+              </Pressable>
+            )}
+          </HStack>
 
         <Box className="flex-1 flex items-center justify-center">
             <WorkoutTimer elapsedSeconds={elapsedSeconds} />

@@ -15,6 +15,7 @@ import {
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
 import { Platform } from 'react-native';
+import RestTimerOverlay from './components/RestTimerOverlay';
 
 
 function AppLayout() {
@@ -98,6 +99,7 @@ export default function RootLayout() {
                   <ExerciseDBProvider>
                     <TemplateFoldersProvider>
                       <AppLayout />
+                      <RestTimerOverlay />
                     </TemplateFoldersProvider>
                   </ExerciseDBProvider>
                 </EditWorkoutProvider>

@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useRef, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Crypto from 'expo-crypto';
+import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, doc, getDoc, query, orderBy, limit, getDocs, setDoc, getCountFromServer } from 'firebase/firestore';
 import { 
@@ -483,6 +485,12 @@ type Ctx = {
   startReorderExercises: () => void;
   finishReorderExercises: () => void;
   reorderExercises: (order: string[]) => void;
+  restTotal: number | null;
+  restRemaining: number | null;
+  restComplete: boolean;
+  startRest: (seconds: number) => void;
+  cancelRest: () => void;
+  dismissRestComplete: () => void;
 };
 
 const WorkoutContext = createContext<Ctx | undefined>(undefined);
@@ -490,6 +498,111 @@ const WorkoutContext = createContext<Ctx | undefined>(undefined);
 export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Rest timer (ephemeral — not persisted with workout state)
+  // Uses wall-clock timestamps so backgrounding the app doesn't stall the countdown
+  const [restTotal, setRestTotal] = useState<number | null>(null);
+  const [restRemaining, setRestRemaining] = useState<number | null>(null);
+  const [restComplete, setRestComplete] = useState(false);
+  const restEndTimeRef = useRef<number | null>(null);
+  const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const restNotifIdRef = useRef<string | null>(null);
+
+  // Request notification permissions once on mount
+  useEffect(() => {
+    Notifications.requestPermissionsAsync();
+  }, []);
+
+  const startRest = useCallback(async (seconds: number) => {
+    restEndTimeRef.current = Date.now() + seconds * 1000;
+    setRestTotal(seconds);
+    setRestRemaining(seconds);
+    setRestComplete(false);
+
+    // Schedule a local notification for when the timer ends
+    try {
+      if (restNotifIdRef.current) {
+        await Notifications.cancelScheduledNotificationAsync(restNotifIdRef.current);
+      }
+      restNotifIdRef.current = await Notifications.scheduleNotificationAsync({
+        content: { title: 'Rest Interval Complete', body: 'Back to it!', sound: 'default' },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds, repeats: false },
+      });
+    } catch {}
+  }, []);
+
+  const cancelRest = useCallback(async () => {
+    restEndTimeRef.current = null;
+    if (restIntervalRef.current) {
+      clearInterval(restIntervalRef.current);
+      restIntervalRef.current = null;
+    }
+    setRestRemaining(null);
+    setRestTotal(null);
+
+    if (restNotifIdRef.current) {
+      try { await Notifications.cancelScheduledNotificationAsync(restNotifIdRef.current); } catch {}
+      restNotifIdRef.current = null;
+    }
+  }, []);
+
+  const dismissRestComplete = useCallback(() => {
+    setRestComplete(false);
+  }, []);
+
+  // Rest countdown — recalculates from wall clock each tick
+  useEffect(() => {
+    if (restEndTimeRef.current == null || restRemaining == null || restRemaining <= 0) {
+      if (restIntervalRef.current) {
+        clearInterval(restIntervalRef.current);
+        restIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const tick = () => {
+      const endTime = restEndTimeRef.current;
+      if (endTime == null) return;
+      const secsLeft = Math.ceil((endTime - Date.now()) / 1000);
+      if (secsLeft <= 0) {
+        restEndTimeRef.current = null;
+        if (restIntervalRef.current) {
+          clearInterval(restIntervalRef.current);
+          restIntervalRef.current = null;
+        }
+        setRestRemaining(null);
+        // Cancel the scheduled notification since the in-app alert will show
+        if (restNotifIdRef.current) {
+          Notifications.cancelScheduledNotificationAsync(restNotifIdRef.current).catch(() => {});
+          restNotifIdRef.current = null;
+        }
+        setTimeout(() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setRestComplete(true);
+          setRestTotal(null);
+        }, 0);
+      } else {
+        setRestRemaining(secsLeft);
+      }
+    };
+
+    tick();
+    restIntervalRef.current = setInterval(tick, 1000);
+    return () => {
+      if (restIntervalRef.current) {
+        clearInterval(restIntervalRef.current);
+        restIntervalRef.current = null;
+      }
+    };
+  }, [restRemaining != null && restRemaining > 0]);
+
+  // Clear rest timer when workout becomes inactive
+  useEffect(() => {
+    if (!state.isActive) {
+      cancelRest();
+      setRestComplete(false);
+    }
+  }, [state.isActive, cancelRest]);
 
   // Load from storage once
   useEffect(() => {
@@ -796,6 +909,12 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     startReorderExercises,
     finishReorderExercises,
     reorderExercises,
+    restTotal,
+    restRemaining,
+    restComplete,
+    startRest,
+    cancelRest,
+    dismissRestComplete,
   };
 
   return <WorkoutContext.Provider value={value}>{children}</WorkoutContext.Provider>;
