@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/app/context/ThemeContext';
 import { HStack } from '@/components/ui/hstack';
@@ -7,11 +7,28 @@ import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
 import { Spinner } from '@/components/ui/spinner';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import YoutubePlayer from 'react-native-youtube-iframe';
 
 type MetricsAllTime = Record<string, number | string | undefined>;
 
+function extractYouTubeId(url?: string): string | null {
+  if (!url) return null;
+  const match = url.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/
+  );
+  return match?.[1] ?? null;
+}
+
 export default function ExerciseAbout({ exercise, metrics, loading }: { exercise?: any; metrics: MetricsAllTime | null; loading: boolean }) {
   const { theme, colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const videoId = useMemo(() => extractYouTubeId(exercise?.videoLink), [exercise?.videoLink]);
+  const videoWidth = screenWidth - 32;
+  const videoHeight = Math.round(videoWidth * (9 / 16));
+  const [playing, setPlaying] = useState(false);
+  const onStateChange = useCallback((state: string) => {
+    if (state === 'ended') setPlaying(false);
+  }, []);
 
   const hasWeight = useMemo(() => (exercise?.trackingMethods || []).includes('weight'), [exercise]);
   const hasReps = useMemo(() => (exercise?.trackingMethods || []).includes('reps'), [exercise]);
@@ -87,16 +104,34 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
     );
   }
 
+  const VideoEmbed = videoId ? (
+    <View className="mt-5 mb-4">
+      <Heading size="xl" className="mb-3 text-typography-800">
+        Exercise Demo
+      </Heading>
+      <View style={{ borderRadius: 8, overflow: 'hidden' }}>
+        <YoutubePlayer
+          height={videoHeight}
+          videoId={videoId}
+          play={playing}
+          onChangeState={onStateChange}
+          webViewProps={{ allowsInlineMediaPlayback: true }}
+        />
+      </View>
+    </View>
+  ) : null;
+
   if (!metrics) {
     return (
-      <View className={`flex-1 items-center justify-start bg-${theme}-background px-4 pt-10`}>
-        <Text size="xl" className="text-typography-700">No metrics yet for this exercise.</Text>
-      </View>
+      <ScrollView className={`flex-1 bg-${theme}-background`} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 40, paddingBottom: 24 }}>
+        <Text size="xl" className="text-typography-700 text-center">No metrics yet for this exercise.</Text>
+        {VideoEmbed}
+      </ScrollView>
     );
   }
 
   return (
-    <View className={`flex-1 bg-${theme}-background px-4 py-3`}>
+    <ScrollView className={`flex-1 bg-${theme}-background`} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}>
       <HStack className="items-center justify-between mb-3">
         <Heading size="xl" className="text-typography-800">
           Personal Records
@@ -123,6 +158,8 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
           </HStack>
         ))}
       </VStack>
-    </View>
+
+      {VideoEmbed}
+    </ScrollView>
   );
 }

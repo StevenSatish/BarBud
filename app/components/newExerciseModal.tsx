@@ -91,6 +91,9 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
   const exerciseNameDraftRef = useRef('');
   const [exerciseNameInputKey, setExerciseNameInputKey] = useState(0);
 
+  const videoLinkDraftRef = useRef('');
+  const [videoLinkInputKey, setVideoLinkInputKey] = useState(0);
+
   const [secondaryMuscleGroups, setSecondaryMuscleGroups] = useState<string[]>([]);
   const [showSecondaryMuscles, setShowSecondaryMuscles] = useState(false);
 
@@ -146,10 +149,13 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
 
   const handleConfirmCreate = async () => {
     const trimmedName = exerciseNameDraftRef.current.trim();
-    const result = await createExercise(trimmedName, category, muscleGroup, secondaryMuscleGroups, [trackingMethod]);
+    const trimmedLink = videoLinkDraftRef.current.trim();
+    const result = await createExercise(trimmedName, category, muscleGroup, secondaryMuscleGroups, [trackingMethod], trimmedLink || undefined);
     if (result.success) {
       exerciseNameDraftRef.current = '';
       setExerciseNameInputKey((k) => k + 1);
+      videoLinkDraftRef.current = '';
+      setVideoLinkInputKey((k) => k + 1);
       setShowSecondaryMuscles(false);
       setShowConfirm(false);
       onClose();
@@ -165,6 +171,8 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
     setExerciseNameError(false);
     setExerciseNameInputKey((k) => k + 1);
     exerciseNameDraftRef.current = '';
+    videoLinkDraftRef.current = '';
+    setVideoLinkInputKey((k) => k + 1);
     setSecondaryMuscleGroups([]);
     setTrackingMethod('');
     setTrackingMethodError(false);
@@ -301,6 +309,29 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
 
             <FormControl>
               <FormControlLabel>
+                <FormControlLabelText>YouTube Link (Optional)</FormControlLabelText>
+              </FormControlLabel>
+              <Box className="w-full rounded border px-3 py-2 border-secondary-900">
+                <TextInput
+                  key={videoLinkInputKey}
+                  onChangeText={(t) => { videoLinkDraftRef.current = t; }}
+                  placeholder="https://youtube.com/..."
+                  placeholderTextColor="rgba(255,255,255,0.6)"
+                  className="text-typography-800"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                />
+              </Box>
+              <FormControlHelper>
+                <FormControlHelperText>
+                  Exercise demo video
+                </FormControlHelperText>
+              </FormControlHelper>
+            </FormControl>
+
+            <FormControl className="-mt-2">
+              <FormControlLabel>
                 <FormControlLabelText>Secondary Muscles (Optional)</FormControlLabelText>
               </FormControlLabel>
               <Pressable
@@ -397,7 +428,6 @@ export default function NewExerciseModal({ isOpen, onClose }: any) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
     </Modal>
   );
 } 

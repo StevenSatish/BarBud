@@ -36,7 +36,7 @@ type ExerciseSectionType = {
 type ExerciseDBContextType = {
   exerciseSections: ExerciseSectionType[];
   loading: boolean;
-  createExercise: (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => Promise<{ success: boolean; error?: string }>;
+  createExercise: (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[], videoLink?: string) => Promise<{ success: boolean; error?: string }>;
   fetchExercises: () => Promise<void>;
 };
 
@@ -48,7 +48,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
   const emptyStateRetryCount = useRef(0);
   const isRefetchingDueToEmpty = useRef(false);
 
-  const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[]) => {
+  const createExercise = async (exerciseName: string, category: string, muscleGroup: string, secondaryMuscleGroups: string[], trackingMethods: string[], videoLink?: string) => {
     const user = FIREBASE_AUTH.currentUser;
     if (!user?.uid) return { success: false, error: "No user logged in" };
 
@@ -84,7 +84,7 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       }
     }).flat();
 
-    const exerciseData = {
+    const exerciseData: Record<string, any> = {
       name: trimmedExerciseName,
       category: trimmedCategory,
       exerciseId,
@@ -94,6 +94,9 @@ export const ExerciseDBProvider: React.FC<{children: React.ReactNode}> = ({ chil
       notes: '',
       isDeleted: false,
     };
+    if (videoLink) {
+      exerciseData.videoLink = videoLink;
+    }
 
     try {
       await setDoc(exerciseRef, exerciseData);

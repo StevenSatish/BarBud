@@ -3,6 +3,9 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 
 admin.initializeApp();
 
+// One-time migration function (can be removed after running)
+export { migrateVideoLinks } from "./migrateVideoLinks";
+
 export const deleteMyAccount = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) {
