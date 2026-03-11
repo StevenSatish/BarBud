@@ -402,16 +402,22 @@ const recomputeMetricsForExercise = async (
   currentSessionStartDate?: Date,
   currentSessionEndDate?: Date
 ) => {
-  const instancesSnap = await getDocs(
-    collection(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}/instances`)
-  );
+  const [instancesSnap, exerciseSnap] = await Promise.all([
+    getDocs(collection(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}/instances`)),
+    getDoc(doc(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}`)),
+  ]);
+
+  const resetDateRaw = exerciseSnap.data()?.resetDate;
+  const resetDate: Date | null = resetDateRaw
+    ? (typeof resetDateRaw.toDate === 'function' ? resetDateRaw.toDate() : new Date(resetDateRaw))
+    : null;
+
   if (instancesSnap.empty) {
-    // No instances: clear metrics
     const lastRef = doc(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}/metrics/lastSessionMetrics`);
     const allTimeRef = doc(FIREBASE_DB, `users/${uid}/exercises/${exerciseId}/metrics/allTimeMetrics`);
     const batch = writeBatch(FIREBASE_DB);
-    batch.set(lastRef, {}, { merge: true });
-    batch.set(allTimeRef, {}, { merge: true });
+    batch.set(lastRef, {}, { merge: false });
+    batch.set(allTimeRef, {}, { merge: false });
     await batch.commit();
     return;
   }
@@ -425,6 +431,9 @@ const recomputeMetricsForExercise = async (
     const data = snap.data() as ExerciseInstanceDoc;
     const tracking = deriveTrackingFromInstance(data, trackingFromState ?? []);
     const date = (data.date instanceof Date ? data.date : new Date((data as any).date?.seconds * 1000 || data.date)) as Date;
+
+    if (resetDate && date.getTime() <= resetDate.getTime()) continue;
+
     const completedSetCount = data.completedSetCount || 0;
     agg.totalSets += completedSetCount;
 
@@ -498,7 +507,7 @@ const recomputeMetricsForExercise = async (
   if (agg.lastTopTime) lastDoc.lastTopTime = agg.lastTopTime;
   if (agg.lastTotalTime) lastDoc.lastTotalTime = agg.lastTotalTime;
 
-  batch.set(lastRef, lastDoc, { merge: true });
+  batch.set(lastRef, lastDoc, { merge: false });
 
   const allTimeDoc: any = {};
   if (agg.totalSets) allTimeDoc.totalSets = agg.totalSets;
@@ -514,7 +523,7 @@ const recomputeMetricsForExercise = async (
   if (agg.maxTopTime) allTimeDoc.maxTopTime = agg.maxTopTime;
   if (agg.maxTotalTime) allTimeDoc.maxTotalTime = agg.maxTotalTime;
 
-  batch.set(allTimeRef, allTimeDoc, { merge: true });
+  batch.set(allTimeRef, allTimeDoc, { merge: false });
 
   // Update lastPerformedAt when there were completed sets
   // Use currentSessionEndDate if the most recent session is the one being edited

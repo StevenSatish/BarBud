@@ -19,6 +19,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
 import { collection, getDocs, orderBy, query, limit, Timestamp } from 'firebase/firestore';
 import Feather from '@expo/vector-icons/Feather';
+import { resetExerciseProgress } from '@/app/services/exerciseService';
 
 type TabKey = 'about' | 'history' | 'charts';
 
@@ -54,6 +55,7 @@ export default function ExerciseHistoryScreen() {
   const [chartsLoading, setChartsLoading] = useState<boolean>(true);
   const [chartsInstances, setChartsInstances] = useState<ChartsInstance[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleConfirmDelete = async () => {
     if (!user?.uid || !exercise?.exerciseId) {
@@ -71,6 +73,21 @@ export default function ExerciseHistoryScreen() {
       console.warn('Failed to mark exercise deleted', err);
     } finally {
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleConfirmReset = async () => {
+    if (!user?.uid || !exercise?.exerciseId) {
+      setShowResetConfirm(false);
+      return;
+    }
+    try {
+      await resetExerciseProgress(user.uid, exercise.exerciseId);
+      setMetrics(null);
+    } catch (err) {
+      console.warn('Failed to reset exercise progress', err);
+    } finally {
+      setShowResetConfirm(false);
     }
   };
 
@@ -254,13 +271,20 @@ export default function ExerciseHistoryScreen() {
             </Heading>
           </Box>
 
-          <Pressable
-            className="w-24 pr-3 flex items-end"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            onPress={() => setShowDeleteConfirm(true)}
-          >
-            <Feather name="trash" size={24} color="rgba(220, 38, 38, 0.8)" />
-          </Pressable>
+          <HStack className="w-24 pr-3 items-center justify-end" space="md">
+            <Pressable
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => setShowResetConfirm(true)}
+            >
+              <Feather name="rotate-ccw" size={22} color="white" />
+            </Pressable>
+            <Pressable
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => setShowDeleteConfirm(true)}
+            >
+              <Feather name="trash" size={24} color="rgba(220, 38, 38, 0.8)" />
+            </Pressable>
+          </HStack>
         </HStack>
 
         {/* Custom Tabs */}
@@ -324,6 +348,38 @@ export default function ExerciseHistoryScreen() {
             </Button>
             <Button action="negative" onPress={handleConfirmDelete}>
               <ButtonText>Confirm</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        useRNModal
+        className="z-1000"
+      >
+        <ModalBackdrop onPress={() => setShowResetConfirm(false)} />
+        <ModalContent
+          size="sm"
+          className={`bg-${theme}-background border-${theme}-steelGray px-5 py-4`}
+        >
+          <ModalHeader>
+            <HStack className="flex-1" space="md">
+              <Heading size="md" className="text-typography-800 font-semibold">
+                Reset progress?
+              </Heading>
+            </HStack>
+          </ModalHeader>
+          <ModalBody>
+            <Text className="text-typography-800">This will clear all personal records and lifetime stats for this exercise.{'\n\n'}Your workout history and charts will not be affected.{'\n\n'}(Useful for switching to a new machine, resetting your form, etc.)</Text>
+          </ModalBody>
+          <ModalFooter className="flex-row justify-between items-center px-4">
+            <Button variant="link" onPress={() => setShowResetConfirm(false)}>
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button onPress={handleConfirmReset}>
+              <ButtonText className="text-black">Reset</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>
