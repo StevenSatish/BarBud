@@ -450,26 +450,41 @@ export default function TemplateCard({ template, folderId, folderName }: Templat
 }
 
 function formatRelativeTime(ts?: Template['lastPerformedAt']) {
-  if (!ts) return 'Never performed';
+  if (!ts) return null;
   let date: Date | null = null;
   try {
-    // @ts-expect-error Timestamp from Firestore
-    date = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
-    if (!(date instanceof Date) || Number.isNaN(date.getTime())) date = null;
-  } catch {
-    date = null;
-  }
-  if (!date) return 'Never performed';
+    if (ts && typeof (ts as any).toDate === 'function') {
+      date = (ts as any).toDate();
+    } else if (ts && typeof ts === 'object' && typeof (ts as any).seconds === 'number') {
+      date = new Date((ts as any).seconds * 1000);
+    } else if (typeof ts === 'number') {
+      date = new Date(ts);
+    } else if (typeof ts === 'string') {
+      const parsed = new Date(ts);
+      if (!isNaN(parsed.getTime())) date = parsed;
+    }
+  } catch {}
+  if (!date) return null;
 
-  const diffMs = Date.now() - date.getTime();
-  if (diffMs <= 0) return 'Just now';
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (!Number.isFinite(diffMs) || diffMs < 0) return null;
 
+  const minutes = Math.floor(diffMs / (1000 * 60));
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (hours < 1) return 'Less than 1 hour ago';
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (hours < 1) {
+    const m = Math.max(1, minutes);
+    return `${m} ${m === 1 ? 'minute' : 'minutes'} ago`;
+  }
+  if (hours < 24) {
+    const h = Math.max(1, hours);
+    return `${h} ${h === 1 ? 'hour' : 'hours'} ago`;
+  }
 
-  const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const performed = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const d = Math.round((today.getTime() - performed.getTime()) / (1000 * 60 * 60 * 24));
+  return `${d} ${d === 1 ? 'day' : 'days'} ago`;
 }
 
 function slugify(name: string) {
