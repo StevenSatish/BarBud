@@ -83,11 +83,20 @@ export default function Settings() {
   const [rankedWeightClass, setRankedWeightClass] = useState('');
 
   const [showRankedModal, setShowRankedModal] = useState(false);
+  const [rankedGenderInvalid, setRankedGenderInvalid] = useState(false);
+  const [rankedWeightClassInvalid, setRankedWeightClassInvalid] = useState(false);
   const [progressionItems, setProgressionItems] = useState<RankedProgressionItem[]>([]);
   const [progressionIndex, setProgressionIndex] = useState(0);
   const [showProgressionModal, setShowProgressionModal] = useState(false);
   const [rankedSaving, setRankedSaving] = useState(false);
   const [showRankedInfo, setShowRankedInfo] = useState(false);
+
+  useEffect(() => {
+    if (showRankedModal) {
+      setRankedGenderInvalid(false);
+      setRankedWeightClassInvalid(false);
+    }
+  }, [showRankedModal]);
 
   useEffect(() => {
     if (userProfile) {
@@ -381,13 +390,16 @@ export default function Settings() {
           </ModalHeader>
           <ModalBody>
             <VStack space="lg">
-              <FormControl>
+              <FormControl isInvalid={rankedGenderInvalid}>
                 <FormControlLabel>
                   <FormControlLabelText>Gender</FormControlLabelText>
                 </FormControlLabel>
                 <Select
                   selectedValue={rankedGender}
-                  onValueChange={(value: string) => setRankedGender(value)}
+                  onValueChange={(value: string) => {
+                    setRankedGender(value);
+                    setRankedGenderInvalid(false);
+                  }}
                 >
                   <SelectTrigger className="flex-row justify-between items-center">
                     <SelectInput placeholder="Select gender" />
@@ -401,18 +413,22 @@ export default function Settings() {
                       </SelectDragIndicatorWrapper>
                       <SelectItem label="Male" value="male" />
                       <SelectItem label="Female" value="female" />
+                      <SelectItem label="" value="" />
                     </SelectContent>
                   </SelectPortal>
                 </Select>
               </FormControl>
 
-              <FormControl>
+              <FormControl isInvalid={rankedWeightClassInvalid}>
                 <FormControlLabel>
                   <FormControlLabelText>Weight Class (lbs)</FormControlLabelText>
                 </FormControlLabel>
                 <Select
                   selectedValue={rankedWeightClass}
-                  onValueChange={(value: string) => setRankedWeightClass(value)}
+                  onValueChange={(value: string) => {
+                    setRankedWeightClass(value);
+                    setRankedWeightClassInvalid(false);
+                  }}
                 >
                   <SelectTrigger className="flex-row justify-between items-center">
                     <SelectInput placeholder="Select weight class" />
@@ -427,6 +443,7 @@ export default function Settings() {
                       {WEIGHT_CLASSES.map((wc) => (
                         <SelectItem key={wc} label={wc} value={wc} />
                       ))}
+                      <SelectItem label="" value="" />
                     </SelectContent>
                   </SelectPortal>
                 </Select>
@@ -469,7 +486,11 @@ export default function Settings() {
                     size="sm"
                     onPress={async () => {
                       const uid = FIREBASE_AUTH.currentUser?.uid;
-                      if (!uid || !rankedGender || !rankedWeightClass) return;
+                      if (!uid || !rankedGender || !rankedWeightClass) {
+                        setRankedGenderInvalid(!rankedGender);
+                        setRankedWeightClassInvalid(!rankedWeightClass);
+                        return;
+                      }
                       setRankedSaving(true);
                       try {
                         await setDoc(doc(FIREBASE_DB, 'users', uid), {
@@ -505,7 +526,11 @@ export default function Settings() {
                   size="sm"
                   onPress={async () => {
                     const uid = FIREBASE_AUTH.currentUser?.uid;
-                    if (!uid || !rankedGender || !rankedWeightClass) return;
+                    if (!uid || !rankedGender || !rankedWeightClass) {
+                      setRankedGenderInvalid(!rankedGender);
+                      setRankedWeightClassInvalid(!rankedWeightClass);
+                      return;
+                    }
                     setRankedSaving(true);
                     try {
                       await setDoc(doc(FIREBASE_DB, 'users', uid), {
