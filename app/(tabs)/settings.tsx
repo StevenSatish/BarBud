@@ -1,4 +1,4 @@
-import { View, TextInput } from 'react-native';
+import { View, TextInput, Pressable, Image } from 'react-native';
 import { useAuth } from '../context/AuthProvider';
 import {
   AlertDialog,
@@ -40,13 +40,26 @@ import {
 } from "@/components/ui/form-control";
 import { ChevronDownIcon } from "@/components/ui/icon";
 import { SelectIcon } from "@/components/ui/select";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { httpsCallable } from "firebase/functions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FIREBASE_FUNCTIONS, FIREBASE_DB, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { doc, deleteField, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { HStack } from '@/components/ui/hstack';
 import RankedProgressionModal, { type RankedProgressionItem } from '@/app/components/RankedProgressionModal';
-import { RANKED_EXERCISES, getCutoffs, computeRank, computePercentile, getProgressForPR, RANK_ORDER, type Rank } from '@/app/lib/rankData';
+import { RANKED_EXERCISES, getCutoffs, computeRank, computePercentile, getProgressForPR, RANK_ORDER, RANK_PERCENTILES, type Rank } from '@/app/lib/rankData';
+import Feather from '@expo/vector-icons/Feather';
+
+const BADGE_IMAGES: Record<Rank, any> = {
+  iron: require('@/app/badges/ironBadge.png'),
+  bronze: require('@/app/badges/bronzeBadge.png'),
+  silver: require('@/app/badges/silverBadge.png'),
+  gold: require('@/app/badges/goldBadge.png'),
+  platinum: require('@/app/badges/platinumBadge.png'),
+  diamond: require('@/app/badges/diamondBadge.png'),
+  titanium: require('@/app/badges/titaniumBadge.png'),
+  mythic: require('@/app/badges/mythicBadge.png'),
+};
 
 const themeOptions: ThemeType[] = ['blue', 'cyan', 'pink', 'green', 'orange', ];
 
@@ -58,7 +71,7 @@ const WEIGHT_CLASSES = [
 export default function Settings() {
   const [showAlertDialog, setShowAlertDialog] = useState(false);
   const handleClose = () => setShowAlertDialog(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colors } = useTheme();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
@@ -74,6 +87,7 @@ export default function Settings() {
   const [progressionIndex, setProgressionIndex] = useState(0);
   const [showProgressionModal, setShowProgressionModal] = useState(false);
   const [rankedSaving, setRankedSaving] = useState(false);
+  const [showRankedInfo, setShowRankedInfo] = useState(false);
 
   useEffect(() => {
     if (userProfile) {
@@ -215,7 +229,7 @@ export default function Settings() {
         </Select>
       </View>
 
-      <View className="w-64 mb-4">
+      <View className="mb-4 flex-row items-center">
         <Button
           onPress={() => setShowRankedModal(true)}
           action="primary"
@@ -223,7 +237,50 @@ export default function Settings() {
         >
           <ButtonText>{optedIntoRanked ? 'Manage Ranked' : 'Opt Into Ranked?'}</ButtonText>
         </Button>
+        <Pressable hitSlop={8} style={{ marginLeft: 8 }} onPress={() => setShowRankedInfo(true)}>
+          <Feather name="info" size={20} color={colors.light} />
+        </Pressable>
       </View>
+
+      <Modal isOpen={showRankedInfo} onClose={() => setShowRankedInfo(false)} size="full">
+        <ModalBackdrop onPress={() => setShowRankedInfo(false)} />
+        <ModalContent className={`bg-${theme}-background border-0`} style={{flex: 1, maxHeight: '100%' }}>
+          <SafeAreaView className="flex-1" edges={['top', 'left', 'right', 'bottom']}>
+            <ModalHeader>
+              <Heading className="text-typography-800 font-semibold text-center" size="2xl">
+                Ranking System
+              </Heading>
+            </ModalHeader>
+            <ModalBody scrollEnabled={true} className="flex-1 pb-6">
+              <Text className="text-typography-700 text-lg mb-6">
+                Ranks are exercise-specific and based on your One Rep Max, compared to lifters in your chosen gender and weight class.
+              </Text>
+              <Text className="text-typography-600 text-base mb-6 italic">
+                These standards come from sites like StrengthLevel.com. Therefore, they reflect only 
+                the lifters dedicated enough to log their numbers online, not the general population. 
+              </Text>
+              <VStack space="lg">
+                {RANK_ORDER.map((rank) => (
+                  <HStack key={rank} className="items-center gap-4">
+                    <Image source={BADGE_IMAGES[rank]} style={{ width: 64, height: 64 }} resizeMode="contain" />
+                    <VStack className="flex-1">
+                      <Text className="text-typography-800 text-lg font-semibold capitalize">{rank}</Text>
+                      <Text className="text-typography-600 text-base">
+                        Stronger than ~{RANK_PERCENTILES[rank]}% of lifters in your division
+                      </Text>
+                    </VStack>
+                  </HStack>
+                ))}
+              </VStack>
+            </ModalBody>
+            <ModalFooter className="justify-center">
+              <Button onPress={() => setShowRankedInfo(false)} className={`bg-${theme}-accent`}>
+                <ButtonText className="text-typography-800">Got it</ButtonText>
+              </Button>
+            </ModalFooter>
+          </SafeAreaView>
+        </ModalContent>
+      </Modal>
 
       <Button onPress={() => setShowAlertDialog(true)}>
         <ButtonText>Sign Out</ButtonText>

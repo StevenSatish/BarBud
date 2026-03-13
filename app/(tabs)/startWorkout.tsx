@@ -21,7 +21,7 @@ import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
 import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Image, Pressable, ScrollView, TextInput } from 'react-native';
 import { VStack } from '@/components/ui/vstack';
 import {
@@ -35,7 +35,7 @@ import { router } from 'expo-router';
 import TemplateCard from '@/app/components/templateCard';
 import LogRankedPRModal, { type PRResultData } from '@/app/components/LogRankedPRModal';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
-import { getProgressForPR, RANK_ORDER, type Rank } from '@/app/lib/rankData';
+import { RANK_ORDER, type Rank } from '@/app/lib/rankData';
 
 const UNRANKED_BADGE = require('@/app/badges/unrankedBadge.png');
 

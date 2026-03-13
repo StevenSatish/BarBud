@@ -369,7 +369,7 @@ export function getProgressForPR(
   return getRankProgress(rank, allTimePR, cutoffs);
 }
 
-const RANK_PERCENTILES: Record<Rank, number> = {
+export const RANK_PERCENTILES: Record<Rank, number> = {
   iron: 5,
   bronze: 13,
   silver: 20,
