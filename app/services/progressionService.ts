@@ -1,6 +1,17 @@
 import { WorkoutData, ExerciseEntity, SetEntity, estimate1RM } from './workoutDatabase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB } from '@/FirebaseConfig';
+import {
+  RANKED_EXERCISE_IDS,
+  RANKED_EXERCISES,
+  getCutoffs,
+  computeRank,
+  computePercentile,
+  getProgressForPR,
+  RANK_ORDER,
+  type Rank,
+} from '@/app/lib/rankData';
+import type { PRResultData } from '@/app/components/LogRankedPRModal';
 
 export type ProgressionItem = {
     exerciseName: string;
@@ -17,6 +28,7 @@ export type ProgressionsResult = {
 	title: string;
 	items: ProgressionItem[];
 	workoutsCompletedBefore?: number;
+	rankedPRs?: PRResultData[];
 };
 
 export default async function calculateProgressionsForWorkout(
@@ -24,6 +36,22 @@ export default async function calculateProgressionsForWorkout(
 	ws: WorkoutData
 ): Promise<ProgressionsResult> {
 	const items: ProgressionItem[] = [];
+	const rankedPRs: PRResultData[] = [];
+
+	// Fetch user profile for ranked PR checks
+	let optedIntoRanked = false;
+	let userGender = '';
+	let userWeightClass = '';
+	try {
+		const userRef = doc(FIREBASE_DB, 'users', uid);
+		const userSnap = await getDoc(userRef);
+		if (userSnap.exists()) {
+			const d = userSnap.data();
+			optedIntoRanked = d.optedIntoRanked === true;
+			userGender = d.gender ?? '';
+			userWeightClass = d.weightClass ?? '';
+		}
+	} catch {}
 
 	const formatIncrease = (prev: number, next: number, type: 'lbs' | 'reps' | 'seconds'): string => {
 		if (!Number.isFinite(prev) || prev <= 0) return `${next}${type}`;
@@ -182,6 +210,55 @@ export default async function calculateProgressionsForWorkout(
                     exerciseId: ex.exerciseId,
                     category: 'standard',
                 };
+			}
+
+			// Ranked PR: if maxTopWeight beats allTimePR (or allTimePR doesn't exist), update and show modal
+			if (
+				RANKED_EXERCISE_IDS.has(ex.exerciseId) &&
+				optedIntoRanked &&
+				userGender &&
+				userWeightClass &&
+				Number.isFinite(lastTopWeight) &&
+				lastTopWeight > 0
+			) {
+				const newMaxTopWeight = Math.max(prevAll.maxTopWeight ?? 0, lastTopWeight);
+				const prevAllTimePR = prevAll.allTimePR;
+				const isNewRankedPR = newMaxTopWeight > (prevAllTimePR ?? 0) || prevAllTimePR == null;
+
+				if (isNewRankedPR) {
+					const cutoffs = getCutoffs(ex.exerciseId, userGender, userWeightClass);
+					if (cutoffs) {
+						const exerciseRef = doc(FIREBASE_DB, 'users', uid, 'exercises', ex.exerciseId);
+						const exerciseSnap = await getDoc(exerciseRef);
+						const oldRankStr = exerciseSnap.exists() ? exerciseSnap.data()?.rank : null;
+						const oldRank: Rank | null = oldRankStr && RANK_ORDER.includes(oldRankStr as Rank) ? (oldRankStr as Rank) : null;
+
+						const newRank = computeRank(newMaxTopWeight, cutoffs);
+						const percentile = computePercentile(newMaxTopWeight, cutoffs);
+
+						const metricsRef = doc(FIREBASE_DB, 'users', uid, 'exercises', ex.exerciseId, 'metrics', 'allTimeMetrics');
+						await setDoc(metricsRef, { allTimePR: newMaxTopWeight, prPercentile: percentile }, { merge: true });
+						if (newRank !== oldRank) {
+							await setDoc(exerciseRef, { rank: newRank ?? '' }, { merge: true });
+						}
+
+						const oldProgressInfo = getProgressForPR(prevAllTimePR ?? 0, oldRank, cutoffs);
+						const newProgressInfo = getProgressForPR(newMaxTopWeight, newRank, cutoffs);
+						const exerciseName = RANKED_EXERCISES.find((e) => e.id === ex.exerciseId)?.label ?? ex.name;
+
+						rankedPRs.push({
+							exerciseName,
+							allTimePR: newMaxTopWeight,
+							oldRank,
+							newRank,
+							rankChanged: oldRank !== newRank,
+							oldProgress: oldProgressInfo.progress,
+							newProgress: newProgressInfo.progress,
+							cutoffs,
+							percentile,
+						});
+					}
+				}
 			}
 
 			// Independent Estimated 1RM PRs (do not affect chosen)
@@ -373,6 +450,7 @@ export default async function calculateProgressionsForWorkout(
 	return {
 		title: 'Workout Progressions',
 		items,
+		rankedPRs: rankedPRs.length > 0 ? rankedPRs : undefined,
 	};
 }
 

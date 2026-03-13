@@ -12,6 +12,8 @@ import { Button, ButtonText } from "@/components/ui/button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ScrollView } from "@/components/ui/scroll-view";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import PRResultModal from "@/app/components/PRResultModal";
+import type { PRResultData } from "@/app/components/LogRankedPRModal";
 
 function formatOrdinal(n: number): string {
   const s = ["th", "st", "nd", "rd"] as const;
@@ -32,6 +34,7 @@ type ProgressionsResult = {
   title: string;
   items: ProgressionItem[];
   workoutsCompletedBefore?: number;
+  rankedPRs?: PRResultData[];
 };
 
 export default function ProgressionsScreen() {
@@ -39,6 +42,7 @@ export default function ProgressionsScreen() {
   const { theme, colors } = useTheme();
   const params = useLocalSearchParams();
   const [usernameFromDb, setUsernameFromDb] = useState<string>("");
+  const [rankedPRIndex, setRankedPRIndex] = useState(0);
   const data = useMemo(() => {
     try {
       const raw =
@@ -65,6 +69,10 @@ export default function ProgressionsScreen() {
       } catch { }
     })();
   }, []);
+
+  const rankedPRs = useMemo(() => (data.rankedPRs ?? []), [data.rankedPRs]);
+  const currentRankedPR = rankedPRs[rankedPRIndex] ?? null;
+  const showRankedPRModal = rankedPRs.length > 0 && rankedPRIndex < rankedPRs.length;
 
   const allTimeItems = useMemo(
     () => (data.items || []).filter((i) => i.kind === "allTime"),
@@ -115,6 +123,13 @@ export default function ProgressionsScreen() {
 
   return (
     <SafeAreaView className={`bg-${theme}-background flex-1`}>
+      <PRResultModal
+        isOpen={showRankedPRModal}
+        result={currentRankedPR}
+        theme={theme}
+        onClose={() => setRankedPRIndex((i) => i + 1)}
+      />
+
       <Confetti
         ref={(r: any) => (confettiRef.current = r)}
         untilStopped={false}
