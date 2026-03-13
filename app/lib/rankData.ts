@@ -421,3 +421,18 @@ export const RANKED_EXERCISE_IDS = new Set([
   'shoulder-press-dumbbell',
   'squat-barbell',
 ]);
+
+export const RANKED_EXERCISES: { id: string; label: string }[] = [
+  { id: 'bench-press-barbell', label: 'Bench Press (Barbell)' },
+  { id: 'bench-press-dumbbell', label: 'Bench Press (Dumbbell)' },
+  { id: 'bent-over-row-barbell', label: 'Bent Over Row (Barbell)' },
+  { id: 'bicep-curl-barbell', label: 'Bicep Curl (Barbell)' },
+  { id: 'deadlift-barbell', label: 'Deadlift (Barbell)' },
+  { id: 'hip-thrust-barbell', label: 'Hip Thrust (Barbell)' },
+  { id: 'incline-bench-press-barbell', label: 'Incline Bench Press (Barbell)' },
+  { id: 'lat-pulldown-machine', label: 'Lat Pulldown (Machine)' },
+  { id: 'romanian-deadlift-barbell', label: 'Romanian Deadlift (Barbell)' },
+  { id: 'shoulder-press-barbell', label: 'Shoulder Press (Barbell)' },
+  { id: 'shoulder-press-dumbbell', label: 'Shoulder Press (Dumbbell)' },
+  { id: 'squat-barbell', label: 'Squat (Barbell)' },
+];

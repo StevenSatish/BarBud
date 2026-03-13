@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import { TextInput } from 'react-native';
 import { Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
 import { Button, ButtonText } from '@/components/ui/button';
 import { VStack } from '@/components/ui/vstack';
@@ -25,7 +24,7 @@ import { ChevronDownIcon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { getCutoffs, computeRank, computePercentile, getProgressForPR, RANK_ORDER, type Rank } from '@/app/lib/rankData';
+import { getCutoffs, computeRank, computePercentile, getProgressForPR, RANK_ORDER, RANKED_EXERCISES, type Rank } from '@/app/lib/rankData';
 
 export type PRResultData = {
   exerciseName: string;
@@ -38,21 +37,6 @@ export type PRResultData = {
   cutoffs: Record<Rank, number>;
   percentile: number;
 };
-
-const RANKED_EXERCISES: { id: string; label: string }[] = [
-  { id: 'bench-press-barbell', label: 'Bench Press (Barbell)' },
-  { id: 'bench-press-dumbbell', label: 'Bench Press (Dumbbell)' },
-  { id: 'bent-over-row-barbell', label: 'Bent Over Row (Barbell)' },
-  { id: 'bicep-curl-barbell', label: 'Bicep Curl (Barbell)' },
-  { id: 'deadlift-barbell', label: 'Deadlift (Barbell)' },
-  { id: 'hip-thrust-barbell', label: 'Hip Thrust (Barbell)' },
-  { id: 'incline-bench-press-barbell', label: 'Incline Bench Press (Barbell)' },
-  { id: 'lat-pulldown-machine', label: 'Lat Pulldown (Machine)' },
-  { id: 'romanian-deadlift-barbell', label: 'Romanian Deadlift (Barbell)' },
-  { id: 'shoulder-press-barbell', label: 'Shoulder Press (Barbell)' },
-  { id: 'shoulder-press-dumbbell', label: 'Shoulder Press (Dumbbell)' },
-  { id: 'squat-barbell', label: 'Squat (Barbell)' },
-];
 
 type LogRankedPRModalProps = {
   isOpen: boolean;

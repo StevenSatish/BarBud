@@ -1,4 +1,5 @@
 import { Box } from '@/components/ui/box';
+import { useAuth } from '../context/AuthProvider';
 import { useWorkout } from '../context/WorkoutContext';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -18,7 +19,7 @@ import useTemplateFolders from '@/app/context/TemplateFoldersContext';
 import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui/modal';
 import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Image, Pressable, ScrollView, TextInput } from 'react-native';
@@ -31,7 +32,6 @@ import {
 } from '@/components/ui/popover';
 import { Asset } from 'expo-asset';
 import { router } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import TemplateCard from '@/app/components/templateCard';
 import LogRankedPRModal, { type PRResultData } from '@/app/components/LogRankedPRModal';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
@@ -263,9 +263,10 @@ export default function StartWorkoutTab() {
   const renameDraftRef = useRef('');
   const [renameInputKey, setRenameInputKey] = useState(0);
   const [renameInvalid, setRenameInvalid] = useState(false);
-  const [optedIntoRanked, setOptedIntoRanked] = useState(false);
-  const [userGender, setUserGender] = useState('');
-  const [userWeightClass, setUserWeightClass] = useState('');
+  const { userProfile } = useAuth();
+  const optedIntoRanked = userProfile?.optedIntoRanked ?? false;
+  const userGender = userProfile?.gender ?? '';
+  const userWeightClass = userProfile?.weightClass ?? '';
   const [showRankedInfo, setShowRankedInfo] = useState(false);
   const [showPRModal, setShowPRModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
@@ -275,23 +276,6 @@ export default function StartWorkoutTab() {
     setPRResult(result);
     setTimeout(() => setShowResultModal(true), 300);
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      const uid = FIREBASE_AUTH.currentUser?.uid;
-      if (!uid) return;
-      getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          setOptedIntoRanked(data.optedIntoRanked === true);
-          if (data.gender) setUserGender(data.gender);
-          if (data.weightClass) setUserWeightClass(data.weightClass);
-        } else {
-          setOptedIntoRanked(false);
-        }
-      });
-    }, [])
-  );
 
   const orderedFolders = useMemo(() => {
     const nonNone = folders.filter((f) => f.id !== 'none');

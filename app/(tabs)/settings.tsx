@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogBackdrop,
 } from "@/components/ui/alert-dialog"
-import { Button, ButtonText } from '@/components/ui/button';
+import { Button, ButtonText, ButtonSpinner } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { useEffect, useState } from 'react';
@@ -45,6 +45,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FIREBASE_FUNCTIONS, FIREBASE_DB, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { doc, deleteField, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { HStack } from '@/components/ui/hstack';
+import RankedProgressionModal, { type RankedProgressionItem } from '@/app/components/RankedProgressionModal';
+import { RANKED_EXERCISES, getCutoffs, computeRank, computePercentile, getProgressForPR, RANK_ORDER, type Rank } from '@/app/lib/rankData';
 
 const themeOptions: ThemeType[] = ['blue', 'cyan', 'pink', 'green', 'orange', ];
 
@@ -62,24 +64,93 @@ export default function Settings() {
   const [deleteInput, setDeleteInput] = useState('');
   const [deleteInputError, setDeleteInputError] = useState(false);
 
-  const [optedIntoRanked, setOptedIntoRanked] = useState(false);
-  const [showRankedModal, setShowRankedModal] = useState(false);
+  const { userProfile, refreshUserProfile } = useAuth();
+  const optedIntoRanked = userProfile?.optedIntoRanked ?? false;
   const [rankedGender, setRankedGender] = useState('');
   const [rankedWeightClass, setRankedWeightClass] = useState('');
 
+  const [showRankedModal, setShowRankedModal] = useState(false);
+  const [progressionItems, setProgressionItems] = useState<RankedProgressionItem[]>([]);
+  const [progressionIndex, setProgressionIndex] = useState(0);
+  const [showProgressionModal, setShowProgressionModal] = useState(false);
+  const [rankedSaving, setRankedSaving] = useState(false);
+
   useEffect(() => {
-    const uid = FIREBASE_AUTH.currentUser?.uid;
-    if (!uid) return;
-    getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      if (data.optedIntoRanked === true) {
-        setOptedIntoRanked(true);
-        if (data.gender) setRankedGender(data.gender);
-        if (data.weightClass) setRankedWeightClass(data.weightClass);
+    if (userProfile) {
+      setRankedGender(userProfile.gender);
+      setRankedWeightClass(userProfile.weightClass);
+    }
+  }, [userProfile]);
+
+  const fetchRankedProgressionItems = async (
+    uid: string,
+    gender: string,
+    weightClass: string
+  ): Promise<RankedProgressionItem[]> => {
+    const items: RankedProgressionItem[] = [];
+    for (const { id: exerciseId, label: exerciseName } of RANKED_EXERCISES) {
+      const cutoffs = getCutoffs(exerciseId, gender, weightClass);
+      if (!cutoffs) continue;
+
+      const metricsRef = doc(FIREBASE_DB, 'users', uid, 'exercises', exerciseId, 'metrics', 'allTimeMetrics');
+      const metricsSnap = await getDoc(metricsRef);
+      const metrics = metricsSnap.exists() ? metricsSnap.data() : null;
+
+      let allTimePR = metrics?.allTimePR != null ? Number(metrics.allTimePR) : 0;
+      const maxTopWeight = metrics?.maxTopWeight != null ? Number(metrics.maxTopWeight) : 0;
+
+      if (allTimePR <= 0 && maxTopWeight > 0) {
+        allTimePR = maxTopWeight;
       }
-    });
-  }, []);
+
+      const rank: Rank | null = computeRank(allTimePR, cutoffs);
+      const percentile = computePercentile(allTimePR, cutoffs);
+
+      if (allTimePR > 0) {
+        await setDoc(metricsRef, { allTimePR, prPercentile: percentile }, { merge: true });
+        const exerciseRef = doc(FIREBASE_DB, 'users', uid, 'exercises', exerciseId);
+        await setDoc(exerciseRef, { rank: rank ?? '' }, { merge: true });
+      }
+
+      const progressInfo = getProgressForPR(allTimePR, rank, cutoffs);
+      items.push({
+        exerciseId,
+        exerciseName,
+        allTimePR,
+        rank,
+        cutoffs,
+        percentile,
+        ...progressInfo,
+      });
+    }
+    return items;
+  };
+
+  const openProgressionModals = async () => {
+    const uid = FIREBASE_AUTH.currentUser?.uid;
+    if (!uid || !rankedGender || !rankedWeightClass) return;
+    const items = await fetchRankedProgressionItems(uid, rankedGender, rankedWeightClass);
+    if (items.length === 0) return;
+    setProgressionItems(items);
+    setProgressionIndex(0);
+    setShowProgressionModal(true);
+  };
+
+  const handleProgressionContinue = () => {
+    if (progressionIndex < progressionItems.length - 1) {
+      setProgressionIndex((i) => i + 1);
+    } else {
+      setShowProgressionModal(false);
+      setProgressionItems([]);
+      setProgressionIndex(0);
+    }
+  };
+
+  const handleProgressionClose = () => {
+    setShowProgressionModal(false);
+    setProgressionItems([]);
+    setProgressionIndex(0);
+  };
 
   const { signOut } = useAuth();
 
@@ -329,7 +400,7 @@ export default function Settings() {
                         gender: deleteField(),
                         weightClass: deleteField(),
                       });
-                      setOptedIntoRanked(false);
+                      await refreshUserProfile();
                       setRankedGender('');
                       setRankedWeightClass('');
                       setShowRankedModal(false);
@@ -342,15 +413,24 @@ export default function Settings() {
                     onPress={async () => {
                       const uid = FIREBASE_AUTH.currentUser?.uid;
                       if (!uid || !rankedGender || !rankedWeightClass) return;
-                      await setDoc(doc(FIREBASE_DB, 'users', uid), {
-                        optedIntoRanked: true,
-                        gender: rankedGender,
-                        weightClass: rankedWeightClass,
-                      }, { merge: true });
-                      setShowRankedModal(false);
+                      setRankedSaving(true);
+                      try {
+                        await setDoc(doc(FIREBASE_DB, 'users', uid), {
+                          optedIntoRanked: true,
+                          gender: rankedGender,
+                          weightClass: rankedWeightClass,
+                        }, { merge: true });
+                        await openProgressionModals();
+                        setShowRankedModal(false);
+                        await refreshUserProfile();
+                      } finally {
+                        setRankedSaving(false);
+                      }
                     }}
+                    isDisabled={rankedSaving}
                   >
-                    <ButtonText>Update</ButtonText>
+                    {rankedSaving && <ButtonSpinner />}
+                    <ButtonText>{rankedSaving ? 'Loading...' : 'Update'}</ButtonText>
                   </Button>
                 </HStack>
               </HStack>
@@ -369,22 +449,40 @@ export default function Settings() {
                   onPress={async () => {
                     const uid = FIREBASE_AUTH.currentUser?.uid;
                     if (!uid || !rankedGender || !rankedWeightClass) return;
-                    await setDoc(doc(FIREBASE_DB, 'users', uid), {
-                      optedIntoRanked: true,
-                      gender: rankedGender,
-                      weightClass: rankedWeightClass,
-                    }, { merge: true });
-                    setOptedIntoRanked(true);
-                    setShowRankedModal(false);
+                    setRankedSaving(true);
+                    try {
+                      await setDoc(doc(FIREBASE_DB, 'users', uid), {
+                        optedIntoRanked: true,
+                        gender: rankedGender,
+                        weightClass: rankedWeightClass,
+                      }, { merge: true });
+                      await openProgressionModals();
+                      setShowRankedModal(false);
+                      await refreshUserProfile();
+                    } finally {
+                      setRankedSaving(false);
+                    }
                   }}
+                  isDisabled={rankedSaving}
                 >
-                  <ButtonText>Opt In</ButtonText>
+                  {rankedSaving && <ButtonSpinner />}
+                  <ButtonText>{rankedSaving ? 'Loading...' : 'Opt In'}</ButtonText>
                 </Button>
               </HStack>
             )}
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <RankedProgressionModal
+        isOpen={showProgressionModal}
+        onClose={handleProgressionClose}
+        onContinue={handleProgressionContinue}
+        theme={theme}
+        item={progressionItems[progressionIndex] ?? null}
+        currentIndex={progressionIndex}
+        totalCount={progressionItems.length}
+      />
     </View>
   );
 }
