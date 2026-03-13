@@ -10,7 +10,7 @@ import {
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme, ThemeType } from '@/app/context/ThemeContext';
 import {
   Select,
@@ -32,11 +32,26 @@ import {
   ModalFooter,
 } from '@/components/ui/modal';
 import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { ChevronDownIcon } from "@/components/ui/icon";
+import { SelectIcon } from "@/components/ui/select";
 import { httpsCallable } from "firebase/functions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {FIREBASE_FUNCTIONS } from "@/FirebaseConfig";
+import { FIREBASE_FUNCTIONS, FIREBASE_DB, FIREBASE_AUTH } from "@/FirebaseConfig";
+import { doc, deleteField, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { HStack } from '@/components/ui/hstack';
 
 const themeOptions: ThemeType[] = ['blue', 'cyan', 'pink', 'green', 'orange', ];
+
+const WEIGHT_CLASSES = [
+  '114-', '115-129', '130-144', '145-159', '160-174',
+  '175-189', '190-204', '205-219', '220-234', '235-249', '250+',
+];
 
 export default function Settings() {
   const [showAlertDialog, setShowAlertDialog] = useState(false);
@@ -46,6 +61,25 @@ export default function Settings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
   const [deleteInputError, setDeleteInputError] = useState(false);
+
+  const [optedIntoRanked, setOptedIntoRanked] = useState(false);
+  const [showRankedModal, setShowRankedModal] = useState(false);
+  const [rankedGender, setRankedGender] = useState('');
+  const [rankedWeightClass, setRankedWeightClass] = useState('');
+
+  useEffect(() => {
+    const uid = FIREBASE_AUTH.currentUser?.uid;
+    if (!uid) return;
+    getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      if (data.optedIntoRanked === true) {
+        setOptedIntoRanked(true);
+        if (data.gender) setRankedGender(data.gender);
+        if (data.weightClass) setRankedWeightClass(data.weightClass);
+      }
+    });
+  }, []);
 
   const { signOut } = useAuth();
 
@@ -68,7 +102,7 @@ export default function Settings() {
       const deleteFn = httpsCallable(FIREBASE_FUNCTIONS, "deleteMyAccount");
       await deleteFn();
   
-      await AsyncStorage.multiRemove(["username"]); // add any other keys you store
+      await AsyncStorage.multiRemove(["username"]);
       await signOut();
   
       setShowDeleteModal(false);
@@ -108,6 +142,16 @@ export default function Settings() {
             </SelectContent>
           </SelectPortal>
         </Select>
+      </View>
+
+      <View className="w-64 mb-4">
+        <Button
+          onPress={() => setShowRankedModal(true)}
+          action="primary"
+          size="lg"
+        >
+          <ButtonText>{optedIntoRanked ? 'Manage Ranked' : 'Opt Into Ranked?'}</ButtonText>
+        </Button>
       </View>
 
       <Button onPress={() => setShowAlertDialog(true)}>
@@ -198,6 +242,149 @@ export default function Settings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Modal isOpen={showRankedModal} onClose={() => setShowRankedModal(false)}>
+        <ModalBackdrop onPress={() => setShowRankedModal(false)} />
+        <ModalContent size="md" className={`bg-${theme}-background border-${theme}-steelGray`}>
+          <ModalHeader>
+            <Heading className="text-typography-800 font-semibold" size="lg">
+              {optedIntoRanked ? 'Ranked Settings' : 'Opt Into Ranked'}
+            </Heading>
+          </ModalHeader>
+          <ModalBody>
+            <VStack space="lg">
+              <FormControl>
+                <FormControlLabel>
+                  <FormControlLabelText>Gender</FormControlLabelText>
+                </FormControlLabel>
+                <Select
+                  selectedValue={rankedGender}
+                  onValueChange={(value: string) => setRankedGender(value)}
+                >
+                  <SelectTrigger className="flex-row justify-between items-center">
+                    <SelectInput placeholder="Select gender" />
+                    <SelectIcon className="mr-2" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      <SelectItem label="Male" value="male" />
+                      <SelectItem label="Female" value="female" />
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+              </FormControl>
+
+              <FormControl>
+                <FormControlLabel>
+                  <FormControlLabelText>Weight Class (lbs)</FormControlLabelText>
+                </FormControlLabel>
+                <Select
+                  selectedValue={rankedWeightClass}
+                  onValueChange={(value: string) => setRankedWeightClass(value)}
+                >
+                  <SelectTrigger className="flex-row justify-between items-center">
+                    <SelectInput placeholder="Select weight class" />
+                    <SelectIcon className="mr-2" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      {WEIGHT_CLASSES.map((wc) => (
+                        <SelectItem key={wc} label={wc} value={wc} />
+                      ))}
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            {optedIntoRanked ? (
+              <HStack className="flex-1 justify-between">
+                <Button
+                  variant="outline"
+                  action="secondary"
+                  onPress={() => setShowRankedModal(false)}
+                  size="sm"
+                >
+                  <ButtonText>Cancel</ButtonText>
+                </Button>
+                <HStack space="sm">
+                  <Button
+                    action="primary"
+                    variant="solid"
+                    size="sm"
+                    onPress={async () => {
+                      const uid = FIREBASE_AUTH.currentUser?.uid;
+                      if (!uid) return;
+                      await updateDoc(doc(FIREBASE_DB, 'users', uid), {
+                        optedIntoRanked: false,
+                        gender: deleteField(),
+                        weightClass: deleteField(),
+                      });
+                      setOptedIntoRanked(false);
+                      setRankedGender('');
+                      setRankedWeightClass('');
+                      setShowRankedModal(false);
+                    }}
+                  >
+                    <ButtonText>Opt Out</ButtonText>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onPress={async () => {
+                      const uid = FIREBASE_AUTH.currentUser?.uid;
+                      if (!uid || !rankedGender || !rankedWeightClass) return;
+                      await setDoc(doc(FIREBASE_DB, 'users', uid), {
+                        optedIntoRanked: true,
+                        gender: rankedGender,
+                        weightClass: rankedWeightClass,
+                      }, { merge: true });
+                      setShowRankedModal(false);
+                    }}
+                  >
+                    <ButtonText>Update</ButtonText>
+                  </Button>
+                </HStack>
+              </HStack>
+            ) : (
+              <HStack className="flex-1 justify-between">
+                <Button
+                  variant="outline"
+                  action="secondary"
+                  onPress={() => setShowRankedModal(false)}
+                  size="sm"
+                >
+                  <ButtonText>Cancel</ButtonText>
+                </Button>
+                <Button
+                  size="sm"
+                  onPress={async () => {
+                    const uid = FIREBASE_AUTH.currentUser?.uid;
+                    if (!uid || !rankedGender || !rankedWeightClass) return;
+                    await setDoc(doc(FIREBASE_DB, 'users', uid), {
+                      optedIntoRanked: true,
+                      gender: rankedGender,
+                      weightClass: rankedWeightClass,
+                    }, { merge: true });
+                    setOptedIntoRanked(true);
+                    setShowRankedModal(false);
+                  }}
+                >
+                  <ButtonText>Opt In</ButtonText>
+                </Button>
+              </HStack>
+            )}
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </View>
   );
 }

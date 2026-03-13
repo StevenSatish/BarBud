@@ -18,9 +18,9 @@ import useTemplateFolders from '@/app/context/TemplateFoldersContext';
 import { Modal, ModalBackdrop, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@/components/ui/modal';
 import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
-import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import TemplateCard from '@/app/components/templateCard';
@@ -45,6 +45,18 @@ export default function StartWorkoutTab() {
   const renameDraftRef = useRef('');
   const [renameInputKey, setRenameInputKey] = useState(0);
   const [renameInvalid, setRenameInvalid] = useState(false);
+  const [optedIntoRanked, setOptedIntoRanked] = useState(false);
+
+  useEffect(() => {
+    const uid = FIREBASE_AUTH.currentUser?.uid;
+    if (!uid) return;
+    getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
+      if (snap.exists() && snap.data().optedIntoRanked === true) {
+        setOptedIntoRanked(true);
+      }
+    });
+  }, []);
+
   const orderedFolders = useMemo(() => {
     const nonNone = folders.filter((f) => f.id !== 'none');
     const none = folders.filter((f) => f.id === 'none');
@@ -230,6 +242,15 @@ export default function StartWorkoutTab() {
               </ButtonText>
             </Button>
           </Box>
+          {optedIntoRanked && (
+            <Box className='items-center mb-1'>
+              <Button onPress={() => {}} className={`bg-${theme}-accent`}>
+                <ButtonText className='text-typography-800'>
+                  Log Ranked PR
+                </ButtonText>
+              </Button>
+            </Box>
+          )}
         </Box>
 
         <ScrollView
