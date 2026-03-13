@@ -3,11 +3,29 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Box } from '@/components/ui/box';
 import WorkoutIndicator from '../components/workoutIndicator';
 import { View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { useTheme } from '@/app/context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@/components/ui/modal';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
+
+const RANKED_FEATURE_PROMPT_KEY = 'hasSeenRankedFeaturePrompt';
 
 export default function TabsLayout() {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const [showNewFeatureModal, setShowNewFeatureModal] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(RANKED_FEATURE_PROMPT_KEY).then((seen) => {
+      if (!seen) setShowNewFeatureModal(true);
+    });
+  }, []);
+
+  const handleCloseNewFeature = () => {
+    setShowNewFeatureModal(false);
+    AsyncStorage.setItem(RANKED_FEATURE_PROMPT_KEY, 'true');
+  };
   
   return (
     <View style={{ flex: 1}}>
@@ -105,6 +123,27 @@ export default function TabsLayout() {
       >
         <WorkoutIndicator />
       </Box>
+
+      <Modal isOpen={showNewFeatureModal} onClose={handleCloseNewFeature}>
+        <ModalBackdrop onPress={handleCloseNewFeature} />
+        <ModalContent size="md" className={`bg-${theme}-background border-${theme}-steelGray`}>
+          <ModalHeader>
+            <Text className="text-xl font-bold text-typography-800 text-center w-full">
+              New Feature!
+            </Text>
+          </ModalHeader>
+          <ModalBody>
+            <Text className="text-typography-700 text-base text-center">
+              Check out ranked lifting in the settings!
+            </Text>
+          </ModalBody>
+          <ModalFooter className="justify-center">
+            <Button onPress={handleCloseNewFeature} className={`bg-${theme}-accent`}>
+              <ButtonText className="text-typography-800">Got it</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </View>
   );
 }
