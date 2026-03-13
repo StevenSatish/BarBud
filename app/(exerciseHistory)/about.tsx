@@ -14,6 +14,8 @@ import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { RANKED_EXERCISE_IDS, getCutoffs, RANK_ORDER, type Rank } from '@/app/lib/rankData';
 import getRankProgress from '@/app/lib/rankData';
 
+const UNRANKED_BADGE = require('@/app/badges/unrankedBadge.png');
+
 const BADGE_IMAGES: Record<Rank, any> = {
   iron: require('@/app/badges/ironBadge.png'),
   bronze: require('@/app/badges/bronzeBadge.png'),
@@ -77,7 +79,7 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
     return {
       rank: null as Rank | null,
       allTimePR,
-      badge: null,
+      badge: UNRANKED_BADGE,
       currentCutoff: 0,
       nextCutoff: firstRankCutoff,
       nextRank: RANK_ORDER[0],
@@ -192,9 +194,7 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
           <Heading size="xl" className="text-typography-800 text-center mb-3">
             {exercise?.name} Rank
           </Heading>
-          {rankInfo.badge && (
-            <Image source={rankInfo.badge} style={{ width: 200, height: 200 }} resizeMode="contain" />
-          )}
+          <Image source={rankInfo.badge} style={{ width: 200, height: 200 }} resizeMode="contain" />
           <Text size="2xl" bold className="text-typography-800 mt-2">
             {rankInfo.rank ? rankInfo.rank.charAt(0).toUpperCase() + rankInfo.rank.slice(1) : 'Unranked'}
           </Text>
@@ -219,6 +219,11 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
               </Text>
             </HStack>
           </Box>
+          {metrics?.prPercentile != null && (
+            <Text size="md" className="text-typography-700 text-center mt-3" italic>
+              Stronger than approximately {metrics.prPercentile}% of lifters in your division
+            </Text>
+          )}
         </VStack>
       )}
 

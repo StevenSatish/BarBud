@@ -20,53 +20,229 @@ import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
 import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, TextInput } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Image, Pressable, ScrollView, TextInput } from 'react-native';
 import { VStack } from '@/components/ui/vstack';
-import {
-  Select,
-  SelectTrigger,
-  SelectInput,
-  SelectIcon,
-  SelectPortal,
-  SelectBackdrop,
-  SelectContent,
-  SelectDragIndicator,
-  SelectDragIndicatorWrapper,
-  SelectItem,
-} from '@/components/ui/select';
-import { ChevronDownIcon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
-import {
-  FormControl,
-  FormControlLabel,
-  FormControlLabelText,
-} from '@/components/ui/form-control';
 import {
   Popover,
   PopoverBackdrop,
   PopoverBody,
   PopoverContent,
 } from '@/components/ui/popover';
+import { Asset } from 'expo-asset';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import TemplateCard from '@/app/components/templateCard';
+import LogRankedPRModal, { type PRResultData } from '@/app/components/LogRankedPRModal';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
+import { getProgressForPR, RANK_ORDER, type Rank } from '@/app/lib/rankData';
 
-const RANKED_EXERCISES: { id: string; label: string }[] = [
-  { id: 'bench-press-barbell', label: 'Bench Press (Barbell)' },
-  { id: 'bench-press-dumbbell', label: 'Bench Press (Dumbbell)' },
-  { id: 'bent-over-row-barbell', label: 'Bent Over Row (Barbell)' },
-  { id: 'bicep-curl-barbell', label: 'Bicep Curl (Barbell)' },
-  { id: 'deadlift-barbell', label: 'Deadlift (Barbell)' },
-  { id: 'hip-thrust-barbell', label: 'Hip Thrust (Barbell)' },
-  { id: 'incline-bench-press-barbell', label: 'Incline Bench Press (Barbell)' },
-  { id: 'lat-pulldown-machine', label: 'Lat Pulldown (Machine)' },
-  { id: 'romanian-deadlift-barbell', label: 'Romanian Deadlift (Barbell)' },
-  { id: 'shoulder-press-barbell', label: 'Shoulder Press (Barbell)' },
-  { id: 'shoulder-press-dumbbell', label: 'Shoulder Press (Dumbbell)' },
-  { id: 'squat-barbell', label: 'Squat (Barbell)' },
-];
+const UNRANKED_BADGE = require('@/app/badges/unrankedBadge.png');
+
+const BADGE_IMAGES: Record<Rank, any> = {
+  iron: require('@/app/badges/ironBadge.png'),
+  bronze: require('@/app/badges/bronzeBadge.png'),
+  silver: require('@/app/badges/silverBadge.png'),
+  gold: require('@/app/badges/goldBadge.png'),
+  platinum: require('@/app/badges/platinumBadge.png'),
+  diamond: require('@/app/badges/diamondBadge.png'),
+  titanium: require('@/app/badges/titaniumBadge.png'),
+  mythic: require('@/app/badges/mythicBadge.png'),
+};
+
+function getRankLabel(rank: Rank | null): string {
+  return rank ? rank.charAt(0).toUpperCase() + rank.slice(1) : 'Unranked';
+}
+
+function getBarLabels(rank: Rank | null, cutoffs: Record<Rank, number>): { left: string; right: string } {
+  if (!rank) {
+    const first = RANK_ORDER[0];
+    return { left: '0 lbs', right: `${cutoffs[first]} lbs (${getRankLabel(first)})` };
+  }
+  const idx = RANK_ORDER.indexOf(rank);
+  const left = `${cutoffs[rank]} lbs`;
+  if (idx >= RANK_ORDER.length - 1) {
+    return { left, right: 'Max Rank' };
+  }
+  const next = RANK_ORDER[idx + 1];
+  return { left, right: `${cutoffs[next]} lbs (${getRankLabel(next)})` };
+}
+
+function getIntermediateRanks(oldRank: Rank | null, newRank: Rank | null): Rank[] {
+  if (!newRank) return [];
+  const oldIdx = oldRank ? RANK_ORDER.indexOf(oldRank) : -1;
+  const newIdx = RANK_ORDER.indexOf(newRank);
+  const ranks: Rank[] = [];
+  for (let i = oldIdx + 1; i <= newIdx; i++) {
+    ranks.push(RANK_ORDER[i]);
+  }
+  return ranks;
+}
+
+function PRResultModal({ isOpen, result, theme, onClose }: {
+  isOpen: boolean;
+  result: PRResultData | null;
+  theme: string;
+  onClose: () => void;
+}) {
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const oldBadgeX = useRef(new Animated.Value(0)).current;
+  const newBadgeX = useRef(new Animated.Value(300)).current;
+  const newBadgeOpacity = useRef(new Animated.Value(0)).current;
+  const percentileOpacity = useRef(new Animated.Value(0)).current;
+  const [displayRank, setDisplayRank] = useState<Rank | null>(null);
+  const [incomingRank, setIncomingRank] = useState<Rank | null>(null);
+  const [barLabels, setBarLabels] = useState({ left: '', right: '' });
+
+  useEffect(() => {
+    if (!isOpen || !result) return;
+
+    const { oldRank, newRank, cutoffs, oldProgress, newProgress, rankChanged } = result;
+
+    const runAnimation = async () => {
+      await Asset.loadAsync([
+        UNRANKED_BADGE,
+        ...Object.values(BADGE_IMAGES),
+      ]);
+    };
+
+    const init = async () => {
+      await runAnimation();
+
+      progressAnim.setValue(oldProgress);
+      oldBadgeX.setValue(0);
+      newBadgeX.setValue(300);
+      newBadgeOpacity.setValue(0);
+      percentileOpacity.setValue(0);
+      setDisplayRank(oldRank);
+      setIncomingRank(null);
+      setBarLabels(getBarLabels(oldRank, cutoffs));
+
+      const fadeInPercentile = Animated.timing(percentileOpacity, {
+        toValue: 1, duration: 600, useNativeDriver: true,
+      });
+
+      if (!rankChanged) {
+        setTimeout(() => {
+          Animated.timing(progressAnim, {
+            toValue: newProgress, duration: 1200, useNativeDriver: false,
+          }).start(() => fadeInPercentile.start());
+        }, 500);
+        return;
+      }
+
+      const steps = getIntermediateRanks(oldRank, newRank);
+
+      const animateStep = (stepIdx: number) => {
+        if (stepIdx >= steps.length) {
+          Animated.timing(progressAnim, {
+            toValue: newProgress, duration: 800, useNativeDriver: false,
+          }).start(() => fadeInPercentile.start());
+          return;
+        }
+
+        const targetRank = steps[stepIdx];
+
+        Animated.timing(progressAnim, {
+          toValue: 1, duration: 700, useNativeDriver: false,
+        }).start(() => {
+          setIncomingRank(targetRank);
+          oldBadgeX.setValue(0);
+          newBadgeX.setValue(300);
+          newBadgeOpacity.setValue(0);
+
+          Animated.parallel([
+            Animated.timing(oldBadgeX, { toValue: -300, duration: 400, useNativeDriver: true }),
+            Animated.timing(newBadgeX, { toValue: 0, duration: 400, useNativeDriver: true }),
+            Animated.timing(newBadgeOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          ]).start(() => {
+            setDisplayRank(targetRank);
+            setBarLabels(getBarLabels(targetRank, cutoffs));
+            setIncomingRank(null);
+            oldBadgeX.setValue(-300);
+            newBadgeX.setValue(0);
+            newBadgeOpacity.setValue(1);
+            progressAnim.setValue(0);
+            setTimeout(() => animateStep(stepIdx + 1), 250);
+          });
+        });
+      };
+
+      setTimeout(() => animateStep(0), 500);
+    };
+
+    init();
+  }, [isOpen, result]);
+
+  if (!result) return null;
+
+  const currentBadge = displayRank ? BADGE_IMAGES[displayRank] : UNRANKED_BADGE;
+  const incomingBadge = incomingRank ? BADGE_IMAGES[incomingRank] : currentBadge;
+
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalBackdrop onPress={onClose} />
+      <ModalContent size="md" className={`bg-${theme}-background border-${theme}-steelGray`}>
+        <ModalHeader>
+          <Text className="text-xl font-bold text-typography-800 text-center w-full">
+            {result.exerciseName}
+          </Text>
+        </ModalHeader>
+        <ModalBody>
+          <VStack className="items-center">
+            <Box style={{ height: 240, width: '100%', overflow: 'hidden' }} className="items-center justify-center">
+              <Box style={{ width: 100, height: 100 }} className="items-center justify-center">
+                <Animated.View style={{ position: 'absolute', transform: [{ translateX: oldBadgeX }] }}>
+                  <Image source={currentBadge} style={{ width: 200, height: 200 }} resizeMode="contain" />
+                </Animated.View>
+                <Animated.View style={{ position: 'absolute', transform: [{ translateX: newBadgeX }], opacity: newBadgeOpacity }}>
+                  <Image source={incomingBadge} style={{ width: 200, height: 200 }} resizeMode="contain" />
+                </Animated.View>
+              </Box>
+            </Box>
+            <Text size="2xl" bold className="text-typography-800">
+              {getRankLabel(displayRank)}
+            </Text>
+            <Text size="lg" className="text-typography-700 mt-1">
+              PR: {result.allTimePR} lbs
+            </Text>
+            <Box className="w-full mt-4 px-2">
+              <Box className="w-full h-3 rounded-full bg-outline-200 overflow-hidden">
+                <Animated.View
+                  style={{
+                    height: '100%',
+                    borderRadius: 999,
+                    width: progressWidth,
+                  }}
+                  className={`bg-${theme}-accent`}
+                />
+              </Box>
+              <HStack className="justify-between mt-1">
+                <Text size="sm" className="text-typography-600">{barLabels.left}</Text>
+                <Text size="sm" className="text-typography-600">{barLabels.right}</Text>
+              </HStack>
+            </Box>
+            <Animated.View style={{ opacity: percentileOpacity, marginTop: 16 }}>
+              <Text size="md" className="text-typography-700 text-center" italic>
+                Stronger than approximately {result.percentile}% of lifters in your division
+              </Text>
+            </Animated.View>
+          </VStack>
+        </ModalBody>
+        <ModalFooter className="justify-center">
+          <Button onPress={onClose} className={`bg-${theme}-accent`}>
+            <ButtonText className="text-typography-800">Congrats!</ButtonText>
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+}
 
 export default function StartWorkoutTab() {
   const { startWorkout } = useWorkout();
@@ -88,55 +264,16 @@ export default function StartWorkoutTab() {
   const [renameInputKey, setRenameInputKey] = useState(0);
   const [renameInvalid, setRenameInvalid] = useState(false);
   const [optedIntoRanked, setOptedIntoRanked] = useState(false);
+  const [userGender, setUserGender] = useState('');
+  const [userWeightClass, setUserWeightClass] = useState('');
   const [showRankedInfo, setShowRankedInfo] = useState(false);
   const [showPRModal, setShowPRModal] = useState(false);
-  const [prExercise, setPRExercise] = useState('');
-  const prValueRef = useRef('');
-  const [prValueInputKey, setPRValueInputKey] = useState(0);
-  const [prExerciseInvalid, setPRExerciseInvalid] = useState(false);
-  const [prValueInvalid, setPRValueInvalid] = useState(false);
-  const [prSubmitting, setPRSubmitting] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [prResult, setPRResult] = useState<PRResultData | null>(null);
 
-  const handleLogPR = async () => {
-    let hasError = false;
-    if (!prExercise) {
-      setPRExerciseInvalid(true);
-      hasError = true;
-    }
-    const trimmed = prValueRef.current.trim();
-    if (!trimmed || isNaN(Number(trimmed)) || Number(trimmed) <= 0) {
-      setPRValueInvalid(true);
-      hasError = true;
-    }
-    if (hasError) return;
-
-    const uid = FIREBASE_AUTH.currentUser?.uid;
-    if (!uid) return;
-
-    setPRSubmitting(true);
-    try {
-      const metricsRef = doc(FIREBASE_DB, 'users', uid, 'exercises', prExercise, 'metrics', 'allTimeMetrics');
-      await setDoc(metricsRef, { allTimePR: Number(trimmed) }, { merge: true });
-      setShowPRModal(false);
-      setPRExercise('');
-      prValueRef.current = '';
-      setPRValueInputKey((k) => k + 1);
-      setPRExerciseInvalid(false);
-      setPRValueInvalid(false);
-    } catch (e) {
-      console.error('Failed to log PR', e);
-    } finally {
-      setPRSubmitting(false);
-    }
-  };
-
-  const handleClosePRModal = () => {
-    setShowPRModal(false);
-    setPRExercise('');
-    prValueRef.current = '';
-    setPRValueInputKey((k) => k + 1);
-    setPRExerciseInvalid(false);
-    setPRValueInvalid(false);
+  const handlePRSuccess = (result: PRResultData) => {
+    setPRResult(result);
+    setTimeout(() => setShowResultModal(true), 300);
   };
 
   useFocusEffect(
@@ -144,8 +281,11 @@ export default function StartWorkoutTab() {
       const uid = FIREBASE_AUTH.currentUser?.uid;
       if (!uid) return;
       getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
-        if (snap.exists() && snap.data().optedIntoRanked === true) {
-          setOptedIntoRanked(true);
+        if (snap.exists()) {
+          const data = snap.data();
+          setOptedIntoRanked(data.optedIntoRanked === true);
+          if (data.gender) setUserGender(data.gender);
+          if (data.weightClass) setUserWeightClass(data.weightClass);
         } else {
           setOptedIntoRanked(false);
         }
@@ -627,73 +767,24 @@ export default function StartWorkoutTab() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-      <Modal isOpen={showPRModal} onClose={handleClosePRModal}>
-        <ModalBackdrop onPress={handleClosePRModal} />
-        <ModalContent size="md" className={`bg-${theme}-background border-${theme}-steelGray`}>
-          <ModalHeader>
-            <Text className='text-xl font-bold text-typography-800'>Log Ranked PR</Text>
-          </ModalHeader>
-          <ModalBody>
-            <VStack space="lg">
-              <FormControl isInvalid={prExerciseInvalid}>
-                <FormControlLabel>
-                  <FormControlLabelText>Exercise</FormControlLabelText>
-                </FormControlLabel>
-                <Select
-                  selectedValue={prExercise}
-                  onValueChange={(value: string) => {
-                    setPRExercise(value);
-                    if (prExerciseInvalid) setPRExerciseInvalid(false);
-                  }}
-                >
-                  <SelectTrigger className="flex-row justify-between items-center">
-                    <SelectInput placeholder="Select exercise" />
-                    <SelectIcon className="mr-2" as={ChevronDownIcon} />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      {RANKED_EXERCISES.map((ex) => (
-                        <SelectItem key={ex.id} label={ex.label} value={ex.id} />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-              </FormControl>
+      <PRResultModal
+        isOpen={showResultModal}
+        result={prResult}
+        theme={theme}
+        onClose={() => {
+          setShowResultModal(false);
+          setPRResult(null);
+        }}
+      />
 
-              <FormControl isInvalid={prValueInvalid}>
-                <FormControlLabel>
-                  <FormControlLabelText>Weight (lbs)</FormControlLabelText>
-                </FormControlLabel>
-                <Input variant="outline" size="md">
-                  <InputField
-                    key={prValueInputKey}
-                    className="text-typography-800"
-                    placeholder="lbs"
-                    keyboardType="decimal-pad"
-                    onChangeText={(value) => {
-                      prValueRef.current = value;
-                      if (prValueInvalid) setPRValueInvalid(false);
-                    }}
-                    selectTextOnFocus={true}
-                  />
-                </Input>
-              </FormControl>
-            </VStack>
-          </ModalBody>
-          <ModalFooter className='flex-row justify-between items-center px-4'>
-            <Button variant="outline" action="secondary" size="sm" onPress={handleClosePRModal}>
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button size="sm" onPress={handleLogPR} isDisabled={prSubmitting}>
-              <ButtonText>{prSubmitting ? 'Logging...' : 'Log PR!'}</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <LogRankedPRModal
+        isOpen={showPRModal}
+        onClose={() => setShowPRModal(false)}
+        theme={theme}
+        userGender={userGender}
+        userWeightClass={userWeightClass}
+        onSuccess={handlePRSuccess}
+      />
     </SafeAreaView>
   );
 }

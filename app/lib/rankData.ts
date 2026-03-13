@@ -345,6 +345,68 @@ export default function getRankProgress(
   return { currentCutoff, nextCutoff, nextRank, progress };
 }
 
+export function computeRank(allTimePR: number, cutoffs: Record<Rank, number>): Rank | null {
+  let result: Rank | null = null;
+  for (const rank of RANK_ORDER) {
+    if (allTimePR >= cutoffs[rank]) {
+      result = rank;
+    } else {
+      break;
+    }
+  }
+  return result;
+}
+
+export function getProgressForPR(
+  allTimePR: number,
+  rank: Rank | null,
+  cutoffs: Record<Rank, number>
+): { currentCutoff: number; nextCutoff: number | null; nextRank: Rank | null; progress: number } {
+  if (!rank) {
+    const first = cutoffs[RANK_ORDER[0]];
+    return { currentCutoff: 0, nextCutoff: first, nextRank: RANK_ORDER[0], progress: first > 0 ? Math.min(allTimePR / first, 1) : 0 };
+  }
+  return getRankProgress(rank, allTimePR, cutoffs);
+}
+
+const RANK_PERCENTILES: Record<Rank, number> = {
+  iron: 5,
+  bronze: 13,
+  silver: 20,
+  gold: 35,
+  platinum: 50,
+  diamond: 66,
+  titanium: 80,
+  mythic: 98,
+};
+
+export function computePercentile(allTimePR: number, cutoffs: Record<Rank, number>): number {
+  if (allTimePR <= 0) return 0;
+
+  const ironCutoff = cutoffs[RANK_ORDER[0]];
+  if (allTimePR < ironCutoff) {
+    return Math.round((allTimePR / ironCutoff) * RANK_PERCENTILES.iron);
+  }
+
+  for (let i = RANK_ORDER.length - 1; i >= 0; i--) {
+    const rank = RANK_ORDER[i];
+    if (allTimePR >= cutoffs[rank]) {
+      const pctFloor = RANK_PERCENTILES[rank];
+      if (i >= RANK_ORDER.length - 1) {
+        return Math.min(Math.round(pctFloor + (allTimePR - cutoffs[rank]) * 0.01), 99);
+      }
+      const nextRank = RANK_ORDER[i + 1];
+      const nextCutoff = cutoffs[nextRank];
+      const pctCeil = RANK_PERCENTILES[nextRank];
+      const range = nextCutoff - cutoffs[rank];
+      const fraction = range > 0 ? (allTimePR - cutoffs[rank]) / range : 0;
+      return Math.round(pctFloor + fraction * (pctCeil - pctFloor));
+    }
+  }
+
+  return 0;
+}
+
 export const RANKED_EXERCISE_IDS = new Set([
   'bench-press-barbell',
   'bench-press-dumbbell',
