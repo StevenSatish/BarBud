@@ -7,6 +7,8 @@ import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Animated, Image } from 'react-native';
 import { Asset } from 'expo-asset';
+import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/app/context/ThemeContext';
 import { RANK_ORDER, type Rank } from '@/app/lib/rankData';
 import type { PRResultData } from '@/app/components/LogRankedPRModal';
 
@@ -62,11 +64,20 @@ export default function PRResultModal({
   theme: string;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const oldBadgeX = useRef(new Animated.Value(0)).current;
   const newBadgeX = useRef(new Animated.Value(300)).current;
   const newBadgeOpacity = useRef(new Animated.Value(0)).current;
+  const ringScale = useRef(new Animated.Value(0)).current;
+  const ringOpacity = useRef(new Animated.Value(0)).current;
+  const ring2Scale = useRef(new Animated.Value(0)).current;
+  const ring2Opacity = useRef(new Animated.Value(0)).current;
+  const particleAnim = useRef(new Animated.Value(0)).current;
   const percentileOpacity = useRef(new Animated.Value(0)).current;
+
+  const PARTICLE_COUNT = 12;
+  const particleAngles = Array.from({ length: PARTICLE_COUNT }, (_, i) => (i / PARTICLE_COUNT) * 2 * Math.PI);
   const [displayRank, setDisplayRank] = useState<Rank | null>(null);
   const [incomingRank, setIncomingRank] = useState<Rank | null>(null);
   const [barLabels, setBarLabels] = useState({ left: '', right: '' });
@@ -90,6 +101,11 @@ export default function PRResultModal({
       oldBadgeX.setValue(0);
       newBadgeX.setValue(300);
       newBadgeOpacity.setValue(0);
+      ringScale.setValue(0);
+      ringOpacity.setValue(0);
+      ring2Scale.setValue(0);
+      ring2Opacity.setValue(0);
+      particleAnim.setValue(0);
       percentileOpacity.setValue(0);
       setDisplayRank(oldRank);
       setIncomingRank(null);
@@ -127,12 +143,61 @@ export default function PRResultModal({
           oldBadgeX.setValue(0);
           newBadgeX.setValue(300);
           newBadgeOpacity.setValue(0);
+          ringScale.setValue(0);
+          ringOpacity.setValue(0);
+          ring2Scale.setValue(0);
+          ring2Opacity.setValue(0);
+          particleAnim.setValue(0);
 
           Animated.parallel([
             Animated.timing(oldBadgeX, { toValue: -300, duration: 400, useNativeDriver: true }),
             Animated.timing(newBadgeX, { toValue: 0, duration: 400, useNativeDriver: true }),
             Animated.timing(newBadgeOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
           ]).start(() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            ringScale.setValue(0);
+            ringOpacity.setValue(1);
+            ring2Scale.setValue(0);
+            ring2Opacity.setValue(1);
+            particleAnim.setValue(0);
+
+            Animated.parallel([
+              Animated.timing(ringScale, {
+                toValue: 4.5,
+                duration: 450,
+                useNativeDriver: true,
+              }),
+              Animated.timing(ringOpacity, {
+                toValue: 0,
+                duration: 450,
+                useNativeDriver: true,
+              }),
+              Animated.timing(particleAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+              }),
+            ]).start();
+
+            setTimeout(() => {
+              ring2Scale.setValue(0);
+              ring2Opacity.setValue(0.9);
+              Animated.parallel([
+                Animated.timing(ring2Scale, {
+                  toValue: 5,
+                  duration: 500,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(ring2Opacity, {
+                  toValue: 0,
+                  duration: 500,
+                  useNativeDriver: true,
+                }),
+              ]).start();
+            }, 80);
+          });
+
+          const onRingComplete = () => {
             setDisplayRank(targetRank);
             setBarLabels(getBarLabels(targetRank, cutoffs));
             setIncomingRank(null);
@@ -141,7 +206,8 @@ export default function PRResultModal({
             newBadgeOpacity.setValue(1);
             progressAnim.setValue(0);
             setTimeout(() => animateStep(stepIdx + 1), 250);
-          });
+          };
+          setTimeout(onRingComplete, 550);
         });
       };
 
@@ -172,12 +238,80 @@ export default function PRResultModal({
         </ModalHeader>
         <ModalBody>
           <VStack className="items-center">
-            <Box style={{ height: 240, width: '100%', overflow: 'hidden' }} className="items-center justify-center">
+            <Box style={{ height: 240, width: '100%', overflow: 'visible' }} className="items-center justify-center">
               <Box style={{ width: 100, height: 100 }} className="items-center justify-center">
+                {particleAngles.map((angle, i) => {
+                  const dist = 90;
+                  const translateX = particleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, dist * Math.cos(angle)],
+                  });
+                  const translateY = particleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, dist * Math.sin(angle)],
+                  });
+                  const pOpacity = particleAnim.interpolate({
+                    inputRange: [0, 0.05, 0.4, 1],
+                    outputRange: [0, 1, 0.7, 0],
+                  });
+                  return (
+                    <Animated.View
+                      key={i}
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        left: 45,
+                        top: 45,
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: colors.accent,
+                        transform: [{ translateX }, { translateY }],
+                        opacity: pOpacity,
+                      }}
+                    />
+                  );
+                })}
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: 10,
+                    top: 10,
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    borderWidth: 8,
+                    borderColor: colors.accent,
+                    transform: [{ scale: ringScale }],
+                    opacity: ringOpacity,
+                  }}
+                />
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: 6,
+                    top: 6,
+                    width: 88,
+                    height: 88,
+                    borderRadius: 44,
+                    borderWidth: 6,
+                    borderColor: colors.light ?? colors.accent,
+                    transform: [{ scale: ring2Scale }],
+                    opacity: ring2Opacity,
+                  }}
+                />
                 <Animated.View style={{ position: 'absolute', transform: [{ translateX: oldBadgeX }] }}>
                   <Image source={currentBadge} style={{ width: 200, height: 200 }} resizeMode="contain" />
                 </Animated.View>
-                <Animated.View style={{ position: 'absolute', transform: [{ translateX: newBadgeX }], opacity: newBadgeOpacity }}>
+                <Animated.View
+                  style={{
+                    position: 'absolute',
+                    transform: [{ translateX: newBadgeX }],
+                    opacity: newBadgeOpacity,
+                  }}
+                >
                   <Image source={incomingBadge} style={{ width: 200, height: 200 }} resizeMode="contain" />
                 </Animated.View>
               </Box>
