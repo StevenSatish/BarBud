@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/app/context/ThemeContext';
@@ -33,6 +33,7 @@ export default function HistoryCalendarView() {
 	const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
 	const [selectedDayKey, setSelectedDayKey] = useState<string | null>(() => formatDayKey(new Date()));
 	const [loadedMonths, setLoadedMonths] = useState<Record<string, boolean>>({});
+	const [sessionListVersion, setSessionListVersion] = useState(0); // Increment to force selectedDaySessions to re-read from cache
 
 	const { colors, theme } = useTheme();
 	const { user } = useAuth();
@@ -42,7 +43,7 @@ export default function HistoryCalendarView() {
 		const monthKey = selectedDayKey.slice(0, 7);
 		const monthMap = monthCacheRef.current[monthKey] || {};
 		return monthMap[selectedDayKey] || [];
-	}, [selectedDayKey, loadedMonths]);
+	}, [selectedDayKey, loadedMonths, sessionListVersion]);
 
 	useEffect(() => {
 		if (!user?.uid) return;
@@ -150,7 +151,10 @@ export default function HistoryCalendarView() {
 		const next: Record<string, any> = {};
 		Object.entries(combined).forEach(([dayKey, sessions]) => {
 			const count = sessions.length;
-			if (count <= 0) return;
+			if (count <= 0) {
+				next[dayKey] = { dots: [] }; // Clear dots when day has no sessions
+				return;
+			}
 			const dotCount = Math.min(count, 4);
 			const dots = Array.from({ length: dotCount }).map((_, i) => ({
 				key: `${dayKey}-s${i + 1}`,
@@ -229,6 +233,19 @@ export default function HistoryCalendarView() {
 		};
 	}, [recoloredMarkedDates, selectedDayKey, colors.accent, colors.background, colors.lightText]);
 
+	const handleSessionDeleted = useCallback((sessionId: string, dayKey?: string) => {
+		const dk = dayKey ?? selectedDayKey;
+		if (!dk) return;
+		const monthKey = dk.slice(0, 7);
+		const dayMap = monthCacheRef.current[monthKey];
+		if (dayMap?.[dk]) {
+			dayMap[dk] = dayMap[dk].filter(s => s.id !== sessionId);
+			if (dayMap[dk].length === 0) delete dayMap[dk];
+			updateMarkedDatesForMonth(monthKey);
+			setSessionListVersion(v => v + 1); // Force useMemo to re-read from cache
+		}
+	}, [selectedDayKey]);
+
 	const isSelectedMonthLoaded = useMemo(() => {
 		if (!selectedDayKey) return false;
 		const mk = selectedDayKey.slice(0, 7);
@@ -236,9 +253,9 @@ export default function HistoryCalendarView() {
 	}, [selectedDayKey, loadedMonths]);
 
 	const calendarKey = useMemo(() => {
-		// Changing key forces Calendar to remount and pick up new theme
-		return `${theme}-${colors.background}-${colors.accent}-${colors.lightText}`;
-	}, [theme, colors.background, colors.accent, colors.lightText]);
+		// Changing key forces Calendar to remount and pick up new theme/dots
+		return `${theme}-${colors.background}-${colors.accent}-${colors.lightText}-${sessionListVersion}`;
+	}, [theme, colors.background, colors.accent, colors.lightText, sessionListVersion]);
 
 	return (
 		<ScrollView className={`bg-${theme}-background`}>
@@ -303,7 +320,7 @@ export default function HistoryCalendarView() {
 							.slice()
 							.sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
 							.map((s) => (
-								<SessionCard key={s.id} session={s} />
+								<SessionCard key={s.id} session={s} onDeleted={handleSessionDeleted} />
 							))
 					)}
 				</View>

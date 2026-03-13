@@ -111,9 +111,14 @@ export default function HistoryListView() {
 		loadFirstPage();
 	}, [loadFirstPage]);
 
+	const handleSessionDeleted = useCallback(() => {
+		// Refetch from DB to ensure list reflects deletion
+		loadFirstPage();
+	}, [loadFirstPage]);
+
 	const renderItem = useCallback(({ item }: { item: SessionSummary }) => {
-		return <SessionCard session={item} />;
-	}, []);
+		return <SessionCard session={item} onDeleted={handleSessionDeleted} />;
+	}, [handleSessionDeleted]);
 
 	const listEmpty = useMemo(() => {
 		if (loading) return null;

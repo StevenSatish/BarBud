@@ -579,4 +579,52 @@ export const writeEditedSession = async (
   return { date };
 };
 
+/**
+ * Deletes a session and all its exercises. Removes instance docs for each exercise,
+ * recalculates metrics for affected exercises, and triggers exercise refetch.
+ */
+export const deleteSession = async (uid: string, sessionId: string): Promise<void> => {
+  const sessionRef = doc(FIREBASE_DB, `users/${uid}/sessions/${sessionId}`);
+  const sessionSnap = await getDoc(sessionRef);
+  if (!sessionSnap.exists()) return;
+
+  const exercisesRef = collection(sessionRef, 'exercises');
+  const exercisesSnap = await getDocs(exercisesRef);
+
+  const changedExerciseIds = new Set<string>();
+  const instanceRefsToDelete: Array<{ exerciseId: string; exerciseInSessionId: string }> = [];
+
+  exercisesSnap.docs.forEach((exSnap) => {
+    const data = exSnap.data() as { exerciseId?: string };
+    const exerciseId = data?.exerciseId;
+    if (exerciseId) {
+      changedExerciseIds.add(exerciseId);
+      instanceRefsToDelete.push({ exerciseId, exerciseInSessionId: exSnap.id });
+    }
+  });
+
+  const batch = writeBatch(FIREBASE_DB);
+
+  instanceRefsToDelete.forEach(({ exerciseId, exerciseInSessionId }) => {
+    const instanceRef = doc(
+      FIREBASE_DB,
+      `users/${uid}/exercises/${exerciseId}/instances/${buildInstanceId(sessionId, exerciseInSessionId)}`
+    );
+    batch.delete(instanceRef);
+  });
+
+  exercisesSnap.docs.forEach((exSnap) => {
+    batch.delete(exSnap.ref);
+  });
+
+  batch.delete(sessionRef);
+  await batch.commit();
+
+  for (const exerciseId of changedExerciseIds) {
+    await recomputeMetricsForExercise(uid, exerciseId, undefined);
+  }
+
+  await triggerExerciseRefetch();
+};
+
 export default writeEditedSession;
