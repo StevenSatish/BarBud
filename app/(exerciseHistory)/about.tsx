@@ -1,13 +1,29 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Image, ScrollView, View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/app/context/ThemeContext';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Heading } from '@/components/ui/heading';
 import { Spinner } from '@/components/ui/spinner';
+import { Box } from '@/components/ui/box';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import YoutubePlayer from 'react-native-youtube-iframe';
+import { doc, getDoc } from 'firebase/firestore';
+import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
+import { RANKED_EXERCISE_IDS, getCutoffs, RANK_ORDER, type Rank } from '@/app/lib/rankData';
+import getRankProgress from '@/app/lib/rankData';
+
+const BADGE_IMAGES: Record<Rank, any> = {
+  iron: require('@/app/badges/ironBadge.png'),
+  bronze: require('@/app/badges/bronzeBadge.png'),
+  silver: require('@/app/badges/silverBadge.png'),
+  gold: require('@/app/badges/goldBadge.png'),
+  platinum: require('@/app/badges/platinumBadge.png'),
+  diamond: require('@/app/badges/diamondBadge.png'),
+  titanium: require('@/app/badges/titaniumBadge.png'),
+  mythic: require('@/app/badges/mythicBadge.png'),
+};
 
 type MetricsAllTime = Record<string, number | string | undefined>;
 
@@ -29,6 +45,45 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
   const onStateChange = useCallback((state: string) => {
     if (state === 'ended') setPlaying(false);
   }, []);
+
+  const [userProfile, setUserProfile] = useState<{ optedIntoRanked?: boolean; gender?: string; weightClass?: string } | null>(null);
+
+  useEffect(() => {
+    const uid = FIREBASE_AUTH.currentUser?.uid;
+    if (!uid) return;
+    getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
+      if (snap.exists()) setUserProfile(snap.data());
+    });
+  }, []);
+
+  const isRankedExercise = !!exercise?.exerciseId && RANKED_EXERCISE_IDS.has(exercise.exerciseId);
+  const showRanked = isRankedExercise && userProfile?.optedIntoRanked === true;
+
+  const rankInfo = useMemo(() => {
+    if (!showRanked || !userProfile?.gender || !userProfile?.weightClass) return null;
+    const cutoffs = getCutoffs(exercise.exerciseId, userProfile.gender, userProfile.weightClass);
+    if (!cutoffs) return null;
+    const allTimePR = metrics?.allTimePR != null ? Number(metrics.allTimePR) : 0;
+    const rank = exercise?.rank as Rank | undefined;
+    const hasRank = rank && RANK_ORDER.includes(rank);
+
+    if (hasRank) {
+      const progress = getRankProgress(rank, allTimePR, cutoffs);
+      return { rank, allTimePR, badge: BADGE_IMAGES[rank], ...progress };
+    }
+
+    const firstRankCutoff = cutoffs[RANK_ORDER[0]];
+    const progress = firstRankCutoff > 0 ? Math.min(Math.max(allTimePR / firstRankCutoff, 0), 1) : 0;
+    return {
+      rank: null as Rank | null,
+      allTimePR,
+      badge: null,
+      currentCutoff: 0,
+      nextCutoff: firstRankCutoff,
+      nextRank: RANK_ORDER[0],
+      progress,
+    };
+  }, [showRanked, exercise, userProfile, metrics]);
 
   const hasWeight = useMemo(() => (exercise?.trackingMethods || []).includes('weight'), [exercise]);
   const hasReps = useMemo(() => (exercise?.trackingMethods || []).includes('reps'), [exercise]);
@@ -132,6 +187,41 @@ export default function ExerciseAbout({ exercise, metrics, loading }: { exercise
 
   return (
     <ScrollView className={`flex-1 bg-${theme}-background`} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+      {rankInfo && (
+        <VStack className="items-center mb-6">
+          <Heading size="xl" className="text-typography-800 text-center mb-3">
+            {exercise?.name} Rank
+          </Heading>
+          {rankInfo.badge && (
+            <Image source={rankInfo.badge} style={{ width: 200, height: 200 }} resizeMode="contain" />
+          )}
+          <Text size="2xl" bold className="text-typography-800 mt-2">
+            {rankInfo.rank ? rankInfo.rank.charAt(0).toUpperCase() + rankInfo.rank.slice(1) : 'Unranked'}
+          </Text>
+          <Text size="lg" className="text-typography-700 mt-1">
+            All-Time PR: {rankInfo.allTimePR} lbs
+          </Text>
+          <Box className="w-full mt-3 px-4">
+            <Box className="w-full h-3 rounded-full bg-outline-200 overflow-hidden">
+              <Box
+                className={`h-full rounded-full bg-${theme}-accent`}
+                style={{ width: `${Math.round(rankInfo.progress * 100)}%` }}
+              />
+            </Box>
+            <HStack className="justify-between mt-1">
+              <Text size="sm" className="text-typography-600">
+                {rankInfo.currentCutoff} lbs
+              </Text>
+              <Text size="sm" className="text-typography-600">
+                {rankInfo.nextCutoff != null
+                  ? `${rankInfo.nextCutoff} lbs (${rankInfo.nextRank!.charAt(0).toUpperCase() + rankInfo.nextRank!.slice(1)})`
+                  : 'Max Rank'}
+              </Text>
+            </HStack>
+          </Box>
+        </VStack>
+      )}
+
       <HStack className="items-center justify-between mb-3">
         <Heading size="xl" className="text-typography-800">
           Personal Records

@@ -20,11 +20,53 @@ import { Text } from '@/components/ui/text';
 import { HStack } from '@/components/ui/hstack';
 import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput } from 'react-native';
+import { VStack } from '@/components/ui/vstack';
+import {
+  Select,
+  SelectTrigger,
+  SelectInput,
+  SelectIcon,
+  SelectPortal,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicator,
+  SelectDragIndicatorWrapper,
+  SelectItem,
+} from '@/components/ui/select';
+import { ChevronDownIcon } from '@/components/ui/icon';
+import { Input, InputField } from '@/components/ui/input';
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+} from '@/components/ui/form-control';
+import {
+  Popover,
+  PopoverBackdrop,
+  PopoverBody,
+  PopoverContent,
+} from '@/components/ui/popover';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import TemplateCard from '@/app/components/templateCard';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu';
+
+const RANKED_EXERCISES: { id: string; label: string }[] = [
+  { id: 'bench-press-barbell', label: 'Bench Press (Barbell)' },
+  { id: 'bench-press-dumbbell', label: 'Bench Press (Dumbbell)' },
+  { id: 'bent-over-row-barbell', label: 'Bent Over Row (Barbell)' },
+  { id: 'bicep-curl-barbell', label: 'Bicep Curl (Barbell)' },
+  { id: 'deadlift-barbell', label: 'Deadlift (Barbell)' },
+  { id: 'hip-thrust-barbell', label: 'Hip Thrust (Barbell)' },
+  { id: 'incline-bench-press-barbell', label: 'Incline Bench Press (Barbell)' },
+  { id: 'lat-pulldown-machine', label: 'Lat Pulldown (Machine)' },
+  { id: 'romanian-deadlift-barbell', label: 'Romanian Deadlift (Barbell)' },
+  { id: 'shoulder-press-barbell', label: 'Shoulder Press (Barbell)' },
+  { id: 'shoulder-press-dumbbell', label: 'Shoulder Press (Dumbbell)' },
+  { id: 'squat-barbell', label: 'Squat (Barbell)' },
+];
 
 export default function StartWorkoutTab() {
   const { startWorkout } = useWorkout();
@@ -46,16 +88,70 @@ export default function StartWorkoutTab() {
   const [renameInputKey, setRenameInputKey] = useState(0);
   const [renameInvalid, setRenameInvalid] = useState(false);
   const [optedIntoRanked, setOptedIntoRanked] = useState(false);
+  const [showRankedInfo, setShowRankedInfo] = useState(false);
+  const [showPRModal, setShowPRModal] = useState(false);
+  const [prExercise, setPRExercise] = useState('');
+  const prValueRef = useRef('');
+  const [prValueInputKey, setPRValueInputKey] = useState(0);
+  const [prExerciseInvalid, setPRExerciseInvalid] = useState(false);
+  const [prValueInvalid, setPRValueInvalid] = useState(false);
+  const [prSubmitting, setPRSubmitting] = useState(false);
 
-  useEffect(() => {
+  const handleLogPR = async () => {
+    let hasError = false;
+    if (!prExercise) {
+      setPRExerciseInvalid(true);
+      hasError = true;
+    }
+    const trimmed = prValueRef.current.trim();
+    if (!trimmed || isNaN(Number(trimmed)) || Number(trimmed) <= 0) {
+      setPRValueInvalid(true);
+      hasError = true;
+    }
+    if (hasError) return;
+
     const uid = FIREBASE_AUTH.currentUser?.uid;
     if (!uid) return;
-    getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
-      if (snap.exists() && snap.data().optedIntoRanked === true) {
-        setOptedIntoRanked(true);
-      }
-    });
-  }, []);
+
+    setPRSubmitting(true);
+    try {
+      const metricsRef = doc(FIREBASE_DB, 'users', uid, 'exercises', prExercise, 'metrics', 'allTimeMetrics');
+      await setDoc(metricsRef, { allTimePR: Number(trimmed) }, { merge: true });
+      setShowPRModal(false);
+      setPRExercise('');
+      prValueRef.current = '';
+      setPRValueInputKey((k) => k + 1);
+      setPRExerciseInvalid(false);
+      setPRValueInvalid(false);
+    } catch (e) {
+      console.error('Failed to log PR', e);
+    } finally {
+      setPRSubmitting(false);
+    }
+  };
+
+  const handleClosePRModal = () => {
+    setShowPRModal(false);
+    setPRExercise('');
+    prValueRef.current = '';
+    setPRValueInputKey((k) => k + 1);
+    setPRExerciseInvalid(false);
+    setPRValueInvalid(false);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const uid = FIREBASE_AUTH.currentUser?.uid;
+      if (!uid) return;
+      getDoc(doc(FIREBASE_DB, 'users', uid)).then((snap) => {
+        if (snap.exists() && snap.data().optedIntoRanked === true) {
+          setOptedIntoRanked(true);
+        } else {
+          setOptedIntoRanked(false);
+        }
+      });
+    }, [])
+  );
 
   const orderedFolders = useMemo(() => {
     const nonNone = folders.filter((f) => f.id !== 'none');
@@ -244,11 +340,34 @@ export default function StartWorkoutTab() {
           </Box>
           {optedIntoRanked && (
             <Box className='items-center mb-1'>
-              <Button onPress={() => {}} className={`bg-${theme}-accent`}>
-                <ButtonText className='text-typography-800'>
-                  Log Ranked PR
-                </ButtonText>
-              </Button>
+              <Box className='flex-row items-center'>
+                <Box style={{ width: 28 }} />
+                <Button onPress={() => setShowPRModal(true)} className={`bg-${theme}-accent`}>
+                  <ButtonText className='text-typography-800'>
+                    Log Ranked PR
+                  </ButtonText>
+                </Button>
+                <Popover
+                  isOpen={showRankedInfo}
+                  onClose={() => setShowRankedInfo(false)}
+                  onOpen={() => setShowRankedInfo(true)}
+                  placement="bottom"
+                  trigger={(triggerProps) => (
+                    <Pressable {...triggerProps} hitSlop={8} style={{ marginLeft: 8 }}>
+                      <Feather name="info" size={20} color={colors.light} />
+                    </Pressable>
+                  )}
+                >
+                  <PopoverBackdrop />
+                  <PopoverContent className={`bg-${theme}-background border-${theme}-steelGray p-3`} style={{ maxWidth: 200 }}>
+                    <PopoverBody>
+                      <Text className='text-typography-800 text-sm'>
+                        Logging a One Rep Max can mess with regular tracking, so you can use this for ranked progression.
+                      </Text>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
+              </Box>
             </Box>
           )}
         </Box>
@@ -504,6 +623,73 @@ export default function StartWorkoutTab() {
               onPress={handleDeleteFolder}
             >
               <ButtonText>{deletingFolder ? 'Deleting...' : 'Yes, delete'}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={showPRModal} onClose={handleClosePRModal}>
+        <ModalBackdrop onPress={handleClosePRModal} />
+        <ModalContent size="md" className={`bg-${theme}-background border-${theme}-steelGray`}>
+          <ModalHeader>
+            <Text className='text-xl font-bold text-typography-800'>Log Ranked PR</Text>
+          </ModalHeader>
+          <ModalBody>
+            <VStack space="lg">
+              <FormControl isInvalid={prExerciseInvalid}>
+                <FormControlLabel>
+                  <FormControlLabelText>Exercise</FormControlLabelText>
+                </FormControlLabel>
+                <Select
+                  selectedValue={prExercise}
+                  onValueChange={(value: string) => {
+                    setPRExercise(value);
+                    if (prExerciseInvalid) setPRExerciseInvalid(false);
+                  }}
+                >
+                  <SelectTrigger className="flex-row justify-between items-center">
+                    <SelectInput placeholder="Select exercise" />
+                    <SelectIcon className="mr-2" as={ChevronDownIcon} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      {RANKED_EXERCISES.map((ex) => (
+                        <SelectItem key={ex.id} label={ex.label} value={ex.id} />
+                      ))}
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
+              </FormControl>
+
+              <FormControl isInvalid={prValueInvalid}>
+                <FormControlLabel>
+                  <FormControlLabelText>Weight (lbs)</FormControlLabelText>
+                </FormControlLabel>
+                <Input variant="outline" size="md">
+                  <InputField
+                    key={prValueInputKey}
+                    className="text-typography-800"
+                    placeholder="lbs"
+                    keyboardType="decimal-pad"
+                    onChangeText={(value) => {
+                      prValueRef.current = value;
+                      if (prValueInvalid) setPRValueInvalid(false);
+                    }}
+                    selectTextOnFocus={true}
+                  />
+                </Input>
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter className='flex-row justify-between items-center px-4'>
+            <Button variant="outline" action="secondary" size="sm" onPress={handleClosePRModal}>
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button size="sm" onPress={handleLogPR} isDisabled={prSubmitting}>
+              <ButtonText>{prSubmitting ? 'Logging...' : 'Log PR!'}</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>

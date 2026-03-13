@@ -2,7 +2,7 @@ exerciseId,gender,bracket,iron,bronze,silver,gold,platinum,diamond,titanium,myth
 bench-press-barbell,male,114-,60,75,90,110,130,155,180,245
 bench-press-barbell,male,115-129,65,80,100,120,145,170,195,265
 bench-press-barbell,male,130-144,80,100,120,140,165,190,220,295
-bench-press-barbell,male,145–159,95,115,135,160,185,215,245,320
+bench-press-barbell,male,145-159,95,115,135,160,185,215,245,320
 bench-press-barbell,male,160-174,110,130,155,180,205,235,265,350
 bench-press-barbell,male,175-189,125,145,170,195,225,255,290,375
 bench-press-barbell,male,190-204,135,160,185,215,245,275,310,395
