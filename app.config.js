@@ -6,8 +6,6 @@ export default ({ config }) => ({
   ...appJson,
   extra: {
     ...(appJson.expo?.extra || {}),
-    openaiApiKey:
-      process.env.EXPO_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY || '',
     firebase: {
       apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY || '',
       authDomain:

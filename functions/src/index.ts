@@ -5,6 +5,7 @@ admin.initializeApp();
 
 // One-time migration function (can be removed after running)
 export { migrateVideoLinks } from "./migrateVideoLinks";
+export { chatCompletion } from "./chat";
 
 export const deleteMyAccount = onCall(async (request) => {
   const uid = request.auth?.uid;

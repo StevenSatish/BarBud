@@ -5,7 +5,7 @@ import { initializeAuth, getReactNativePersistence, browserSessionPersistence } 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 import Constants from 'expo-constants';
-import { getFunctions } from "firebase/functions";
+import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 
 const extraConfig =
   (Constants.expoConfig as any)?.extra?.firebase ??
@@ -39,3 +39,10 @@ const persistence =
 export const FIREBASE_AUTH = initializeAuth(FIREBASE_APP, { persistence });
 export const FIREBASE_DB = getFirestore(FIREBASE_APP);
 export const FIREBASE_FUNCTIONS = getFunctions(FIREBASE_APP);
+
+if (__DEV__ && process.env.EXPO_PUBLIC_USE_FUNCTIONS_EMULATOR === 'true') {
+  const host =
+    process.env.EXPO_PUBLIC_FUNCTIONS_EMULATOR_HOST ||
+    (Platform.OS === 'android' ? '10.0.2.2' : '127.0.0.1');
+  connectFunctionsEmulator(FIREBASE_FUNCTIONS, host, 5001);
+}

@@ -1,9 +1,7 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Constants from 'expo-constants';
-import OpenAI from 'openai';
-import type { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
+import { httpsCallable } from 'firebase/functions';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
@@ -13,7 +11,7 @@ import { useTheme } from '@/app/context/ThemeContext';
 import useExerciseDB from '@/app/context/ExerciseDBContext';
 import { ArrowUp } from 'lucide-react-native';
 import { doc, setDoc} from 'firebase/firestore';
-import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_DB, FIREBASE_AUTH, FIREBASE_FUNCTIONS } from '@/FirebaseConfig';
 import useTemplateFolders from '../context/TemplateFoldersContext';
 
 export default function Chat() {
@@ -34,22 +32,6 @@ templates for you that'll appear in the 'Workout' tab.`,
   const inputRef = useRef<any>(null);
   const [templateWaiting, setTemplateWaiting] = useState(false);
   const { fetchFolders, fetchTemplates } = useTemplateFolders();
-
-  const apiKey =
-  (Constants.expoConfig?.extra as any)?.openaiApiKey ||
-  (Constants as any).manifest2?.extra?.openaiApiKey ||
-  (Constants as any).manifest?.extra?.openaiApiKey ||
-  process.env.EXPO_PUBLIC_OPENAI_API_KEY ||
-  process.env.OPENAI_API_KEY ||
-  '';
-
-  const safeStringify = (value: unknown) => {
-    try {
-      return JSON.stringify(value, null, 2);
-    } catch {
-      return String(value);
-    }
-  };
 
   const flattenExercises = () => {
     const flat: { exerciseId: string; name: string; category: string; muscleGroup?: string }[] = [];
@@ -84,10 +66,19 @@ templates for you that'll appear in the 'Workout' tab.`,
     return result;
   };
 
-  const parseTemplateJson = (text: string) => {
-    const cleaned = text.replace(/^Template:\s*/i, '').trim();
-    const parsed = JSON.parse(cleaned);
-    return parsed;
+  const chatErrorMessage = (err: unknown) => {
+    const code = (err as { code?: string })?.code;
+    const message = (err as { message?: string })?.message;
+    if (code === 'functions/unauthenticated') {
+      return 'Sign in to use chat.';
+    }
+    if (code === 'functions/resource-exhausted') {
+      return message || 'Too many messages. Please wait and try again.';
+    }
+    if (code === 'functions/invalid-argument') {
+      return message || 'That message could not be sent.';
+    }
+    return 'Something went wrong sending that message.';
   };
 
   const saveTemplate = async (template: any) => {
@@ -133,40 +124,13 @@ templates for you that'll appear in the 'Workout' tab.`,
     }
   };
 
-  const client = useMemo(() => {
-    if (!apiKey) return null;
-    return new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
-  }, [apiKey]);
-
-  const systemPrompt = useMemo(
-    () =>
-      `You are Bud, a friendly and enthusiastic workout assistant for a workout tracking app. Answer only questions about lifting, training, recovery,
-        or making workout templates. Also respond to greetings and goodbyes. If asked about anything else, 
-       respond with "Sorry, I only like to talk about working out." Keep replies very concise. Be friendly and engaging, but not too chatty.
-       If a user asks to create multiple templates at once, respond with "Sorry, I can only create one template at a time."
-
-When the user asks for a workout template or plan, follow this exact protocol:
-1) If the user asks for specific exercises in their template, thoroughly search the names and exerciseIds of the exercises in the exercise catalog 
-to find the best matches, it doesn't need to be an exact match.
-2) First reply with exactly: "Creating template, supply exercises" and nothing else.
-3) After you are given an exercise catalog, start out with heavy compound lifts, then move on to accessories and isolation exercises, with no more than 3 sets per exercise.
-Do not include any exercises that are deemed unoptimal for muscle building or are not typically used in bodybuilding.
-then reply with exactly one message starting with "Template:" followed by strict JSON matching: 
-{ templateName: string; exercises: [{ exerciseId: string; name: string; category: string; numSets: number }] }.
-4) If you cannot create a template, return a short error message.`,
-    [],
-  );
-
-  const templateSchemaHint =
-    'Template schema: { templateName: string; exercises: [{ exerciseId: string; name: string; category: string; numSets: number }] }. Always use provided exerciseId/name/category exactly as given.';
-
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed || sending) return;
-    if (!client || !apiKey) {
+    if (!FIREBASE_AUTH.currentUser) {
       setMessages((prev) => [
         ...prev,
-        { id: Date.now().toString(), role: 'assistant', text: 'Missing API key.' },
+        { id: Date.now().toString(), role: 'assistant', text: 'Sign in to use chat.' },
       ]);
       return;
     }
@@ -177,12 +141,9 @@ then reply with exactly one message starting with "Template:" followed by strict
       text: trimmed,
     };
 
-    const historyForApi: ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'system', content: templateSchemaHint },
-      ...messages.map((m) => ({ role: m.role, content: m.text })),
-      { role: 'user', content: trimmed },
-    ];
+    const historyForApi = messages
+      .filter((m) => m.id !== 'intro')
+      .map((m) => ({ role: m.role, text: m.text }));
 
     setSending(true);
     setTemplateWaiting(false);
@@ -190,62 +151,26 @@ then reply with exactly one message starting with "Template:" followed by strict
     setInput('');
 
     try {
-      const completion = await client.chat.completions.create({
-        model: 'gpt-5-mini',
-        messages: historyForApi,
-        // max_completion_tokens: 400,
-        presence_penalty: 0,
-        n: 1,
-        stream: false,
+      const chatFn = httpsCallable(FIREBASE_FUNCTIONS, 'chatCompletion');
+      const result = await chatFn({
+        userMessage: trimmed,
+        history: historyForApi,
+        exerciseCatalog: filterExercisesForQuery(trimmed),
       });
+      const payload = result.data as
+        | { kind: 'message'; text: string }
+        | { kind: 'template'; template: any };
 
-      const reply = completion?.choices?.[0]?.message?.content?.trim() || '';
-      const sentinel = 'Creating template, supply exercises';
-
-      if (reply.trim() === sentinel) {
+      if (payload?.kind === 'template') {
         setTemplateWaiting(true);
-        const exercisesForModel = filterExercisesForQuery(trimmed);
-        const followupMessages: ChatCompletionMessageParam[] = [
-          { role: 'system', content: systemPrompt },
-          { role: 'system', content: templateSchemaHint },
-          {
-            role: 'system',
-            content:
-              'You already asked for exercises and received them. Do NOT repeat "Creating template, supply exercises". Now respond with exactly one message starting with "Template:" followed by the strict JSON schema. If you cannot, return a short error.',
-          },
-          ...(exercisesForModel.length
-            ? [
-                {
-                  role: 'system',
-                  content: `Exercise catalog (capped at ${exercisesForModel.length}): ${safeStringify(
-                    exercisesForModel,
-                  )}`,
-                } as const,
-              ]
-            : [
-                {
-                  role: 'system',
-                  content:
-                    'No exercises were found to build a template. Ask the user to add exercises first or try a different query.',
-                } as const,
-              ]),
-          ...messages.map((m) => ({ role: m.role, content: m.text })),
-          { role: 'user', content: trimmed },
-        ];
-
-        const followup = await client.chat.completions.create({
-          model: 'gpt-5-mini',
-          messages: followupMessages,
-          presence_penalty: 0,
-          n: 1,
-          stream: false,
-        });
-
-        const templateReply =
-          followup?.choices?.[0]?.message?.content?.trim() ||
-          'Sorry, I only like to talk about working out.';
-
-        if (templateReply.trim() === 'Creating template, supply exercises') {
+        try {
+          await saveTemplate(payload.template);
+          setMessages((prev) => [
+            ...prev,
+            { id: `${Date.now()}-assistant`, role: 'assistant', text: 'Template created! Go check it out.' },
+          ]);
+        } catch (err) {
+          console.error('Failed to save template', err);
           setMessages((prev) => [
             ...prev,
             {
@@ -254,36 +179,14 @@ then reply with exactly one message starting with "Template:" followed by strict
               text: 'Sorry, I could not create that template. Please try again.',
             },
           ]);
-        } else {
-          try {
-            const parsed = parseTemplateJson(templateReply);
-            await saveTemplate(parsed);
-          } catch (err) {
-            console.error('Failed to parse/save template JSON', err);
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `${Date.now()}-assistant`,
-                role: 'assistant',
-                text: 'Sorry, I could not create that template. Please try again.',
-              },
-            ]);
-            setTemplateWaiting(false);
-            return;
-          }
-          setMessages((prev) => [
-            ...prev,
-            { id: `${Date.now()}-assistant`, role: 'assistant', text: 'Template created! Go check it out.' },
-          ]);
         }
-        setTemplateWaiting(false);
       } else {
         setMessages((prev) => [
           ...prev,
           {
             id: `${Date.now()}-assistant`,
             role: 'assistant',
-            text: reply || 'Sorry, I only like to talk about working out.',
+            text: payload?.kind === 'message' ? payload.text : 'Sorry, I only like to talk about working out.',
           },
         ]);
       }
@@ -293,7 +196,7 @@ then reply with exactly one message starting with "Template:" followed by strict
         {
           id: `${Date.now()}-error`,
           role: 'assistant',
-          text: 'Something went wrong sending that message.',
+          text: chatErrorMessage(err),
         },
       ]);
       console.error('Chat send error', err);
